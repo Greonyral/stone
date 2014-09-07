@@ -194,6 +194,11 @@ public class PathOption extends Option {
 				null);
 	}
 
+	@Override
+	final void setByFlagValue(final String value) {
+		value(new File(value));
+	}
+
 	final void value(final File fileSelected) {
 		final File file = filter.value(fileSelected);
 		final Path path = Path.getPath(file.toString().split("\\" + FileSystem.getFileSeparator()));

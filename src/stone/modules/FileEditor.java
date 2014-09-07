@@ -67,7 +67,7 @@ public class FileEditor implements Module {
 			final OptionContainer oc) {
 		return new BooleanOption(oc, "changeNumbering",
 				"Changes the numbering of one or more songs.",
-				"Change song numbering", 'n', "change-numbering", FileEditor.SECTION,
+				"Change song numbering", Flag.NoShortFlag, "change-numbering", FileEditor.SECTION,
 				null, false);
 	}
 

@@ -18,6 +18,10 @@ public abstract class ReleaseListener implements MouseListener {
 	protected final JButton testButton, loadButton;
 	protected final JPanel panel, panelCenter, globalMenu;
 
+	protected ReleaseListener(final ReleaseListener listener) {
+		this(listener.params);
+	}
+
 	protected ReleaseListener(final ReleaseMouseListenerParams params) {
 		this.params = params;
 		abcMapPlugin = params.plugin();
@@ -28,10 +32,6 @@ public abstract class ReleaseListener implements MouseListener {
 		splitButton = params.splitButton();
 		testButton = params.testButton();
 		loadButton = params.loadButton();
-	}
-
-	protected ReleaseListener(final ReleaseListener listener) {
-		this(listener.params);
 	}
 
 	@Override

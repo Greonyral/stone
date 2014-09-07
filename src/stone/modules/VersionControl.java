@@ -127,7 +127,7 @@ public final class VersionControl implements Module {
 			final OptionContainer oc, final String key,
 			final String defaultValue, char shortFlag, final String longFlag,
 			final String helpText) {
-		return new StringOption(oc, VersionControl.SECTION + key, null,
+		return new StringOption(oc, VersionControl.SECTION + key, helpText,
 				helpText, shortFlag, longFlag, VersionControl.SECTION, key,
 				defaultValue);
 	}

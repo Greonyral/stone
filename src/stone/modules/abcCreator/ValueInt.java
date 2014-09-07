@@ -17,7 +17,7 @@ class ValueInt extends Value<Integer> {
 		@Override
 		public final void stateChanged(final ChangeEvent e) {
 			final int value_ = slider.getValue();
-			if (ValueInt.this.object == null) {
+			if (object == null) {
 				bruteParams.setGlobalValue(Integer.valueOf(value_));
 			} else {
 				bruteParams.setLocalValue(object, target, Integer
@@ -25,23 +25,23 @@ class ValueInt extends Value<Integer> {
 			}
 			label.setText(String.format("%s %d", value_ == 0 ? " "
 					: value_ > 0 ? "+" : "-", Integer.valueOf(Math
-					.abs(value_))));
-			if (ValueInt.this.interval > 0)
-				if (value_ == ValueInt.this.min) {
-					ValueInt.this.min -= ValueInt.this.interval;
-					if (value_ < (ValueInt.this.max - (3 * ValueInt.this.interval))) {
-						ValueInt.this.max -= ValueInt.this.interval;
+							.abs(value_))));
+			if (interval > 0)
+				if (value_ == min) {
+					min -= interval;
+					if (value_ < (max - (3 * interval))) {
+						max -= interval;
 					}
-				} else if (value_ == ValueInt.this.max) {
-					ValueInt.this.max += ValueInt.this.interval;
-					if (value_ > (ValueInt.this.min + (3 * ValueInt.this.interval))) {
-						ValueInt.this.min += ValueInt.this.interval;
+				} else if (value_ == max) {
+					max += interval;
+					if (value_ > (min + (3 * interval))) {
+						min += interval;
 					}
 				} else
 					return;
 			else
 				return;
-			ValueInt.this.display();
+			display();
 			slider.revalidate();
 		}
 	}
@@ -67,7 +67,7 @@ class ValueInt extends Value<Integer> {
 		interval = value.interval;
 		ticks = value.ticks;
 		this.value = valueLocal.intValue(); // bruteParams.globalValue or
-											// previously set value
+		// previously set value
 		max = value.max;
 		min = value.min;
 		this.object = (DragObject<Container, Container, Container>) object;
@@ -118,9 +118,14 @@ class ValueInt extends Value<Integer> {
 	@SuppressWarnings("hiding")
 	@Override
 	public <A extends Container, B extends Container, C extends Container>
-			Value<Integer> localInstance(DragObject<A, B, C> object,
-					DropTarget<A, B, C> target, final Integer value) {
+	Value<Integer> localInstance(DragObject<A, B, C> object,
+			DropTarget<A, B, C> target, final Integer value) {
 		return new ValueInt(bruteParams, this, object, target, value);
+	}
+
+	@Override
+	public final Integer parse(final String string) {
+		return Integer.valueOf(string);
 	}
 
 	@Override
@@ -136,10 +141,5 @@ class ValueInt extends Value<Integer> {
 	@Override
 	public void value(final String string) {
 		value(parse(string));
-	}
-
-	@Override
-	public final Integer parse(final String string) {
-		return Integer.valueOf(string);
 	}
 }

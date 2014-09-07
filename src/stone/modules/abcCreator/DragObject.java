@@ -11,7 +11,7 @@ import java.util.Iterator;
  * @param <T>
  */
 public interface DragObject<C extends Container, D extends Container, T extends Container>
-		extends Iterable<DropTarget<C, D, T>> {
+extends Iterable<DropTarget<C, D, T>> {
 
 	/**
 	 * adds a new association with given target

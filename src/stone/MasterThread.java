@@ -235,7 +235,10 @@ public class MasterThread extends Thread {
 									"The Lord of The Rings Online").toString());
 		}
 		try {
+			final StringOption NAME_OPTION = Main.createNameOption(sc.getOptionContainer());
 			final Set<String> moduleSelection = init();
+			if (moduleSelection == null)
+				return;
 			if (moduleSelection.contains(Main.REPAIR)) {
 				repair();
 				return;
@@ -252,12 +255,7 @@ public class MasterThread extends Thread {
 				}
 			}
 			if (!options.isEmpty()) {
-				options.addFirst(new StringOption(sc.getOptionContainer(), "name",
-						"Your name. Will be used to identify you."
-								+ "Several operations will use it"
-								+ " for more information, read the manual",
-						"Name", Flag.NoShortFlag, "name", Main.GLOBAL_SECTION,
-						Main.NAME_KEY));
+				options.addFirst(NAME_OPTION);
 				io.getOptions(options);
 				if (!isInterrupted())
 					sc.getMain().flushConfig();
@@ -363,7 +361,7 @@ public class MasterThread extends Thread {
 					try {
 						final Class<?> mainClass = ModuleLoader.createLoader().loadClass(stone.Main.class.getCanonicalName());
 						mainClass.getMethod("main", String[].class).invoke(
-								null, (Object) new String[0]);
+								null, sc.flags());
 					} catch (final IllegalAccessException | IllegalArgumentException
 							| InvocationTargetException | NoSuchMethodException
 							| SecurityException | ClassNotFoundException e) {
@@ -455,6 +453,14 @@ public class MasterThread extends Thread {
 			return null;
 		}
 		if (isInterrupted()) {
+			return null;
+		}
+		if (sc.flags.isEnabled(stone.Main.HELP_ID)) {
+			System.out.println(sc.flags.printHelp());
+			return null;
+		}
+		if (sc.flags.isEnabled(stone.Main.REPAIR_ID)) {
+			repair();
 			return null;
 		}
 		try {

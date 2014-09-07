@@ -6,7 +6,6 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 
 import javax.swing.JLabel;
-import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -26,7 +25,7 @@ class ValueFloat extends Value<Double> {
 					Integer.valueOf(max));
 			label.setText(String.format("%s %.2f", value == 0 ? " "
 					: value > 0 ? "+" : "-", Double.valueOf(Math
-					.abs(value))));
+							.abs(value))));
 		}
 	}
 
@@ -66,7 +65,7 @@ class ValueFloat extends Value<Double> {
 		slider.setMinorTickSpacing(ticks);
 		label.setText(String.format("%s %.2f", value == 0 ? " "
 				: value > 0 ? "+" : "-", Double.valueOf(Math.abs(value)
-				/ factor)));
+						/ factor)));
 		if (object != null) {
 			bruteParams.setLocalValue(object, target, Double
 					.valueOf(value));
@@ -90,6 +89,11 @@ class ValueFloat extends Value<Double> {
 	}
 
 	@Override
+	public final Double parse(final String string) {
+		return Double.valueOf(string);
+	}
+
+	@Override
 	public final Double value() {
 		return Double.valueOf(value / factor);
 	}
@@ -105,14 +109,9 @@ class ValueFloat extends Value<Double> {
 	}
 
 	@Override
-	public final Double parse(final String string) {
-		return Double.valueOf(string);
-	}
-
-	@Override
 	final <A extends Container, B extends Container, C extends Container>
-			Value<Double> localInstance(final DragObject<A, B, C> object,
-					final DropTarget<A, B, C> target, final Double value) {
+	Value<Double> localInstance(final DragObject<A, B, C> object,
+			final DropTarget<A, B, C> target, final Double value) {
 		throw new UnsupportedOperationException();
 	}
 }

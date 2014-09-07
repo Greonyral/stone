@@ -12,6 +12,7 @@ import stone.modules.Main;
 import stone.util.FileSystem;
 import stone.util.Path;
 
+
 /**
  * A central object holding every object needed for initialization
  * 
@@ -25,6 +26,7 @@ public class ModuleLoader extends ClassLoader {
 		ModuleLoader.instance = new ModuleLoader();
 		return ModuleLoader.instance;
 	}
+
 	private final boolean jar;
 
 	private final Path workingDirectory;
@@ -39,8 +41,8 @@ public class ModuleLoader extends ClassLoader {
 
 	private ModuleLoader() {
 		super(null);
-		final String className = this.getClass().getCanonicalName()
-				.replace('.', '/')
+		final String className =
+				this.getClass().getCanonicalName().replace('.', '/')
 				+ ".class";
 		final URL url = Main.class.getClassLoader().getResource(className);
 		if (url.getProtocol().equals("file")) {
@@ -55,15 +57,21 @@ public class ModuleLoader extends ClassLoader {
 			workingDirectory = null;
 		}
 		@SuppressWarnings("hiding")
-		final String[] cp = System.getProperty("java.class.path").split(
-				FileSystem.type == FileSystem.OSType.WINDOWS ? ";" : ":");
+		final String[] cp =
+		System.getProperty("java.class.path").split(
+				FileSystem.type == FileSystem.OSType.WINDOWS ? ";"
+						: ":");
 		this.cp = new Path[Math.max(1, cp.length)];
 		if (cp.length == 0) {
 			this.cp[0] = workingDirectory;
 		} else {
+			final Path path =
+					Path.getPath(System.getProperty("user.dir").split(
+							"\\" + FileSystem.getFileSeparator()));
 			for (int i = 0; i < cp.length; i++) {
-				this.cp[i] = workingDirectory.getParent().resolve(
-						cp[i].split("\\" + FileSystem.getFileSeparator()));
+				final String[] cpPath =
+						cp[i].split("\\" + FileSystem.getFileSeparator());
+				this.cp[i] = path.resolve(cpPath);
 			}
 		}
 	}
@@ -72,8 +80,10 @@ public class ModuleLoader extends ClassLoader {
 	public final URL getResource(final String s) {
 		URL url;
 		try {
-			url = new URL((jar ? "jar:" : "") + "file:/"
-					+ workingDirectory.toString() + (jar ? "!/" + s : ""));
+			url =
+					new URL((jar ? "jar:" : "") + "file:/"
+							+ workingDirectory.toString()
+							+ (jar ? "!/" + s : ""));
 			return url;
 		} catch (final MalformedURLException e) {
 			e.printStackTrace();
@@ -131,8 +141,10 @@ public class ModuleLoader extends ClassLoader {
 				if (path.getFileName().endsWith(".jar")) {
 					try {
 						jarFile = new JarFile(path.toFile());
-						final java.util.zip.ZipEntry e = jarFile.getEntry(name
-								.replaceAll("\\.", "/") + ".class");
+						final java.util.zip.ZipEntry e =
+								jarFile.getEntry(name.replaceAll("\\.",
+										"/")
+										+ ".class");
 						if (e == null) {
 							jarFile.close();
 							jarFile = null;
@@ -149,7 +161,9 @@ public class ModuleLoader extends ClassLoader {
 				for (final String p : name.split("\\.")) {
 					path = path.resolve(p);
 				}
-				path = path.getParent().resolve(path.getFileName() + ".class");
+				path =
+						path.getParent().resolve(
+								path.getFileName() + ".class");
 				if (!path.exists()) {
 					continue;
 				}
@@ -163,6 +177,9 @@ public class ModuleLoader extends ClassLoader {
 					return null;
 				}
 			}
+			if (in == null)
+				throw new RuntimeException(
+						"findClass got an null reference for InputStream");
 			assert in != null;
 			if (buffer.length < size) {
 				buffer = new byte[(size & 0xffff_ff00) + 0x100];
@@ -170,7 +187,8 @@ public class ModuleLoader extends ClassLoader {
 			size = 0;
 			try {
 				while (true) {
-					final int read = in.read(buffer, size, buffer.length - size);
+					final int read =
+							in.read(buffer, size, buffer.length - size);
 					if (read < 0) {
 						break;
 					}

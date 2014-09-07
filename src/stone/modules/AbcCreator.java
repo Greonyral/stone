@@ -56,7 +56,7 @@ import stone.util.TaskPool;
  * @author Nelphindal
  */
 public class AbcCreator implements Module,
-		DndPluginCaller<JPanel, JPanel, JPanel> {
+DndPluginCaller<JPanel, JPanel, JPanel> {
 
 	/**
 	 * Enum indicating what type of runnable shall be called
@@ -204,8 +204,8 @@ public class AbcCreator implements Module,
 	private static final Path javaPath = AbcCreator.getJavaPath();
 
 	private final static PathOption
-			createDrumMaps(final OptionContainer optionContainer,
-					final TaskPool taskPool) {
+	createDrumMaps(final OptionContainer optionContainer,
+			final TaskPool taskPool) {
 		final PathOptionFileFilter ff = AbcCreator.DRUM_MAP_FILTER;
 		return new PathOption(optionContainer, taskPool, "drumMapsDir",
 				"Select a directory containing default drum maps",
@@ -215,8 +215,8 @@ public class AbcCreator implements Module,
 	}
 
 	private final static PathOption
-			createInstrMap(final OptionContainer optionContainer,
-					final TaskPool taskPool) {
+	createInstrMap(final OptionContainer optionContainer,
+			final TaskPool taskPool) {
 		final PathOptionFileFilter ff = AbcCreator.INSTR_MAP_FILTER;
 		return new PathOption(
 				optionContainer,
@@ -229,8 +229,8 @@ public class AbcCreator implements Module,
 	}
 
 	private final static PathOption
-			createPathToAbcPlayer(final OptionContainer optionContainer,
-					final TaskPool taskPool) {
+	createPathToAbcPlayer(final OptionContainer optionContainer,
+			final TaskPool taskPool) {
 		final PathOptionFileFilter ff = AbcCreator.EXEC_FILTER;
 		return new PathOption(
 				optionContainer,
@@ -257,7 +257,7 @@ public class AbcCreator implements Module,
 				Path.getPath(
 						System.getProperty("java.home").split(
 								"\\" + FileSystem.getFileSeparator()))
-						.resolve("bin");
+								.resolve("bin");
 		final Path javaPath_;
 		if (FileSystem.type == FileSystem.OSType.WINDOWS) {
 			javaPath_ = javaBin.resolve("java.exe");
@@ -405,11 +405,11 @@ public class AbcCreator implements Module,
 		if (map == null)
 			// no abc-tracks
 			return new Object() {
-				@Override
-				public final String toString() {
-					return "empty file";
-				}
-			};
+			@Override
+			public final String toString() {
+				return "empty file";
+			}
+		};
 		System.out.println("generated map " + map);
 		try {
 			copy(map, brutesMap);
@@ -688,7 +688,7 @@ public class AbcCreator implements Module,
 
 	@Override
 	public final TreeSet<DropTarget<JPanel, JPanel, JPanel>>
-			sortedTargets() {
+	sortedTargets() {
 		return dragAndDropPlugin.targets();
 	}
 
@@ -750,8 +750,8 @@ public class AbcCreator implements Module,
 			case EXE:
 			case EXE_WAIT:
 				p =
-						Runtime.getRuntime().exec(location.toString(),
-								null, wd.toFile());
+				Runtime.getRuntime().exec(location.toString(),
+						null, wd.toFile());
 				break;
 			default:
 				return -1;
@@ -889,50 +889,50 @@ public class AbcCreator implements Module,
 		io.writeln(out, String.format("Transcriber : %s", name));
 		final Map<DragObject<JPanel, JPanel, JPanel>, Integer> abcPartMap =
 				new HashMap<>();
-		boolean empty = true;
-		io.updateProgress();
-
-		for (final Iterator<DropTargetContainer<JPanel, JPanel, JPanel>> targetIter =
-				targets.iterator();;) {
-			final DropTargetContainer<JPanel, JPanel, JPanel> target =
-					targetIter.next();
-			if (!targetIter.hasNext()) {
-				break;
-			}
-			for (final DropTarget<JPanel, JPanel, JPanel> t : target) {
-				empty = false;
-				final StringBuilder params = new StringBuilder();
-				for (final Map.Entry<String, Integer> param : t
-						.getParams().entrySet()) {
-					params.append(" ");
-					params.append(t.printParam(param));
-				}
-				io.writeln(out, "");
-				io.writeln(out, "abctrack begin");
-				io.writeln(out, "polyphony 6 top");
-				io.writeln(out, "duration 2");
-				io.writeln(out, String.format("instrument %s%s", target
-						.toString(), params.toString()));
-				writeAbcTrack(out, t, abcPartMap);
-				io.writeln(out, "abctrack end");
+				boolean empty = true;
 				io.updateProgress();
-			}
-		}
 
-		io.writeln(out, "");
-		io.writeln(out,
-				"% Instrument names are the ones from lotro, pibgorn is supported as well");
-		io.writeln(
-				out,
-				"% Polyphony sets the maximal number of simultanious tones for this instrument (6 is max)");
-		io.writeln(
-				out,
-				"% Pitch is in semitones, to shift an octave up : pitch 12 or down  pitch -12");
-		io.writeln(
-				out,
-				"% Volume will be added /substracted from the normal volume of that track (-127 - 127), everything above/below is truncatedtch is in semitones, to shift an octave up : pitch 12 or down  pitch -12");
-		io.close(out);
-		return empty ? null : map;
+				for (final Iterator<DropTargetContainer<JPanel, JPanel, JPanel>> targetIter =
+						targets.iterator();;) {
+					final DropTargetContainer<JPanel, JPanel, JPanel> target =
+							targetIter.next();
+					if (!targetIter.hasNext()) {
+						break;
+					}
+					for (final DropTarget<JPanel, JPanel, JPanel> t : target) {
+						empty = false;
+						final StringBuilder params = new StringBuilder();
+						for (final Map.Entry<String, Integer> param : t
+								.getParams().entrySet()) {
+							params.append(" ");
+							params.append(t.printParam(param));
+						}
+						io.writeln(out, "");
+						io.writeln(out, "abctrack begin");
+						io.writeln(out, "polyphony 6 top");
+						io.writeln(out, "duration 2");
+						io.writeln(out, String.format("instrument %s%s", target
+								.toString(), params.toString()));
+						writeAbcTrack(out, t, abcPartMap);
+						io.writeln(out, "abctrack end");
+						io.updateProgress();
+					}
+				}
+
+				io.writeln(out, "");
+				io.writeln(out,
+						"% Instrument names are the ones from lotro, pibgorn is supported as well");
+				io.writeln(
+						out,
+						"% Polyphony sets the maximal number of simultanious tones for this instrument (6 is max)");
+				io.writeln(
+						out,
+						"% Pitch is in semitones, to shift an octave up : pitch 12 or down  pitch -12");
+				io.writeln(
+						out,
+						"% Volume will be added /substracted from the normal volume of that track (-127 - 127), everything above/below is truncatedtch is in semitones, to shift an octave up : pitch 12 or down  pitch -12");
+				io.close(out);
+				return empty ? null : map;
 	}
 
 	private void prepareMaps(final Path drumMaps) {
@@ -990,8 +990,8 @@ public class AbcCreator implements Module,
 											Main.GLOBAL_SECTION,
 											Main.PATH_KEY, null)
 											.split("/")).toFile() : midi
-									.getParent().toFile(),
-							AbcCreator.midiFilter);
+											.getParent().toFile(),
+											AbcCreator.midiFilter);
 			if (midi == null) {
 				break;
 			}
@@ -1081,7 +1081,7 @@ public class AbcCreator implements Module,
 			} else {
 				file =
 						bruteDir.resolve(jarEntry.getName().substring(6))
-								.toFile();
+						.toFile();
 			}
 			if (!file.getParentFile().exists()) {
 				if (!file.getParentFile().mkdirs()) {
@@ -1107,11 +1107,11 @@ public class AbcCreator implements Module,
 	}
 
 	private final
-			void
-			writeAbcTrack(
-					final OutputStream out,
-					final DropTarget<JPanel, JPanel, JPanel> abcTrack,
-					final Map<DragObject<JPanel, JPanel, JPanel>, Integer> abcPartMap) {
+	void
+	writeAbcTrack(
+			final OutputStream out,
+			final DropTarget<JPanel, JPanel, JPanel> abcTrack,
+			final Map<DragObject<JPanel, JPanel, JPanel>, Integer> abcPartMap) {
 
 		for (final DragObject<JPanel, JPanel, JPanel> midiTrack : abcTrack) {
 			final Integer pitch =
@@ -1122,7 +1122,7 @@ public class AbcCreator implements Module,
 					BruteParams.DELAY.getLocalValue(midiTrack, abcTrack);
 			io.write(out, String.format(
 					"miditrack %d pitch %d volume %d delay %d", Integer
-							.valueOf(midiTrack.getId()), pitch, volume,
+					.valueOf(midiTrack.getId()), pitch, volume,
 					delay));
 			final int total = midiTrack.getTargets();
 			if (total > 1) {

@@ -10,23 +10,23 @@ final class TestButtonMouseListener extends ReleaseListener {
 
 	@Override
 	public final void mouseReleased(final MouseEvent e) {
-		synchronized (this.abcMapPlugin.state) {
-			if (this.abcMapPlugin.state.loadingMap)
+		synchronized (abcMapPlugin.state) {
+			if (abcMapPlugin.state.loadingMap)
 				return;
-			while (this.abcMapPlugin.state.running) {
+			while (abcMapPlugin.state.running) {
 				try {
-					this.abcMapPlugin.state.wait();
+					abcMapPlugin.state.wait();
 				} catch (final InterruptedException ie) {
 					ie.printStackTrace();
 				}
 			}
-			if (this.abcMapPlugin.state.upToDate) {
-				this.abcMapPlugin.state.io.endProgress();
+			if (abcMapPlugin.state.upToDate) {
+				abcMapPlugin.state.io.endProgress();
 			}
-			this.abcMapPlugin.state.upToDate = false;
-			this.abcMapPlugin.state.running = true;
+			abcMapPlugin.state.upToDate = false;
+			abcMapPlugin.state.running = true;
 		}
-		this.abcMapPlugin.taskPool.addTask(new Runnable() {
+		abcMapPlugin.taskPool.addTask(new Runnable() {
 
 			@Override
 			public void run() {
@@ -41,13 +41,13 @@ final class TestButtonMouseListener extends ReleaseListener {
 						TestButtonMouseListener.this.abcMapPlugin.state.label.setText("Creating abc failed");
 					} else {
 						TestButtonMouseListener.this.abcMapPlugin.state.label
-								.setText("The abc is up-to-date - "
-										+ result.toString()
-												.substring(
-														0,
-														result.toString()
-																.indexOf(
-																		"%") + 1));
+						.setText("The abc is up-to-date - "
+								+ result.toString()
+								.substring(
+										0,
+										result.toString()
+										.indexOf(
+												"%") + 1));
 					}
 				}
 			}

@@ -230,4 +230,8 @@ public abstract class Option {
 	}
 
 	abstract void display(final JPanel rootPanel);
+
+	void setByFlagValue(String value) {
+		this.value(value);
+	}
 }

@@ -13,6 +13,7 @@ import stone.io.IOHandler;
 import stone.io.InputStream;
 import stone.io.OutputStream;
 import stone.modules.songData.SongDataContainer;
+import stone.util.Debug;
 import stone.util.Option;
 import stone.util.Path;
 
@@ -24,7 +25,7 @@ import stone.util.Path;
  */
 public final class SongbookUpdater implements Module {
 
-	private final static int VERSION = 1;
+	private final static int VERSION = 2;
 
 	private final IOHandler io;
 	private final SongDataContainer container;
@@ -75,18 +76,21 @@ public final class SongbookUpdater implements Module {
 	 * @param sc
 	 * @param old
 	 */
-	private SongbookUpdater(final StartupContainer sc, final SongbookUpdater old) {
+	private SongbookUpdater(final StartupContainer sc,
+			final SongbookUpdater old) {
 		io = sc.getIO();
 		main = old.main;
 		final String home =
-				sc.getMain().getConfigValue(Main.GLOBAL_SECTION, Main.PATH_KEY,
-						null);
+				sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
+						Main.PATH_KEY, null);
 		final Path basePath = Path.getPath(home.split("/"));
 		pluginDataPath = basePath.resolve("PluginData");
-		songbookPlugindataPath = pluginDataPath.resolve("SongbookUpdateData");
+		songbookPlugindataPath =
+				pluginDataPath.resolve("SongbookUpdateData");
 		master = sc.getMaster();
 		container =
-				(SongDataContainer) sc.getContainer(SongDataContainer.class
+				(SongDataContainer) sc
+				.getContainer(SongDataContainer.class
 						.getCanonicalName());
 	}
 
@@ -111,7 +115,8 @@ public final class SongbookUpdater implements Module {
 	@Override
 	public final void repair() {
 		final String home =
-				main.getConfigValue(Main.GLOBAL_SECTION, Main.PATH_KEY, null);
+				main.getConfigValue(Main.GLOBAL_SECTION, Main.PATH_KEY,
+						null);
 		if (home == null) {
 			System.out
 			.printf("Unable to determine home - SongbookUpdateData could not been deleted");
@@ -119,10 +124,11 @@ public final class SongbookUpdater implements Module {
 		}
 		final Path basePath = Path.getPath(home.split("/"));
 		final Path updateDataPath =
-				basePath.resolve("PluginData").resolve("SongbookUpdateData");
+				basePath.resolve("PluginData").resolve(
+						"SongbookUpdateData");
 		final Path updateDataPathZip =
-				basePath.resolve("PluginData")
-				.resolve("SongbookUpdateData.zip");
+				basePath.resolve("PluginData").resolve(
+						"SongbookUpdateData.zip");
 		if (updateDataPath.exists()) {
 			final boolean success = updateDataPath.delete();
 			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
@@ -130,8 +136,10 @@ public final class SongbookUpdater implements Module {
 		}
 		if (updateDataPathZip.exists()) {
 			final boolean success = updateDataPathZip.delete();
-			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
-					updateDataPathZip.toString(), success ? "" : " failed");
+			System.out
+			.printf("Delet%s %s%s\n", success ? "ed" : "ing",
+					updateDataPathZip.toString(), success ? ""
+							: " failed");
 		}
 	}
 
@@ -155,7 +163,8 @@ public final class SongbookUpdater implements Module {
 
 		if (!pluginDataPath.exists()) {
 			if (!pluginDataPath.toFile().mkdir()) {
-				io.printMessage(null,
+				io.printMessage(
+						null,
 						"Missing PluginData directory could not be created",
 						true);
 			}
@@ -201,6 +210,10 @@ public final class SongbookUpdater implements Module {
 		container.writeNewSongbookData(masterPluginData);
 
 		io.startProgress("", profiles.size());
+		Debug.print("%2d profiles found:\n", profiles.size());
+		for (final String profile : profiles) {
+			Debug.print("- %s\n", profile);
+		}
 
 		// copy from master plugindata to each profile
 		final Iterator<String> profilesIter = profiles.iterator();

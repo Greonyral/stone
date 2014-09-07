@@ -25,8 +25,11 @@ public class Flag {
 	public static final char NoShortFlag = 5;
 	private static final int PRIMITIVE = 1;
 
-	private final Set<String> enabledFlags = new HashSet<>();
+	public final static Flag getInstance() {
+		return Flag.instance;
+	}
 
+	private final Set<String> enabledFlags = new HashSet<>();
 	private final Map<String, String> help = new HashMap<>();
 	private final Map<String, String> idToLong = new HashMap<>();
 	private final Map<String, Integer> idToShort = new HashMap<>();
@@ -34,12 +37,15 @@ public class Flag {
 	private final Collection<String> registeredFlags = new ArrayDeque<>();
 	private final Map<Integer, String> shortToId = new HashMap<>();
 	private final Map<String, Integer> state = new HashMap<>();
+
 	private final Map<String, String> values = new HashMap<>();
+
+	private static final Flag instance = new Flag();
 
 	/**
 	 * Creates a new instance
 	 */
-	public Flag() {
+	private Flag() {
 	}
 
 	/**
@@ -134,6 +140,9 @@ public class Flag {
 		for (final String fOption : registeredFlags) {
 			final char shortF = (char) idToShort.get(fOption).intValue();
 			final String longF = idToLong.get(fOption);
+			if ((shortF == Flag.NoShortFlag) && (longF == Flag.NoLongFlag)) {
+				continue;
+			}
 			final int state_ = state.get(fOption);
 			final boolean primi = (state_ & Flag.PRIMITIVE) != 0;
 			outPart1 += " [";
@@ -155,16 +164,19 @@ public class Flag {
 		}
 
 		for (final String fOption : registeredFlags) {
+			final String longF = idToLong.get(fOption);
+			final char shortF = (char) idToShort.get(fOption).intValue();
+			if ((shortF == Flag.NoShortFlag) && (longF == Flag.NoLongFlag)) {
+				continue;
+			}
+			final String helpText = help.get(fOption);
 			outPart2 +=
 					"\n"
-							+ String.format("%s %-16s : %s", idToShort
-									.get(fOption) == Flag.NoShortFlag ? "  "
-											: "-"
-											+ (char) idToShort.get(fOption)
-											.intValue(), idToLong
-											.get(fOption) == Flag.NoLongFlag ? ""
-													: "--" + idToLong.get(fOption), help
-													.get(fOption));
+							+ String.format("%s %-16s : %s",
+									shortF == Flag.NoShortFlag ? "  "
+											: "-" + shortF,
+											longF == null ? "" : "--" + longF,
+													helpText == null ? "" : helpText);
 		}
 		return outPart1 + outPart2 + outPart3;
 	}
@@ -178,15 +190,17 @@ public class Flag {
 	 *            a description to be printed in a help message to explain this
 	 *            option
 	 * @param shortFlag
-	 *            a unique printable char to enable this option or {@link #NoShortFlag}
+	 *            a unique printable char to enable this option or
+	 *            {@link #NoShortFlag}
 	 * @param longFlag
-	 *            a unique string literal to enable this option or {@link #NoLongFlag}
+	 *            a unique string literal to enable this option or
+	 *            {@link #NoLongFlag}
 	 * @param argExpected
 	 *            <i>true</i>if this option needs a additional value
 	 */
-	public final void registerOption(final String flagId, final String tooltip,
-			char shortFlag, final String longFlag, boolean argExpected) {
-
+	public final void registerOption(final String flagId,
+			final String tooltip, char shortFlag, final String longFlag,
+			boolean argExpected) {
 		if (shortFlag != Flag.NoShortFlag) {
 			shortToId.put((int) shortFlag, flagId);
 		}

@@ -3,6 +3,7 @@ package stone.modules.songData;
 import java.util.ArrayDeque;
 
 import stone.io.IOHandler;
+import stone.util.Debug;
 import stone.util.Path;
 
 
@@ -96,6 +97,7 @@ class Crawler implements Runnable {
 			} else if (path.toFile().isFile()
 					&& path.getFileName().endsWith(".abc")) {
 				hits.incrementAndGet();
+				Debug.print("found %s\n", path);
 				synchronized (queue) {
 					queue.add(new ModEntry(path));
 					queue.notifyAll();

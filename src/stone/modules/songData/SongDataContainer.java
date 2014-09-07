@@ -15,6 +15,7 @@ import stone.io.IOHandler;
 import stone.io.InputStream;
 import stone.io.OutputStream;
 import stone.modules.Main;
+import stone.util.Debug;
 import stone.util.Path;
 import stone.util.TaskPool;
 
@@ -104,6 +105,7 @@ public class SongDataContainer implements Container {
 		if (master.isInterrupted())
 			return;
 		if (dirty) {
+			Debug.print("Searching for songs at " + tree.getRoot()  + ".");
 			final Path parent =
 					tree.getRoot().getParent().resolve("PluginData");
 			final Path zippedSongDataPath;
@@ -181,6 +183,8 @@ public class SongDataContainer implements Container {
 			// compress
 			io.compress(zippedSongDataPath.toFile(), songDataPath.toFile());
 			songDataPath.delete();
+
+			Debug.print("%4d songs found -", size());
 		}
 	}
 

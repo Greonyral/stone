@@ -3,8 +3,10 @@ package stone.modules.abcCreator;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.MouseEvent;
+
 import javax.swing.JButton;
 import javax.swing.JPanel;
+
 import stone.io.GUI;
 
 
@@ -19,13 +21,13 @@ final class GlobalParamsMouseListener extends ReleaseListener {
 	@Override
 	public final void mouseReleased(final MouseEvent e) {
 		final JPanel globalMenuPanel = new JPanel();
-		this.abcMapPlugin.panelCenter.remove(globalParamsButton);
+		abcMapPlugin.panelCenter.remove(globalParamsButton);
 		GUI.Button.OK.getButton().setVisible(false);
 		splitButton.setVisible(false);
 		GUI.Button.ABORT.getButton().setVisible(false);
 		testButton.setVisible(false);
 
-		for (final DndPluginCallerParams m : this.abcMapPlugin.caller
+		for (final DndPluginCallerParams m : abcMapPlugin.caller
 				.valuesGlobal()) {
 			if (m == null) {
 				continue;
@@ -35,15 +37,15 @@ final class GlobalParamsMouseListener extends ReleaseListener {
 			final MenuListener listener =
 					new MenuListener(GlobalParamsMouseListener.this, button) {
 
-						@Override
-						protected final void trigger() {
-							globalMenuPanel.removeAll();
-							final JPanel panel0 = new JPanel();
-							globalMenuPanel.add(panel0);
-							m.display(panel0);
-							globalMenu.revalidate();
-						}
-					};
+				@Override
+				protected final void trigger() {
+					globalMenuPanel.removeAll();
+					final JPanel panel0 = new JPanel();
+					globalMenuPanel.add(panel0);
+					m.display(panel0);
+					globalMenu.revalidate();
+				}
+			};
 			button.addChangeListener(listener);
 			button.addMouseListener(listener);
 			optionPanel.add(button);
@@ -54,11 +56,11 @@ final class GlobalParamsMouseListener extends ReleaseListener {
 		final MenuListener listener =
 				new MenuListener(GlobalParamsMouseListener.this, closeButton) {
 
-					@Override
-					protected final void trigger() {
-						exit();
-					}
-				};
+			@Override
+			protected final void trigger() {
+				exit();
+			}
+		};
 		closeButton.addMouseListener(listener);
 		closeButton.addChangeListener(listener);
 		optionPanelClose.add(closeButton);
@@ -67,7 +69,7 @@ final class GlobalParamsMouseListener extends ReleaseListener {
 		globalMenu.setLayout(new BorderLayout());
 		globalMenu.add(globalMenuPanel);
 		globalMenu.add(optionPanelClose, BorderLayout.SOUTH);
-		this.abcMapPlugin.panelCenter.add(globalMenu, BorderLayout.SOUTH);
+		abcMapPlugin.panelCenter.add(globalMenu, BorderLayout.SOUTH);
 		panel.revalidate();
 		e.consume();
 	}

@@ -2,6 +2,7 @@ package stone;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import stone.io.IOHandler;
@@ -52,7 +53,7 @@ public class StartupContainer {
 
 	private OptionContainer optionContainer;
 
-	private Flag flags;
+	Flag flags;
 
 	private Main main;
 
@@ -208,5 +209,21 @@ public class StartupContainer {
 
 	public final boolean wdIsJarArchive() {
 		return jar;
+	}
+
+	final Object flags() {
+		final Map<String, String> map = flags.getValues();
+		final String[] params = new String[map.size()];
+		final Iterator<Map.Entry<String, String>> iter = map.entrySet().iterator();
+		int i = -1;
+		while (iter.hasNext()) {
+			final Map.Entry<String, String> e = iter.next();
+			if (e.getValue() == null) {
+				params[++i] = "--" + e.getKey();
+			} else {
+				params[++i] = "--" + e.getKey() + " " + e.getValue();
+			}
+		}
+		return params;
 	}
 }

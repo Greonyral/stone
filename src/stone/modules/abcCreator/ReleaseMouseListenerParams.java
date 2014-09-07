@@ -6,20 +6,20 @@ import javax.swing.JToggleButton;
 
 public interface ReleaseMouseListenerParams {
 
-	JPanel panelCenter();
+	JPanel globalMenu();
 
 	JButton globalParamsButton();
 
-	JButton testButton();
-
-	JToggleButton splitButton();
+	JButton loadButton();
 
 	JPanel panel();
 
+	JPanel panelCenter();
+
 	AbcMapPlugin plugin();
 
-	JButton loadButton();
+	JToggleButton splitButton();
 
-	JPanel globalMenu();
+	JButton testButton();
 
 }

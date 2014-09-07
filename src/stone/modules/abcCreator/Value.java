@@ -24,15 +24,24 @@ abstract class Value<E> {
 		panel.add(label, BorderLayout.SOUTH);
 	}
 
+	public abstract void display();
+
+	public final JPanel panel() {
+		display();
+		return panel;
+	}
+
 	/**
 	 * @param object
 	 * @param target
 	 * @return the param value saved at object for given target
 	 */
 	abstract
-			<A extends Container, B extends Container, C extends Container>
-			Value<E> localInstance(DragObject<A, B, C> object,
-					DropTarget<A, B, C> target, final E value);
+	<A extends Container, B extends Container, C extends Container>
+	Value<E> localInstance(DragObject<A, B, C> object,
+			DropTarget<A, B, C> target, final E value);
+
+	abstract E parse(String string);
 
 	abstract E value();
 
@@ -44,13 +53,4 @@ abstract class Value<E> {
 	abstract void value(E s);
 
 	abstract void value(String string);
-
-	abstract E parse(String string);
-
-	public final JPanel panel() {
-		display();
-		return panel;
-	}
-
-	public abstract void display();
 }

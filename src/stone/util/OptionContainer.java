@@ -39,9 +39,11 @@ public class OptionContainer {
 	 * @param tooltip
 	 *            a description to be printed in the help message
 	 * @param shortFlag
-	 *            a unique printable char to register at flags or {@link stone.util.Flag#NoShortFlag} to enable this option
+	 *            a unique printable char to register at flags or
+	 *            {@link stone.util.Flag#NoShortFlag} to enable this option
 	 * @param longFlag
-	 *            a unique printable string to register at flags or {@link stone.util.Flag#NoLongFlag} to enable this option
+	 *            a unique printable string to register at flags or
+	 *            {@link stone.util.Flag#NoLongFlag} to enable this option
 	 * @param argExpected
 	 * @param option
 	 *            the Option to be registered
@@ -52,6 +54,11 @@ public class OptionContainer {
 			final Option option) {
 		flags.registerOption(id, tooltip, shortFlag, longFlag, argExpected);
 		options.put(id, option);
+		final String valueOfFlag = flags.getValue(id);
+		if (valueOfFlag != null) {
+			option.setByFlagValue(valueOfFlag);
+		}
+
 	}
 
 	/**
@@ -64,8 +71,8 @@ public class OptionContainer {
 	}
 
 	/**
-	 * Sets the value of registered options matching the value of
-	 * registered options
+	 * Sets the value of registered options matching the value of registered
+	 * options
 	 */
 	public final void setValuesByParsedFlags() {
 		for (final Map.Entry<String, Option> entry : options.entrySet()) {

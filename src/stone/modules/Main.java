@@ -24,7 +24,7 @@ import stone.util.TaskPool;
  */
 public class Main implements Module {
 
-	private static final int VERSION = 4;
+	private static final int VERSION = 6;
 
 	/**
 	 * The users homeDir
@@ -68,22 +68,23 @@ public class Main implements Module {
 	 */
 	public static final String NAME_KEY = "name";
 
-
 	/**
 	 * Key for indicating to run the repair routine.
 	 */
 	public static final String REPAIR = "Repair";
 
+	public final static StringOption createNameOption(
+			final OptionContainer oc) {
+		return new StringOption(oc, "Name",
+				"Should be your ingame name. Used as part of commit messages and as"
+						+ " meta-tag in created files.",
+				"Name for Commits", 'n', "name", GLOBAL_SECTION, NAME_KEY);
+	}
+
 	private static final void createIO(final StartupContainer os) {
 		final String icon;
 		icon = "Icon.png";
 		os.createFinalIO(new IOHandler(os, icon));
-	}
-
-	final static StringOption createNameOption(final OptionContainer oc) {
-		return new StringOption(oc, "Name",
-				"Should be your ingame name. Used as part of commit messages.",
-				"Name for Commits", 'n', "name", "[main]", "name");
 	}
 
 	/**
@@ -116,8 +117,8 @@ public class Main implements Module {
 	 * @return the value in the config, or defaultValue if the key in given
 	 *         section does not exist
 	 */
-	public final String getConfigValue(final String section, final String key,
-			final String defaultValue) {
+	public final String getConfigValue(final String section,
+			final String key, final String defaultValue) {
 		synchronized (configOld) {
 			synchronized (configNew) {
 				final Map<String, String> map0 = configNew.get(section);
@@ -194,7 +195,8 @@ public class Main implements Module {
 					sc.finishInit(flags); // sync barrier 1
 					@SuppressWarnings("resource")
 					final InputStream in =
-					io.openIn(homeSetting.toFile(), FileSystem.UTF8);
+							io.openIn(homeSetting.toFile(),
+									FileSystem.UTF8);
 					final StringBuilder sb = new StringBuilder();
 					String section = null;
 					try {
@@ -220,8 +222,7 @@ public class Main implements Module {
 					if (sb.length() != 0) {
 						System.out.println("error parsing config");
 						sc.getMaster().interrupt();
-					}
-					else {
+					} else {
 						sc.parseDone(); // sync barrier 2
 					}
 				} catch (final Exception e) {
@@ -241,15 +242,17 @@ public class Main implements Module {
 	 * @param key
 	 * @param value
 	 */
-	public final void setConfigValue(final String section, final String key,
-			final String value) {
+	public final void setConfigValue(final String section,
+			final String key, final String value) {
 		synchronized (configOld) {
 			synchronized (configNew) {
 				if (value == null) {
 					if (getConfigValue(section, key, null) != null) {
-						final Map<String, String> map0 = configNew.get(section);
+						final Map<String, String> map0 =
+								configNew.get(section);
 						if (map0 == null) {
-							final Map<String, String> map1 = new HashMap<>();
+							final Map<String, String> map1 =
+									new HashMap<>();
 							map1.put(key, null);
 							configNew.put(section, map1);
 						} else {
@@ -257,8 +260,10 @@ public class Main implements Module {
 						}
 					}
 				} else {
-					final Map<String, String> mapOld = configOld.get(section);
-					final Map<String, String> map0 = configNew.get(section);
+					final Map<String, String> mapOld =
+							configOld.get(section);
+					final Map<String, String> map0 =
+							configNew.get(section);
 					if (mapOld != null) {
 						final String valueOld = mapOld.get(key);
 						if ((valueOld != null) && valueOld.equals(value)) {
@@ -283,8 +288,8 @@ public class Main implements Module {
 		}
 	}
 
-	final String parseConfig(final StringBuilder line,
-			final String section) {
+	final String
+			parseConfig(final StringBuilder line, final String section) {
 		int idx = 0;
 		if (line.length() == 0)
 			return section;
