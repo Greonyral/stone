@@ -2,11 +2,6 @@ package stone.util;
 
 import java.nio.charset.Charset;
 
-import javax.swing.filechooser.FileFilter;
-
-import stone.io.GUI;
-
-
 /**
  * Class for abstraction between different FileSystems
  * 
@@ -76,64 +71,10 @@ public abstract class FileSystem {
 	private final static Path home = FileSystem.getHome();
 
 	/**
-	 * @return The path equivalent to ~ on linux, %HOME% on windows.
+	 * @return The path equivalent to ~ on linux, %UserProfile% on windows.
 	 */
 	public final static Path getBase() {
 		return FileSystem.home;
-	}
-
-	/**
-	 * Opens a dialog with the given gui of the path relative to the users home
-	 * can not be determined.
-	 * 
-	 * @param gui
-	 * @param predefinedPath
-	 * @param pathRelToDocuments
-	 * @param title
-	 * @param ff
-	 * @return the selected path
-	 * @throws InterruptedException
-	 */
-	public final static Path getBase(final GUI gui,
-			final String predefinedPath, final String pathRelToDocuments,
-			final String title, final FileFilter ff)
-					throws InterruptedException {
-		final String fullPath;
-		if (predefinedPath == null) {
-			switch (FileSystem.type) {
-				case UNIX:
-					//				case LINUX:
-					fullPath =
-					FileSystem.home + "/Documents/"
-							+ pathRelToDocuments;
-					break;
-				case WINDOWS:
-					final String version = System.getProperty("os.version");
-					final float versionNbr = Float.parseFloat(version);
-					if (versionNbr < 5.0)
-						// Windows NT
-						return FileSystem.askForBase(gui, title, ff);
-					// 6.0: Windows Vista, Server 2008
-					// 6.1: Server 2008 R2, 7
-					// 6.2: 8, Server 2012
-					// 6.3: 8.1, Server 2012 R2
-					// %userProfile% = <root>/Users/<username>
-					final String relPath =
-							"\\Documents\\" + pathRelToDocuments;
-					fullPath = FileSystem.home + relPath;
-					break;
-				default:
-					fullPath = null;
-			}
-		} else {
-			fullPath = predefinedPath;
-		}
-		final Path path = Path.getPath(fullPath);
-		if (!path.exists()) {
-			if (predefinedPath == null)
-				return FileSystem.askForBase(gui, title, ff);
-		}
-		return path;
 	}
 
 	/**
@@ -155,16 +96,6 @@ public abstract class FileSystem {
 	 */
 	public final static String getLineSeparator() {
 		return FileSystem.type.getLineSeparator();
-	}
-
-	private final static Path askForBase(final GUI gui, final String title,
-			final FileFilter ff) {
-		final Path path = gui.getPath(title, ff, null);
-		if (path == null)
-			return null;
-		if (!path.exists())
-			return null;
-		return path;
 	}
 
 	private final static FileSystem createInstance() {

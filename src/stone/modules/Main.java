@@ -73,8 +73,13 @@ public class Main implements Module {
 	 */
 	public static final String REPAIR = "Repair";
 
-	public final static StringOption createNameOption(
-			final OptionContainer oc) {
+	/**
+	 * Should be called only once. Creates an option to adjust the user's name.
+	 * 
+	 * @param oc
+	 * @return the option for the name of user.
+	 */
+	public final static StringOption createNameOption(final OptionContainer oc) {
 		return new StringOption(oc, "Name",
 				"Should be your ingame name. Used as part of commit messages and as"
 						+ " meta-tag in created files.",
@@ -138,22 +143,29 @@ public class Main implements Module {
 		}
 	}
 
+	/** Should not been called, returns always <i>null</i> without any effect. */
+	@Deprecated
 	@Override
 	public final List<Option> getOptions() {
 		return null;
 	}
 
+	/** */
 	@Override
 	public final int getVersion() {
 		return Main.VERSION;
 	}
 
-
+	/** Should not been called, returns always <i>null</i> without any effect. */
+	@Deprecated
 	@Override
 	public final Module init(final StartupContainer sc) {
 		return null;
 	}
 
+	/**
+	 * Deletes the config-file.
+	 */
 	@Override
 	public final void repair() {
 		if (homeSetting.exists()) {
@@ -165,8 +177,10 @@ public class Main implements Module {
 
 
 	/**
-	 * Not supported call {@link #run(StartupContainer, Flag)} instead
+	 * Not supported and will throw an UnsupportedOperationException. Call
+	 * {@link #run(StartupContainer, Flag)} instead.
 	 */
+	@Deprecated
 	@Override
 	public final void run() {
 		throw new UnsupportedOperationException();

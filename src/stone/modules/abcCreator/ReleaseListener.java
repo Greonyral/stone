@@ -8,6 +8,12 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 
+/**
+ * MouseListener listening for none but releasing MouseEvent.
+ * 
+ * @author Nelphindal
+ * 
+ */
 public abstract class ReleaseListener implements MouseListener {
 
 	private final ReleaseMouseListenerParams params;
@@ -34,21 +40,25 @@ public abstract class ReleaseListener implements MouseListener {
 		loadButton = params.loadButton();
 	}
 
+	/** Ignores the event */
 	@Override
 	public final void mouseClicked(final MouseEvent e) {
 		e.consume();
 	}
 
+	/** Ignores the event */
 	@Override
 	public final void mouseEntered(final MouseEvent e) {
 		e.consume();
 	}
 
+	/** Ignores the event */
 	@Override
 	public final void mouseExited(final MouseEvent e) {
 		e.consume();
 	}
 
+	/** Ignores the event */
 	@Override
 	public final void mousePressed(final MouseEvent e) {
 		e.consume();

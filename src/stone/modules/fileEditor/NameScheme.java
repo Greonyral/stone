@@ -153,6 +153,7 @@ public class NameScheme {
 		}
 	}
 
+	/** @return the title matching the name-scheme. Non existing parts will be omitted. */
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();

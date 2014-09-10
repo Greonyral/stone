@@ -8,6 +8,8 @@ import javax.swing.JPanel;
 
 /**
  * @author Nelphindal
+ * @param <E>
+ *            Type of underlying value.
  */
 public interface DndPluginCallerParams<E> {
 
@@ -17,22 +19,30 @@ public interface DndPluginCallerParams<E> {
 	E defaultValue();
 
 	/**
-	 * Called by the GUI whenever <i>this</i> shall be displayed using given panel. Accessing the global parameters.
+	 * Called by the GUI whenever <i>this</i> shall be displayed using given
+	 * panel. Accessing the global parameters.
 	 * 
 	 * @param panel
 	 */
 	void display(final JPanel panel);
 
 	/**
-	 * Called by the GUI whenever <i>this</i> shall be displayed using given panel. Accessing the local parameters.
+	 * Called by the GUI whenever <i>this</i> shall be displayed using given
+	 * panel. Accessing the local parameters.
 	 * 
+	 * @param <C>
+	 *            Container to display the DragObject
+	 * @param <D>
+	 *            Container to display the DropTarget
+	 * @param <T>
+	 *            Container to display the DropTargetContainer
 	 * @param panel
 	 * @param object
 	 * @param targets
 	 */
 	<C extends Container, D extends Container, T extends Container> void
-	display(JPanel panel, DragObject<C, D, T> object,
-			Iterator<DropTarget<C, D, T>> targets);
+			display(JPanel panel, DragObject<C, D, T> object,
+					Iterator<DropTarget<C, D, T>> targets);
 
 	/**
 	 * @return the name of <i>this</i> param, to be used in a GUI

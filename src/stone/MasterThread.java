@@ -27,12 +27,10 @@ import stone.io.OutputStream;
 import stone.modules.Main;
 import stone.modules.Module;
 import stone.util.FileSystem;
-import stone.util.Flag;
 import stone.util.Option;
 import stone.util.Path;
 import stone.util.StringOption;
 import stone.util.TaskPool;
-
 
 /**
  * @author Nelphindal
@@ -130,6 +128,14 @@ public class MasterThread extends Thread {
 		setUncaughtExceptionHandler(exceptionHandler);
 	}
 
+	/**
+	 * Checks the interrupt state of current thread. In the case the current
+	 * thread is an instance of MasterThread the interrupt-flag will be reset
+	 * else it will be untouched.
+	 * 
+	 * @return <i>True</i> if the underlying MasterThread has been interrupted
+	 *         and interrupts have not been disabled.
+	 */
 	public static boolean interrupted() {
 		final boolean interrupted = Thread.interrupted();
 		if (MasterThread.class.isInstance(Thread.currentThread())) {
@@ -139,9 +145,14 @@ public class MasterThread extends Thread {
 		}
 		return interrupted;
 	}
-
+	
+	/**
+	 * Suspends current thread for given time.
+	 * 
+	 * @param millis
+	 *            Milliseconds to suspend.
+	 */
 	public static void sleep(long millis) {
-
 		MasterThread master = null;
 		if (MasterThread.class.isInstance(Thread.currentThread())) {
 			master = MasterThread.class.cast(Thread.currentThread());
@@ -181,6 +192,7 @@ public class MasterThread extends Thread {
 	}
 
 	/**
+	 * Interrupts <i>this</i> thread and blocks to wait for all tasks in the TaskPool to finish.
 	 * @throws InterruptedException
 	 */
 	public void interruptAndWait() throws InterruptedException {
@@ -200,9 +212,12 @@ public class MasterThread extends Thread {
 		return state.isInterrupted();
 	}
 
+
 	/**
-	 * Asks the user which modules to use, launch them and destroy this
-	 * process afterwards.
+	 * - Finishes startup
+	 * - Sets the base if not happened before.
+	 * - Asks the user which modules to use, launches selected ones 
+	 * - Destroys this process
 	 */
 	@Override
 	public void run() {
@@ -223,16 +238,33 @@ public class MasterThread extends Thread {
 		}
 		io.endProgress();
 		sc.waitForInit();
-	
+
 		if (sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
 				Main.PATH_KEY, null) == null) {
+			final Path fsBase = FileSystem.getBase();
+			final Path base;
+			if (FileSystem.type == FileSystem.OSType.WINDOWS
+				// 6.0: Vista, Server 2008
+				// 6.1: Server 2008 R2, 7
+				// 6.2: 8, Server 2012
+				// 6.3: 8.1, Server 2012 R2
+				// %UserProfile% = C:\Users\<username>
+				
+				// 5.0 Windows 2000
+				// 5.1 Windows XP
+				// 5.2 Windows XP - 64 bit, Server 2003, Server 2003 R2
+				// %UserProfile% = C:\Documents and Settings\<username>
+					&& Double
+							.parseDouble(System.getProperty("os.version")) < 6)
+				base = fsBase;
+			else
+				base = fsBase.resolve("Documents");
 			sc.getMain().setConfigValue(
 					Main.GLOBAL_SECTION,
 					Main.PATH_KEY,
-					FileSystem
-							.getBase()
-							.resolve("Documents",
-									"The Lord of The Rings Online").toString());
+					base.resolve("The Lord of The Rings Online")
+							.toString());
+
 		}
 		try {
 			final StringOption NAME_OPTION = Main.createNameOption(sc.getOptionContainer());
@@ -472,7 +504,7 @@ public class MasterThread extends Thread {
 	}
 
 private final void loadModules() {
-		io.startProgress("Searching for modules", possibleModules.size());
+		io.startProgress("Searching for and loading modules", possibleModules.size());
 		for (final String module : possibleModules) {
 			if (isInterrupted()) {
 				return;

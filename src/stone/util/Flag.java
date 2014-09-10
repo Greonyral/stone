@@ -10,6 +10,7 @@ import java.util.Set;
 
 /**
  * Class to parse parameters passed to a program using the command line.
+ * Implemented as skeleton.
  * 
  * @author Nelphindal
  */
@@ -25,6 +26,9 @@ public class Flag {
 	public static final char NoShortFlag = 5;
 	private static final int PRIMITIVE = 1;
 
+	/**
+	 * @return the instance to use.
+	 */
 	public final static Flag getInstance() {
 		return Flag.instance;
 	}
@@ -175,8 +179,8 @@ public class Flag {
 							+ String.format("%s %-16s : %s",
 									shortF == Flag.NoShortFlag ? "  "
 											: "-" + shortF,
-											longF == null ? "" : "--" + longF,
-													helpText == null ? "" : helpText);
+									longF == null ? "" : "--" + longF,
+									helpText == null ? "" : helpText);
 		}
 		return outPart1 + outPart2 + outPart3;
 	}

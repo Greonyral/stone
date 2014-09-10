@@ -19,6 +19,7 @@ public final class ChangeTitleGUI extends FileEditorPlugin {
 		super(fileEditor, root);
 	}
 
+	/** */
 	@Override
 	protected final String getTitle() {
 		return "Selected songs to change titles";

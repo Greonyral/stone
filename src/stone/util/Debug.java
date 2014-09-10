@@ -3,6 +3,12 @@ package stone.util;
 import stone.Main;
 
 
+/**
+ * Contains any methods usable for debugging on stdout/stderr.
+ * 
+ * @author Nelphindal
+ * 
+ */
 public abstract class Debug {
 
 	private static final Debug instance = Flag.getInstance().isEnabled(
@@ -25,11 +31,30 @@ public abstract class Debug {
 
 	};
 
+	/**
+	 * Prints an ouput to stdout if debuging-mode has been enabled.
+	 * 
+	 * @param string
+	 *            A format string as described in Format string syntax.
+	 * @param args
+	 *            Arguments referenced by the format specifiers in the format
+	 *            string.
+	 */
 	public final static void print(final String string,
 			final Object... args) {
 		Debug.instance.printImpl(string, args);
 	}
 
+	/**
+	 * The actual implementation of {@link Debug#print(String, Object...)}
+	 * 
+	 * @param string
+	 *            A format string as described in Format string syntax.
+	 * 
+	 * @param args
+	 *            Arguments referenced by the format specifiers in the format
+	 *            string.
+	 */
 	protected abstract void printImpl(String string, Object[] args);
 
 }

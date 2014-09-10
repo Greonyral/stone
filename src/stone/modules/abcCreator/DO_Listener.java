@@ -20,15 +20,15 @@ extends DNDListener<C, D, T> {
 
 	private final DragObject<C, D, T> object;
 	private final DndPluginCaller<C, D, T> caller;
-	private final BruteParams[] params;
-	BruteParams param;
+	private final BruteParams<?>[] params;
+	BruteParams<?> param;
 
 	private JPanel panelOption;
 	private static final Font font = Font.decode("Arial bold 9");
 
 	DO_Listener(final DragObject<C, D, T> object,
 			final DragAndDropPlugin<C, D, T>.State state,
-			final BruteParams[] params, final DndPluginCaller<C, D, T> caller) {
+			final BruteParams<?>[] params, final DndPluginCaller<C, D, T> caller) {
 		super(state);
 		this.object = object;
 		this.caller = caller;
@@ -40,7 +40,7 @@ extends DNDListener<C, D, T> {
 		if (object.getTargetContainer() != state.emptyTarget.getContainer()) {
 			panelOption = new JPanel();
 			panelOption.setLayout(new GridLayout(0, 2));
-			for (final BruteParams ps : params) {
+			for (final BruteParams<?> ps : params) {
 				if (ps == null) {
 					continue;
 				}

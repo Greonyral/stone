@@ -30,12 +30,22 @@ public class StartupContainer {
 		return new StartupContainer();
 	}
 
+	/**
+	 * Asks the ModuleLoader to load given module
+	 * 
+	 * @param module
+	 * @return the Class of loaded Module or <i> null</i> if the module could
+	 *         not been found.
+	 */
 	public final static Class<Module> loadModule(final String module) {
 		try {
-			@SuppressWarnings("unchecked") final Class<Module> clazz =
-					(Class<Module>) StartupContainer.loader.loadClass("stone.modules." + module);
+			@SuppressWarnings("unchecked")
+			final Class<Module> clazz =
+					(Class<Module>) StartupContainer.loader
+							.loadClass("stone.modules." + module);
 			return clazz;
 		} catch (final ClassNotFoundException e) {
+			// Should never been thrown, but to make the compiler happy
 			e.printStackTrace();
 		}
 		return null;
@@ -73,13 +83,15 @@ public class StartupContainer {
 		boolean jar_ = false;
 		Path workingDirectory_ = null;
 		try {
-			final Class<?> loaderClass = StartupContainer.loader.getClass();
+			final Class<?> loaderClass =
+					StartupContainer.loader.getClass();
 			jar_ =
-					(boolean) loaderClass.getMethod("wdIsJarArchive").invoke(
-							StartupContainer.loader);
+					(boolean) loaderClass.getMethod("wdIsJarArchive")
+							.invoke(StartupContainer.loader);
 			workingDirectory_ =
 					Path.getPath(loaderClass.getMethod("getWorkingDir")
-							.invoke(StartupContainer.loader).toString().split("/"));
+							.invoke(StartupContainer.loader).toString()
+							.split("/"));
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
@@ -87,7 +99,10 @@ public class StartupContainer {
 		jar = jar_;
 	}
 
-	public final void createFinalIO(@SuppressWarnings("hiding") final IOHandler io) {
+	/**
+	 * @param io
+	 */
+	public final void createFinalIO(final IOHandler io) {
 		this.io = io;
 	}
 
@@ -102,20 +117,29 @@ public class StartupContainer {
 	}
 
 	/**
-	 * Calling this method will provide the parsed command line arguments to any module.
+	 * Calling this method will provide the parsed command line arguments to any
+	 * module.
 	 * 
 	 * @param flags
 	 */
-	public final void finishInit(@SuppressWarnings("hiding") final Flag flags) {
+	public final void finishInit(final Flag flags) {
 		this.flags = flags;
 	}
 
+	/**
+	 * 
+	 * @param s
+	 *            idenifier of desired Container. It has to be the class-name.
+	 * @return a Container or <i>null</i> if the Container failed to load.
+	 */
 	public final Container getContainer(final String s) {
 		final Container container = containerMap.get(s);
 		if (container == null) {
 			try {
-				@SuppressWarnings("unchecked") final Class<Container> containerClass =
-						(Class<Container>) StartupContainer.loader.loadClass(s);
+				@SuppressWarnings("unchecked")
+				final Class<Container> containerClass =
+						(Class<Container>) StartupContainer.loader
+								.loadClass(s);
 				Container containerNew;
 				containerNew =
 						(Container) containerClass.getMethod("create",
@@ -124,8 +148,8 @@ public class StartupContainer {
 				return containerNew;
 			} catch (final InvocationTargetException e) {
 				e.getCause().printStackTrace();
-			} catch (final IllegalAccessException | IllegalArgumentException
-					| NoSuchMethodException
+			} catch (final IllegalAccessException
+					| IllegalArgumentException | NoSuchMethodException
 					| SecurityException | ClassNotFoundException e) {
 				e.printStackTrace();
 				return null;
@@ -173,10 +197,18 @@ public class StartupContainer {
 		return taskPool;
 	}
 
+	/**
+	 * @return the directory or jar-archive from which the tool has been loaded
+	 *         from.
+	 */
 	public final Path getWorkingDir() {
 		return workingDirectory;
 	}
 
+	/**
+	 * Called to signal the MasterThread that it can continue from
+	 * {@link #waitForInit()}.
+	 */
 	public final synchronized void parseDone() {
 		--wait;
 		notifyAll();
@@ -191,10 +223,17 @@ public class StartupContainer {
 		this.main = main;
 	}
 
+	/**
+	 * @param master
+	 */
 	public final void setMaster(final MasterThread master) {
 		this.master = master;
 	}
 
+	/**
+	 * Synchronizes the startup. Pauses the MasterThread to wait for the working
+	 * threads to parse the config-file.
+	 */
 	public final synchronized void waitForInit() {
 		if (--wait <= 0)
 			return;
@@ -207,6 +246,11 @@ public class StartupContainer {
 		}
 	}
 
+	/**
+	 * Checks if the workingDirectory is a jar-archive.
+	 * 
+	 * @return <i>True</i> if the tool has been loaded from a jar-archive.
+	 */
 	public final boolean wdIsJarArchive() {
 		return jar;
 	}
@@ -214,7 +258,8 @@ public class StartupContainer {
 	final Object flags() {
 		final Map<String, String> map = flags.getValues();
 		final String[] params = new String[map.size()];
-		final Iterator<Map.Entry<String, String>> iter = map.entrySet().iterator();
+		final Iterator<Map.Entry<String, String>> iter =
+				map.entrySet().iterator();
 		int i = -1;
 		while (iter.hasNext()) {
 			final Map.Entry<String, String> e = iter.next();

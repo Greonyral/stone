@@ -557,6 +557,7 @@ DropTargetContainer<JPanel, JPanel, JPanel> {
 						return t;
 					}
 
+					/** */
 					@Override
 					public void delete(final DropTarget<JPanel, JPanel, JPanel> target) {
 						parts.remove(target);

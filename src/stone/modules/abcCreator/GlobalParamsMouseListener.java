@@ -27,7 +27,7 @@ final class GlobalParamsMouseListener extends ReleaseListener {
 		GUI.Button.ABORT.getButton().setVisible(false);
 		testButton.setVisible(false);
 
-		for (final DndPluginCallerParams m : abcMapPlugin.caller
+		for (final DndPluginCallerParams<?> m : abcMapPlugin.caller
 				.valuesGlobal()) {
 			if (m == null) {
 				continue;

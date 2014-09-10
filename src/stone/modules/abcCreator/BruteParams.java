@@ -19,6 +19,7 @@ import stone.io.IOHandler;
 
 /**
  * @author Nelphindal
+ * @param <E> Type of underlying value. May be Integer or Double.
  */
 public class BruteParams<E> implements DndPluginCallerParams<E> {
 	/** Pitch with floating limits */
@@ -40,13 +41,17 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	// TODO support for fadeout in future releases
 	// FADEOUT("Fadeout", );
 
+	/** Duration with bounded values between 0 and 5 */
 	public static final BruteParams<Integer> DURATION = new BruteParams<>(
 			"Duration", 2, 0, 5, 1, false, true);
 
 	private final static BruteParams<?>[] values = buildValues();
 
+	/**
+	 * Deletes any stored local and global values.
+	 */
 	public final static void clear() {
-		for (final BruteParams<?> b: BruteParams.values) {
+		for (final BruteParams<?> b : BruteParams.values) {
 			b.globalValue.value(b.defaultValue.toString());
 			b.localValueMap.clear();
 		}
@@ -131,178 +136,246 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	private final DoubleMap<DragObject<?, ?, ?>, DropTarget<?, ?, ?>, Value<E>> localValueMap =
 			new DoubleMap<>();
 
-			@SuppressWarnings("unchecked")
-			private BruteParams(final String s, double initValue, double step,
-					double ticks, boolean global, boolean local) {
-				this.s = s;
-				globalValue =
-						(Value<E>) new ValueFloat((BruteParams<Double>) this,
-								initValue, step, ticks);
-				this.local = local;
-				this.global = global;
-				defaultValue = (E) Double.valueOf(initValue);
-			}
+	@SuppressWarnings("unchecked")
+	private BruteParams(final String s, double initValue, double step,
+			double ticks, boolean global, boolean local) {
+		this.s = s;
+		globalValue =
+				(Value<E>) new ValueFloat((BruteParams<Double>) this,
+						initValue, step, ticks);
+		this.local = local;
+		this.global = global;
+		defaultValue = (E) Double.valueOf(initValue);
+	}
 
-			/**
-			 * Creates a new integer param with unbounded value
-			 * 
-			 * @param s
-			 * @param initValue
-			 * @param interval
-			 * @param ticks
-			 * @param global
-			 * @param local
-			 */
-			@SuppressWarnings("unchecked")
-			private BruteParams(final String s, int initValue, int interval,
-					int ticks, boolean global, boolean local) {
-				this.s = s;
-				globalValue =
-						(Value<E>) new ValueInt((BruteParams<Integer>) this,
-								initValue, interval, ticks);
-				this.local = local;
-				this.global = global;
-				defaultValue = (E) Integer.valueOf(initValue);
-			}
+	/**
+	 * Creates a new integer param with unbounded value
+	 * 
+	 * @param s
+	 * @param initValue
+	 * @param interval
+	 * @param ticks
+	 * @param global
+	 * @param local
+	 */
+	@SuppressWarnings("unchecked")
+	private BruteParams(final String s, int initValue, int interval,
+			int ticks, boolean global, boolean local) {
+		this.s = s;
+		globalValue =
+				(Value<E>) new ValueInt((BruteParams<Integer>) this,
+						initValue, interval, ticks);
+		this.local = local;
+		this.global = global;
+		defaultValue = (E) Integer.valueOf(initValue);
+	}
 
-			/**
-			 * Creates an new integer param with bounded value
-			 * 
-			 * @param s
-			 * @param initValue
-			 * @param min
-			 * @param max
-			 * @param ticks
-			 * @param global
-			 * @param local
-			 */
-			@SuppressWarnings("unchecked")
-			private BruteParams(final String s, int initValue, int min, int max,
-					int ticks, boolean global, boolean local) {
-				this.s = s;
-				globalValue =
-						(Value<E>) new ValueInt((BruteParams<Integer>) this,
-								initValue, min, max, ticks);
-				this.local = local;
-				defaultValue = (E) Integer.valueOf(initValue);
-				this.global = global;
-			}
+	/**
+	 * Creates an new integer param with bounded value
+	 * 
+	 * @param s
+	 * @param initValue
+	 * @param min
+	 * @param max
+	 * @param ticks
+	 * @param global
+	 * @param local
+	 */
+	@SuppressWarnings("unchecked")
+	private BruteParams(final String s, int initValue, int min, int max,
+			int ticks, boolean global, boolean local) {
+		this.s = s;
+		globalValue =
+				(Value<E>) new ValueInt((BruteParams<Integer>) this,
+						initValue, min, max, ticks);
+		this.local = local;
+		defaultValue = (E) Integer.valueOf(initValue);
+		this.global = global;
+	}
 
-			@Override
-			public final E defaultValue() {
-				return defaultValue;
-			}
+	/**
+	 * @return The value to use if no value has been set.
+	 */
+	@Override
+	public final E defaultValue() {
+		return defaultValue;
+	}
 
-			@Override
-			public final void display(final JPanel panel) {
-				final JSlider slider = new JSlider();
-				final JLabel label = new JLabel();
-				panel.setLayout(new BorderLayout());
-				panel.add(new JLabel(s), BorderLayout.NORTH);
-				panel.add(slider);
-				panel.add(label, BorderLayout.SOUTH);
-				globalValue.display();
-			}
+	/**
+	 * Displays <i>this</i> param using the given panel.
+	 * 
+	 * @param panel
+	 */
+	@Override
+	public final void display(final JPanel panel) {
+		final JSlider slider = new JSlider();
+		final JLabel label = new JLabel();
+		panel.setLayout(new BorderLayout());
+		panel.add(new JLabel(s), BorderLayout.NORTH);
+		panel.add(slider);
+		panel.add(label, BorderLayout.SOUTH);
+		globalValue.display();
+	}
 
-			@Override
-			public final
+	/**
+	 * 
+	 * @param <C>
+	 *            Container to display the DragObject
+	 * @param <D>
+	 *            Container to display the DropTarget
+	 * @param <T>
+	 *            Container to display the DropTargetContainer
+	 */
+	@Override
+	public final
 			<C extends Container, D extends Container, T extends Container>
 			void display(final JPanel panel,
 					final DragObject<C, D, T> object,
 					final Iterator<DropTarget<C, D, T>> targets) {
-				panel.setLayout(new GridLayout(0, 1));
-				final Map<Integer, JPanel> mapPanel = new HashMap<>();
-				final Map<Integer, DropTarget<?, ?, ?>> mapTarget =
-						new HashMap<>();
-						for (int i = 0, id = 1; targets.hasNext(); i = id++) {
-							final DropTarget<C, D, T> target = targets.next();
-							final Value<E> value = getLocalValue0(object, target);
-							final JPanel panelIdx = value.panel();
-							panel.add(panelIdx);
-							mapPanel.put(i + 1, panelIdx);
-							mapTarget.put(i + 1, target);
-						}
-						for (final Entry<Integer, JPanel> e : mapPanel.entrySet()) {
-							e.getValue().add(
-									new JLabel(s + "   "
-											+ mapTarget.get(e.getKey()).getName() + " "
-											+ e.getKey() + "/" + mapTarget.size()),
-											BorderLayout.NORTH);
-						}
-			}
+		panel.setLayout(new GridLayout(0, 1));
+		final Map<Integer, JPanel> mapPanel = new HashMap<>();
+		final Map<Integer, DropTarget<?, ?, ?>> mapTarget =
+				new HashMap<>();
+		for (int i = 0, id = 1; targets.hasNext(); i = id++) {
+			final DropTarget<C, D, T> target = targets.next();
+			final Value<E> value = getLocalValue0(object, target);
+			final JPanel panelIdx = value.panel();
+			panel.add(panelIdx);
+			mapPanel.put(i + 1, panelIdx);
+			mapTarget.put(i + 1, target);
+		}
+		for (final Entry<Integer, JPanel> e : mapPanel.entrySet()) {
+			e.getValue().add(
+					new JLabel(s + "   "
+							+ mapTarget.get(e.getKey()).getName() + " "
+							+ e.getKey() + "/" + mapTarget.size()),
+					BorderLayout.NORTH);
+		}
+	}
 
-			public final
+	/**
+	 * 
+	 /**
+	 * 
+	 * @param <C>
+	 *            Container to display the DragObject
+	 * @param <D>
+	 *            Container to display the DropTarget
+	 * @param <T>
+	 *            Container to display the DropTargetContainer
+	 * @param midiTrack
+	 * @param abcTrack
+	 * @return The value set for given midiTrack and abcTrack.
+	 */
+	public final
 			<C extends Container, D extends Container, T extends Container>
 			E getLocalValue(final DragObject<C, D, T> midiTrack,
 					final DropTarget<C, D, T> abcTrack) {
-				final Value<E> localValue = getLocalValue0(midiTrack, abcTrack);
-				return localValue.value();
-			}
+		final Value<E> localValue = getLocalValue0(midiTrack, abcTrack);
+		return localValue.value();
+	}
 
-			public final void setGlobalValue(E value) {
-				globalValue.value(value);
-			}
+	/**
+	 * 
+	 * @param value
+	 */
+	public final void setGlobalValue(final E value) {
+		globalValue.value(value);
+	}
 
-			public final
+	/**
+	 * 
+	 * @param <C>
+	 *            Container to display the DragObject
+	 * @param <D>
+	 *            Container to display the DropTarget
+	 * @param <T>
+	 *            Container to display the DropTargetContainer
+	 * @param object
+	 * @param target
+	 * @param value
+	 */
+	public final
 			<C extends Container, D extends Container, T extends Container>
 			void setLocalValue(final DragObject<C, D, T> object,
 					final DropTarget<C, D, T> target, final E value) {
-				getLocalValue0(object, target).value(value);
-			}
+		getLocalValue0(object, target).value(value);
+	}
 
-			public final
+	/**
+	 * @param <C>
+	 *            Container to display the DragObject
+	 * @param <D>
+	 *            Container to display the DropTarget
+	 * @param <T>
+	 *            Container to display the DropTargetContainer
+	 * @param object
+	 * @param target
+	 * @param string
+	 */
+	public final
 			<C extends Container, D extends Container, T extends Container>
 			void setLocalValue(final DragObject<C, D, T> object,
 					final DropTarget<C, D, T> target, final String string) {
-				setLocalValue(object, target, globalValue.parse(string));
-			}
+		setLocalValue(object, target, globalValue.parse(string));
+	}
 
-			@Override
-			public final String toString() {
-				return s;
-			}
+	/** @return the key of <i>this</i> BruteParam */
+	@Override
+	public final String toString() {
+		return s;
+	}
 
-			@Override
-			public final E value() {
-				return globalValue.value();
-			}
+	/**
+	 * @return The global value.
+	 */
+	@Override
+	public final E value() {
+		return globalValue.value();
+	}
 
-			public final void value(final String value, final IOHandler io) {
-				if (!global) {
-					io.handleException(ExceptionHandle.TERMINATE,
-							new IllegalAccessException());
-					return;
-				}
-				final int space = value.indexOf(' ');
-				final int comment = value.indexOf('%');
-				try {
-					if ((space >= 0) && (comment < 0)) {
-						this.globalValue.value(value.substring(0, space));
-					} else if ((comment >= 0) && (space < 0)) {
-						this.globalValue.value(value.substring(0, comment));
-					} else if ((comment >= 0) && (space >= 0)) {
-						this.globalValue.value(value.substring(0, Math.min(
-								comment, space)));
-					} else {
-						this.globalValue.value(value);
-					}
-				} catch (final Exception e) {
-					io.handleException(ExceptionHandle.CONTINUE, e);
-				}
+	/**
+	 * Loads a previously stored value.
+	 * 
+	 * @param value
+	 * @param io
+	 */
+	public final void value(final String value, final IOHandler io) {
+		if (!global) {
+			io.handleException(ExceptionHandle.TERMINATE,
+					new IllegalAccessException());
+			return;
+		}
+		final int space = value.indexOf(' ');
+		final int comment = value.indexOf('%');
+		try {
+			if ((space >= 0) && (comment < 0)) {
+				this.globalValue.value(value.substring(0, space));
+			} else if ((comment >= 0) && (space < 0)) {
+				this.globalValue.value(value.substring(0, comment));
+			} else if ((comment >= 0) && (space >= 0)) {
+				this.globalValue.value(value.substring(0, Math.min(
+						comment, space)));
+			} else {
+				this.globalValue.value(value);
 			}
+		} catch (final Exception e) {
+			io.handleException(ExceptionHandle.CONTINUE, e);
+		}
+	}
 
-			private final
+	private final
 			<C extends Container, D extends Container, T extends Container>
 			Value<E> getLocalValue0(final DragObject<C, D, T> object,
 					final DropTarget<C, D, T> target) {
-				final Value<E> localValue = localValueMap.get(object, target);
-				if (localValue == null) {
-					final Value<E> localValueNew =
-							globalValue.localInstance(object, target, globalValue
-									.value());
-					localValueMap.put(object, target, localValueNew);
-					return localValueNew;
-				}
-				return localValue;
-			}
+		final Value<E> localValue = localValueMap.get(object, target);
+		if (localValue == null) {
+			final Value<E> localValueNew =
+					globalValue.localInstance(object, target, globalValue
+							.value());
+			localValueMap.put(object, target, localValueNew);
+			return localValueNew;
+		}
+		return localValue;
+	}
 }

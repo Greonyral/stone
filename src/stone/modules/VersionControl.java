@@ -411,6 +411,9 @@ public final class VersionControl implements Module {
 		return new VersionControl(this);
 	}
 
+	/**
+	/* Deletes any meta-data created by this tool-box.
+	 */
 	@Override
 	public final void repair() {
 		final String baseValue =

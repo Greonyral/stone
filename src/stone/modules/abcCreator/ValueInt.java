@@ -115,7 +115,6 @@ class ValueInt extends Value<Integer> {
 		slider.addChangeListener(new SliderListener());
 	}
 
-	@SuppressWarnings("hiding")
 	@Override
 	public <A extends Container, B extends Container, C extends Container>
 	Value<Integer> localInstance(DragObject<A, B, C> object,

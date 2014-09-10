@@ -50,6 +50,7 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 		return selection;
 	}
 
+	/** */
 	@Override
 	protected final boolean display(final JPanel panel) {
 		final JPanel panelSelection = new JPanel();
@@ -72,6 +73,7 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 		return false;
 	}
 
+	/** */
 	@Override
 	protected void repack() {
 		super.repack();

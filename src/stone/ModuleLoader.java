@@ -56,7 +56,6 @@ public class ModuleLoader extends ClassLoader {
 			jar = false;
 			workingDirectory = null;
 		}
-		@SuppressWarnings("hiding")
 		final String[] cp =
 		System.getProperty("java.class.path").split(
 				FileSystem.type == FileSystem.OSType.WINDOWS ? ";"
@@ -76,6 +75,7 @@ public class ModuleLoader extends ClassLoader {
 		}
 	}
 
+	/** */
 	@Override
 	public final URL getResource(final String s) {
 		URL url;
@@ -99,6 +99,7 @@ public class ModuleLoader extends ClassLoader {
 		return workingDirectory;
 	}
 
+	/** */
 	@Override
 	public final Class<?> loadClass(final String name)
 			throws ClassNotFoundException {
@@ -120,6 +121,7 @@ public class ModuleLoader extends ClassLoader {
 		return jar;
 	}
 
+	/** */
 	@SuppressWarnings("resource")
 	@Override
 	protected Class<?> findClass(final String name) {

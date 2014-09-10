@@ -268,7 +268,7 @@ public class InputStream extends java.io.InputStream {
 	 * 
 	 * @param io
 	 */
-	public final void registerProgressMonitor(@SuppressWarnings("hiding") final IOHandler io) {
+	public final void registerProgressMonitor(final IOHandler io) {
 		this.io = io;
 		io.startProgress("Reading file", (int) file.length());
 	}

@@ -95,6 +95,6 @@ public interface DndPluginCaller<C extends Container, D extends Container, T ext
 	/**
 	 * @return an array of all global DndPluginCallerParams
 	 */
-	DndPluginCallerParams[] valuesGlobal();
+	DndPluginCallerParams<?>[] valuesGlobal();
 
 }

@@ -193,7 +193,7 @@ final class MidiParserImpl extends MidiParser {
 
 	@SuppressWarnings("resource")
 	@Override
-	protected final void prepareMidi(@SuppressWarnings("hiding") final Path midi) throws Exception {
+	protected final void prepareMidi(final Path midi) throws Exception {
 		final InputStream in = io.openIn(midi.toFile());
 		try {
 			in.read(midiHeaderBufferBytes);

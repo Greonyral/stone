@@ -69,7 +69,7 @@ class Variable extends NameSchemeElement {
 		sb.append(value);
 	}
 
-	final void value(@SuppressWarnings("hiding") final String value) {
+	final void value(final String value) {
 		this.value = value;
 	}
 }

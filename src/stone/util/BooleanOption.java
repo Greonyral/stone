@@ -117,7 +117,7 @@ public final class BooleanOption extends Option {
 
 	/** */
 	@Override
-	public final void value(@SuppressWarnings("hiding") final String value) {
+	public final void value(final String value) {
 		if (key == null) {
 			this.value = value;
 		} else {

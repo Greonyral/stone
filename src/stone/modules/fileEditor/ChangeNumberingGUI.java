@@ -20,6 +20,7 @@ public final class ChangeNumberingGUI extends FileEditorPlugin {
 	}
 
 
+	/** */
 	@Override
 	protected final String getTitle() {
 		return "Selected songs to change numbering";

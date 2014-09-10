@@ -40,6 +40,7 @@ final class TestButtonMouseListener extends ReleaseListener {
 					if (!success) {
 						TestButtonMouseListener.this.abcMapPlugin.state.label.setText("Creating abc failed");
 					} else {
+						assert result != null;
 						TestButtonMouseListener.this.abcMapPlugin.state.label
 						.setText("The abc is up-to-date - "
 								+ result.toString()

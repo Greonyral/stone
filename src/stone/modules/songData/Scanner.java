@@ -12,6 +12,7 @@ import stone.io.ExceptionHandle;
 import stone.io.IOHandler;
 import stone.io.InputStream;
 import stone.io.OutputStream;
+import stone.util.Debug;
 import stone.util.FileSystem;
 import stone.util.Path;
 
@@ -36,10 +37,11 @@ public final class Scanner implements Runnable {
 				result.append("\\\"");
 				pos = i + 1;
 			} else if (((c >= ' ') && (c <= ']' /*
-			 * including uppercased chars and
-			 * digits
-			 */))
-			 || ((c >= 'a') && (c <= 'z')) || ((c > (char) 127) && (c < (char) 256))) {
+												 * including uppercased chars
+												 * and digits
+												 */))
+					|| ((c >= 'a') && (c <= 'z'))
+					|| ((c > (char) 127) && (c < (char) 256))) {
 				continue;
 			} else {
 				result.append(desc.substring(pos, i));
@@ -108,7 +110,9 @@ public final class Scanner implements Runnable {
 				}
 			} else {
 				final ByteBuffer bytes;
-				bytes = SongDataDeserializer_3.serialize(data, tree.getRoot());
+				bytes =
+						SongDataDeserializer_3.serialize(data, tree
+								.getRoot());
 				synchronized (this) {
 					io.write(out, bytes.array(), 0, bytes.position());
 				}
@@ -129,7 +133,8 @@ public final class Scanner implements Runnable {
 
 			final Map<String, String> voices = new HashMap<>();
 			final InputStream songContent =
-					io.openIn(songFile.toFile(), FileSystem.DEFAULT_CHARSET);
+					io.openIn(songFile.toFile(),
+							FileSystem.DEFAULT_CHARSET);
 
 			try {
 				// you can expect T: after X: line, if enforcing abc-syntax
@@ -148,15 +153,18 @@ public final class Scanner implements Runnable {
 					if (line.startsWith("X:")) {
 						final int lineNumberOfX = lineNumber;
 						final String voiceId =
-								line.substring(line.indexOf(":") + 1).trim();
+								line.substring(line.indexOf(":") + 1)
+										.trim();
 						try {
 							line = songContent.readLine();
 							++lineNumber;
 						} catch (final IOException e) {
-							io.handleException(ExceptionHandle.TERMINATE, e);
+							io.handleException(ExceptionHandle.TERMINATE,
+									e);
 						}
 						if ((line == null) || !line.startsWith("T:")) {
-							new MissingTLineInAbc(song.getKey(), lineNumber);
+							Debug.print("%s\n", new MissingTLineInAbc(song
+									.getKey(), lineNumber));
 							error = true;
 							if (line == null) {
 								break;
@@ -164,32 +172,36 @@ public final class Scanner implements Runnable {
 						}
 						final StringBuilder desc = new StringBuilder();
 						do {
-							desc.append(line.substring(line.indexOf(":") + 1)
-									.trim());
+							desc.append(line.substring(
+									line.indexOf(":") + 1).trim());
 							try {
 								line = songContent.readLine();
 								++lineNumber;
 							} catch (final IOException e) {
-								io.handleException(ExceptionHandle.TERMINATE, e);
+								io.handleException(
+										ExceptionHandle.TERMINATE, e);
 							}
 							if (line == null) {
 								break;
 							}
 							if (line.startsWith("T:")) {
 								desc.append(" ");
-								new MultipleTLinesInAbc(lineNumber,
-										song.getKey());
+								Debug.print("%s\n",
+										new MultipleTLinesInAbc(
+												lineNumber, song.getKey()));
 							} else {
 								break;
 							}
 						} while (true);
 						if (desc.length() >= 65) {
-							new LongTitleInAbc(song.getKey(), lineNumberOfX);
+							Debug.print("%s\n", new LongTitleInAbc(song
+									.getKey(), lineNumberOfX));
 						}
 						voices.put(voiceId, Scanner.clean(desc.toString()));
 						continue;
 					} else if (line.startsWith("T:")) {
-						new NoXLineInAbc(song.getKey(), lineNumber);
+						Debug.print("%s\n", new NoXLineInAbc(
+								song.getKey(), lineNumber));
 						error = true;
 					}
 					try {

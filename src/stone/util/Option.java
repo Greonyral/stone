@@ -103,7 +103,7 @@ public abstract class Option {
 	 * @param defaultValue
 	 *            the default value for
 	 *            {@link stone.modules.Main#getConfigValue(String, String, String)}
-	 *            * @see util.OptionContainer#addOption(String, String, char,
+	 *            * @see stone.util.OptionContainer#addOption(String, String, char,
 	 *            String, boolean, Option)
 	 */
 	protected Option(final OptionContainer optionContainer, final String name,

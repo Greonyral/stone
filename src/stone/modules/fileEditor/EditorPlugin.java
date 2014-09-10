@@ -37,6 +37,7 @@ public final class EditorPlugin extends GUIPlugin {
 		return content.getText();
 	}
 
+	/** */
 	@Override
 	protected final boolean display(final JPanel panel) {
 		final JPanel panelButton = new JPanel();
@@ -48,7 +49,8 @@ public final class EditorPlugin extends GUIPlugin {
 		panel.add(scroll);
 		panel.add(panelButton, BorderLayout.SOUTH);
 
-		panelButton.add(GUIInterface.Button.OK.getButton(), BorderLayout.EAST);
+		panelButton.add(GUIInterface.Button.OK.getButton(),
+				BorderLayout.EAST);
 		panelButton.add(GUIInterface.Button.ABORT.getButton(),
 				BorderLayout.WEST);
 		return false;

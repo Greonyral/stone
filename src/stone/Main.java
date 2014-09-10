@@ -9,8 +9,17 @@ import java.lang.reflect.Method;
  */
 public class Main {
 
+	/**
+	 * help
+	 */
 	public static final String HELP_ID = "help";
+	/**
+	 * reset
+	 */
 	public static final String REPAIR_ID = "reset";
+	/**
+	 * debug
+	 */
 	public static final String DEBUG_ID = "debug";
 
 	/**
