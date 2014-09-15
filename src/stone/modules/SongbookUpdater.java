@@ -14,9 +14,9 @@ import stone.io.InputStream;
 import stone.io.OutputStream;
 import stone.modules.songData.SongDataContainer;
 import stone.util.Debug;
+import stone.util.FileSystem;
 import stone.util.Option;
 import stone.util.Path;
-
 
 /**
  * Class allowing to update the data needed for the Songbook-plugin
@@ -25,7 +25,8 @@ import stone.util.Path;
  */
 public final class SongbookUpdater implements Module {
 
-	private final static int VERSION = 2;
+	private final static int VERSION = 3;
+	private final static String USER = "UserPreferences.ini";
 
 	private final IOHandler io;
 	private final SongDataContainer container;
@@ -61,11 +62,6 @@ public final class SongbookUpdater implements Module {
 		master = null;
 		pluginDataPath = null;
 		songbookPlugindataPath = null;
-		synchronized (sc) {
-			while (sc.getOptionContainer() == null) {
-				sc.wait();
-			}
-		}
 		main = sc.getMain();
 		container = null;
 	}
@@ -76,22 +72,17 @@ public final class SongbookUpdater implements Module {
 	 * @param sc
 	 * @param old
 	 */
-	private SongbookUpdater(final StartupContainer sc,
-			final SongbookUpdater old) {
+	private SongbookUpdater(final StartupContainer sc, final SongbookUpdater old) {
 		io = sc.getIO();
 		main = old.main;
-		final String home =
-				sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
-						Main.PATH_KEY, null);
+		final String home = sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
+				Main.PATH_KEY, null);
 		final Path basePath = Path.getPath(home.split("/"));
 		pluginDataPath = basePath.resolve("PluginData");
-		songbookPlugindataPath =
-				pluginDataPath.resolve("SongbookUpdateData");
+		songbookPlugindataPath = pluginDataPath.resolve("SongbookUpdateData");
 		master = sc.getMaster();
-		container =
-				(SongDataContainer) sc
-				.getContainer(SongDataContainer.class
-						.getCanonicalName());
+		container = (SongDataContainer) sc.getContainer(SongDataContainer.class
+				.getCanonicalName());
 	}
 
 	/** */
@@ -114,21 +105,18 @@ public final class SongbookUpdater implements Module {
 
 	@Override
 	public final void repair() {
-		final String home =
-				main.getConfigValue(Main.GLOBAL_SECTION, Main.PATH_KEY,
-						null);
+		final String home = main.getConfigValue(Main.GLOBAL_SECTION,
+				Main.PATH_KEY, null);
 		if (home == null) {
 			System.out
-			.printf("Unable to determine home - SongbookUpdateData could not been deleted");
+					.printf("Unable to determine home - SongbookUpdateData could not been deleted");
 			return;
 		}
 		final Path basePath = Path.getPath(home.split("/"));
-		final Path updateDataPath =
-				basePath.resolve("PluginData").resolve(
-						"SongbookUpdateData");
-		final Path updateDataPathZip =
-				basePath.resolve("PluginData").resolve(
-						"SongbookUpdateData.zip");
+		final Path updateDataPath = basePath.resolve("PluginData").resolve(
+				"SongbookUpdateData");
+		final Path updateDataPathZip = basePath.resolve("PluginData").resolve(
+				"SongbookUpdateData.zip");
 		if (updateDataPath.exists()) {
 			final boolean success = updateDataPath.delete();
 			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
@@ -136,10 +124,8 @@ public final class SongbookUpdater implements Module {
 		}
 		if (updateDataPathZip.exists()) {
 			final boolean success = updateDataPathZip.delete();
-			System.out
-			.printf("Delet%s %s%s\n", success ? "ed" : "ing",
-					updateDataPathZip.toString(), success ? ""
-							: " failed");
+			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
+					updateDataPathZip.toString(), success ? "" : " failed");
 		}
 	}
 
@@ -154,7 +140,6 @@ public final class SongbookUpdater implements Module {
 		updateSongbookData();
 	}
 
-
 	/*
 	 * creates the file needed for Songbook-plugin
 	 */
@@ -163,16 +148,24 @@ public final class SongbookUpdater implements Module {
 
 		if (!pluginDataPath.exists()) {
 			if (!pluginDataPath.toFile().mkdir()) {
-				io.printMessage(
-						null,
+				io.printMessage(null,
 						"Missing PluginData directory could not be created",
 						true);
 			}
 			return;
 		}
-		final File userIni =
-				pluginDataPath.getParent().resolve("UserPreferences.ini")
-				.toFile();
+		final File userIni = pluginDataPath.getParent().resolve(USER).toFile();
+		if (!userIni.exists()) {
+			io.printMessage(
+					"UserPreferences.ini not found",
+					"\""
+							+ SongDataContainer.formatMaxLength(pluginDataPath.getParent(), USER)
+							+ "\"\n"
+							+ "not found. Check if the path is correct or start LoTRO and login to create it.\n"
+							+ "The tool is using the file to get your account names.\n"
+							+ "\nScan aborted.", true);
+			return;
+		}
 		@SuppressWarnings("resource")
 		final InputStream in = io.openIn(userIni);
 		if (userIni.length() != 0) {
@@ -220,9 +213,9 @@ public final class SongbookUpdater implements Module {
 		while (profilesIter.hasNext()) {
 			final String profile = profilesIter.next();
 			io.setProgressTitle("Writing Songbook.plugindata " + profile);
-			final File target =
-					pluginDataPath.resolve(profile).resolve("AllServers")
-					.resolve("SongbookData.plugindata").toFile();
+			final File target = pluginDataPath.resolve(profile)
+					.resolve("AllServers").resolve("SongbookData.plugindata")
+					.toFile();
 			if (!target.exists()) {
 				try {
 					target.getParentFile().mkdirs();

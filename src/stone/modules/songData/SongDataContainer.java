@@ -16,9 +16,9 @@ import stone.io.InputStream;
 import stone.io.OutputStream;
 import stone.modules.Main;
 import stone.util.Debug;
+import stone.util.FileSystem;
 import stone.util.Path;
 import stone.util.TaskPool;
-
 
 /**
  * Central class for holding all data related to the songs
@@ -44,6 +44,8 @@ public class SongDataContainer implements Container {
 		}
 	}
 
+	private final static int MAX_LENGTH_INFO = 80;
+
 	private final DirTree tree;
 
 	private final Set<Path> songsFound = new HashSet<>();
@@ -66,18 +68,17 @@ public class SongDataContainer implements Container {
 		io = sc.getIO();
 		taskPool = sc.getTaskPool();
 		master = sc.getMaster();
-		final String home =
-				sc.getMain().getConfigValue(Main.GLOBAL_SECTION, Main.PATH_KEY,
-						null);
+		final String home = sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
+				Main.PATH_KEY, null);
 		assert home != null;
 		final Path basePath = Path.getPath(home.split("/")).resolve("Music");
 		if (!basePath.exists()) {
 			if (!basePath.getParent().exists() || !basePath.toFile().mkdir()) {
 				io.printError(
-						"The default path or the path defined in\nthe config-file does not exist:\n"
-								+ basePath
-								+ "\n Please look into the manual for more information.",
-								false);
+						"The default path or the path defined in\nthe config-file does not exist:\n\""
+								+ formatMaxLength(basePath, null)
+								+ "\"\n Please look into the manual for more information.",
+						false);
 			}
 		}
 		tree = new DirTree(basePath);
@@ -105,9 +106,9 @@ public class SongDataContainer implements Container {
 		if (master.isInterrupted())
 			return;
 		if (dirty) {
-			Debug.print("Searching for songs at " + tree.getRoot()  + ".");
-			final Path parent =
-					tree.getRoot().getParent().resolve("PluginData");
+			Debug.print("Searching for songs at " + tree.getRoot() + ".");
+			final Path parent = tree.getRoot().getParent()
+					.resolve("PluginData");
 			final Path zippedSongDataPath;
 			final Path songDataPath;
 			final Path songDataUpdatePath;
@@ -132,12 +133,10 @@ public class SongDataContainer implements Container {
 
 					out = io.openOut(songDataUpdatePath.toFile());
 					io.write(out, SongDataDeserializer_3.getHeader());
-					crawler =
-							new Crawler(io, tree.getRoot(),
-									new ArrayDeque<Path>(), queue);
-					scanner =
-							new Scanner(io, queue, master, out, tree,
-									songsFound);
+					crawler = new Crawler(io, tree.getRoot(),
+							new ArrayDeque<Path>(), queue);
+					scanner = new Scanner(io, queue, master, out, tree,
+							songsFound);
 					taskPool.addTaskForAll(crawler, scanner);
 					in.registerProgressMonitor(io);
 					io.setProgressTitle("Reading data base of previous run");
@@ -297,9 +296,8 @@ public class SongDataContainer implements Container {
 				io.writeln(outMaster, "\t\t[" + songIdx + "] =");
 				io.writeln(outMaster, "\t\t{");
 				final String name;
-				name =
-						path.getFileName().substring(0,
-								path.getFileName().lastIndexOf("."));
+				name = path.getFileName().substring(0,
+						path.getFileName().lastIndexOf("."));
 
 				io.write(outMaster, "\t\t\t[\"Filepath\"] = \"/");
 				if (path.getParent() != tree.getRoot()) {
@@ -326,5 +324,41 @@ public class SongDataContainer implements Container {
 
 	final DirTree getDirTree() {
 		return tree;
+	}
+
+	public final static String formatMaxLength(final Path base,
+			final String filename) {
+		int length = base.toString().length();
+		if (filename == null) {
+			if (base.toString().length() < MAX_LENGTH_INFO)
+				return base.toString();
+		} else if (length + filename.length() + 1 < MAX_LENGTH_INFO)
+			return base.toString() + FileSystem.getFileSeparator() + filename;
+		final StringBuilder sb = new StringBuilder();
+		int pos = 0;
+		int lengthSB = 0;
+		final int components = base.getNameCount();
+		while (pos < components) {
+			final String c = base.getComponentAt(pos++);
+			if (lengthSB > 0) {
+				sb.append(FileSystem.getFileSeparator());
+				++lengthSB;
+				if (lengthSB + c.length() >= MAX_LENGTH_INFO) {
+					sb.append("\n");
+					lengthSB = 0;
+				}
+			}
+			sb.append(c);
+			lengthSB += c.length();
+		}
+		if (filename != null) {
+			if (lengthSB > 0 && lengthSB + filename.length() >= MAX_LENGTH_INFO) {
+				sb.append("\n");
+			}
+			sb.append(FileSystem.getFileSeparator());
+			sb.append(filename);
+		}
+
+		return sb.toString();
 	}
 }
