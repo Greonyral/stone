@@ -3,24 +3,24 @@ package stone.modules.abcCreator;
 /**
  * @author Nelphindal
  */
-public class ExecutableFileFilter extends FileEndingFilter {
+public class ExecutableJarFileFilter extends FileEndingFilter {
 
 	/**
 	 * 
 	 */
-	public ExecutableFileFilter() {
+	public ExecutableJarFileFilter() {
 		super(1);
 	}
 
 	/** checks for *.exe or *.jar */
 	@Override
 	public boolean ending(final String s) {
-		return s.equals(".exe") || s.equals(".jar");
+		return s.equals(".jar");
 	}
 
 	/** */
 	@Override
 	public String getDescription() {
-		return "executables (.exe .jar)";
+		return "executables (.jar)";
 	}
 }

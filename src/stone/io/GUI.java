@@ -42,7 +42,6 @@ import stone.util.Path;
 import stone.util.PathOption;
 import stone.util.StringOption;
 
-
 /**
  * Simple GUI handling all interaction with the user
  * 
@@ -92,6 +91,8 @@ public class GUI implements GUIInterface {
 	}
 
 	private static final String waitText = "Please wait ...";
+
+	private static final String vcTooltip = null;
 
 	/**
 	 * Enables a component by calling {@link Component#setEnabled(boolean)}
@@ -198,6 +199,7 @@ public class GUI implements GUIInterface {
 		for (final Button b : Button.values()) {
 			b.getButton().addMouseListener(new ButtonListener(b));
 		}
+		// hide the exceptions for the Progress
 		Thread.setDefaultUncaughtExceptionHandler(master
 				.getUncaughtExceptionHandler());
 	}
@@ -218,7 +220,7 @@ public class GUI implements GUIInterface {
 
 		mainFrame = new JFrame();
 		mainFrame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-		//		mainFrame.setResizable(false);
+		// mainFrame.setResizable(false);
 		mainFrame.setTitle(name);
 		mainFrame.setLayout(new BorderLayout());
 		mainFrame.setMinimumSize(new Dimension(360, 100));
@@ -283,6 +285,8 @@ public class GUI implements GUIInterface {
 		bar.setVisible(false);
 		if (Thread.currentThread() == master) {
 			mainFrame.remove(bar);
+			mainFrame.remove(wait); // may by added to north by another Thread
+									// by calling this method
 			wait.setText(GUI.waitText);
 			mainFrame.add(wait);
 			revalidate(true, false);
@@ -490,7 +494,9 @@ public class GUI implements GUIInterface {
 	@Override
 	public final Set<String> selectModules(final Collection<String> modules) {
 		mainFrame.getContentPane().removeAll();
-		text.setText("Please select the tools you want to use.\nNon existent modules will be downloaded automatically.");
+		text.setText("Please select the actions you want to use. Selected actions\n" 
+				+ "may update themselves if outdated. In this case reselect them\n"
+				+ "after the tool restarted.");
 		text.setBackground(mainFrame.getBackground());
 		text.setEditable(false);
 
@@ -518,8 +524,24 @@ public class GUI implements GUIInterface {
 		mainFrame.add(Button.OK.getButton(), BorderLayout.SOUTH);
 		mainFrame.add(panel);
 		for (final String m : modules) {
-			final JCheckBox box = new JCheckBox(m);
+			final String name, tooltip;
+			final JCheckBox box;
+			if (m.equals(MasterThread.MODULE_VC_NAME)) {
+				tooltip = MasterThread.MODULE_VC_TOOLTIP;
+				name = MasterThread.MODULE_VC_DSP;
+			} else if (m.equals(MasterThread.MODULE_ABC_NAME)) {
+				tooltip = MasterThread.MODULE_ABC_TOOLTIP;
+				name = MasterThread.MODULE_ABC_DSP;
+			} else if (m.equals(MasterThread.MODULE_SB_NAME)) {
+				tooltip = MasterThread.MODULE_SB_TOOLTIP;
+				name = MasterThread.MODULE_SB_DSP;
+			} else {
+				name = m;
+				tooltip = null;
+			}
+			box = new JCheckBox(name);
 			box.addChangeListener(new BoxListener(m));
+			box.setToolTipText(tooltip);
 			panel.add(box);
 		}
 		final JCheckBox box = new JCheckBox(Main.REPAIR);

@@ -44,8 +44,6 @@ public class SongDataContainer implements Container {
 		}
 	}
 
-	private final static int MAX_LENGTH_INFO = 80;
-
 	private final DirTree tree;
 
 	private final Set<Path> songsFound = new HashSet<>();
@@ -76,7 +74,7 @@ public class SongDataContainer implements Container {
 			if (!basePath.getParent().exists() || !basePath.toFile().mkdir()) {
 				io.printError(
 						"The default path or the path defined in\nthe config-file does not exist:\n\""
-								+ formatMaxLength(basePath, null)
+								+ Main.formatMaxLength(basePath, null)
 								+ "\"\n Please look into the manual for more information.",
 						false);
 			}
@@ -324,41 +322,5 @@ public class SongDataContainer implements Container {
 
 	final DirTree getDirTree() {
 		return tree;
-	}
-
-	public final static String formatMaxLength(final Path base,
-			final String filename) {
-		int length = base.toString().length();
-		if (filename == null) {
-			if (base.toString().length() < MAX_LENGTH_INFO)
-				return base.toString();
-		} else if (length + filename.length() + 1 < MAX_LENGTH_INFO)
-			return base.toString() + FileSystem.getFileSeparator() + filename;
-		final StringBuilder sb = new StringBuilder();
-		int pos = 0;
-		int lengthSB = 0;
-		final int components = base.getNameCount();
-		while (pos < components) {
-			final String c = base.getComponentAt(pos++);
-			if (lengthSB > 0) {
-				sb.append(FileSystem.getFileSeparator());
-				++lengthSB;
-				if (lengthSB + c.length() >= MAX_LENGTH_INFO) {
-					sb.append("\n");
-					lengthSB = 0;
-				}
-			}
-			sb.append(c);
-			lengthSB += c.length();
-		}
-		if (filename != null) {
-			if (lengthSB > 0 && lengthSB + filename.length() >= MAX_LENGTH_INFO) {
-				sb.append("\n");
-			}
-			sb.append(FileSystem.getFileSeparator());
-			sb.append(filename);
-		}
-
-		return sb.toString();
 	}
 }

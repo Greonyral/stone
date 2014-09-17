@@ -37,6 +37,18 @@ import stone.util.TaskPool;
  */
 public class MasterThread extends Thread {
 
+	public final static String MODULE_VC_DSP = "Synchronize abc-files";
+	public final static String MODULE_VC_NAME = "VersionControl";
+	public final static String MODULE_VC_TOOLTIP = "Enables download of changed abc-files. Upload can be enabled additionally.";
+	
+	public final static String MODULE_ABC_DSP = "Transcribe midi-files to abc-files";
+	public final static String MODULE_ABC_NAME = "AbcCreator";
+	public final static String MODULE_ABC_TOOLTIP = "Starts the GUI for BruTE - the midi to abc transriper by Bruzo";
+	
+	public final static String MODULE_SB_DSP = "Create Songbook data";
+	public final static String MODULE_SB_NAME = "SongbookUpdater";
+	public final static String MODULE_SB_TOOLTIP = "Creates the file needed for the Songbook-plugin by Chiran";
+	
 	final class ModuleInfo {
 
 		Module instance;
@@ -78,7 +90,9 @@ public class MasterThread extends Thread {
 	final StartupContainer sc;
 	
 	private static final String repo =
-	  "https://raw.githubusercontent.com/Greonyral/stone/master/";
+	  // old URL
+	  // "https://raw.githubusercontent.com/Greonyral/stone/master/";
+	  "https://github.com/Greonyral/stone/raw/master/";
 	  //"file:/D:/Freigabe/Programmierung/arbeitsplatz/Songbook/"; 
 
 	private final ThreadState state = new ThreadState();
@@ -472,12 +486,12 @@ public class MasterThread extends Thread {
 	}
 
 	private final Set<String> init() {
-		possibleModules.add("AbcCreator");
+		possibleModules.add(MODULE_ABC_NAME);
 		possibleModules.add("FileEditor");
 		// cut here
-		possibleModules.add("VersionControl");
+		possibleModules.add(MODULE_VC_NAME);
 		// cut here
-		possibleModules.add("SongbookUpdater");
+		possibleModules.add(MODULE_SB_NAME);
 		try {
 			loadModules();
 		} catch (final Exception e) {

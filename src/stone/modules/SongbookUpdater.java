@@ -25,7 +25,7 @@ import stone.util.Path;
  */
 public final class SongbookUpdater implements Module {
 
-	private final static int VERSION = 3;
+	private final static int VERSION = 5;
 	private final static String USER = "UserPreferences.ini";
 
 	private final IOHandler io;
@@ -159,7 +159,7 @@ public final class SongbookUpdater implements Module {
 			io.printMessage(
 					"UserPreferences.ini not found",
 					"\""
-							+ SongDataContainer.formatMaxLength(pluginDataPath.getParent(), USER)
+							+ Main.formatMaxLength(pluginDataPath.getParent(), USER)
 							+ "\"\n"
 							+ "not found. Check if the path is correct or start LoTRO and login to create it.\n"
 							+ "The tool is using the file to get your account names.\n"

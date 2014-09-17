@@ -16,7 +16,6 @@ import stone.util.Path;
 import stone.util.StringOption;
 import stone.util.TaskPool;
 
-
 /**
  * Dummy module to support updating the core
  * 
@@ -24,7 +23,57 @@ import stone.util.TaskPool;
  */
 public class Main implements Module {
 
-	private static final int VERSION = 6;
+	private static final int MAX_LENGTH_INFO = 80;
+
+	public final static String formatMaxLength(final Path base,
+			final String filename) {
+		return formatMaxLength(base, filename, "", "");
+	}
+
+	public final static String formatMaxLength(final Path base,
+			final String filename, final String a, final String b) {
+
+		if (filename == null) {
+			return formatMaxLength(base, "", a == null ? "" : a, b == null ? ""
+					: b);
+		}
+		if (a == null || b == null) {
+			return formatMaxLength(base, filename, a == null ? "" : a,
+					b == null ? "" : b);
+		}
+		int length = base.toString().length();
+		final StringBuilder sb = new StringBuilder();
+		int pos = 0;
+		int lengthSB = a.length();
+		final int components = base.getNameCount();
+		sb.append(a);
+		sb.append("\"");
+		while (pos < components) {
+			final String c = base.getComponentAt(pos++);
+			if (lengthSB > 0) {
+				sb.append(FileSystem.getFileSeparator());
+				++lengthSB;
+				if (lengthSB + c.length() >= MAX_LENGTH_INFO) {
+					sb.append("\n");
+					lengthSB = 0;
+				}
+			}
+			sb.append(c);
+			lengthSB += c.length();
+		}
+		if (lengthSB > 0 && lengthSB + filename.length() >= MAX_LENGTH_INFO) {
+			sb.append("\n");
+		}
+		sb.append(FileSystem.getFileSeparator());
+		sb.append(filename);
+		sb.append("\"");
+		if (lengthSB + b.length() >= MAX_LENGTH_INFO)
+			sb.append("\n");
+		sb.append(b);
+		return sb.toString();
+	}
+
+	private static final int VERSION = 7;
 
 	/**
 	 * The users homeDir
@@ -82,8 +131,8 @@ public class Main implements Module {
 	public final static StringOption createNameOption(final OptionContainer oc) {
 		return new StringOption(oc, "Name",
 				"Should be your ingame name. Used as part of commit messages and as"
-						+ " meta-tag in created files.",
-				"Name for Commits", 'n', "name", GLOBAL_SECTION, NAME_KEY);
+						+ " meta-tag in created files.", "Name for Commits",
+				'n', "name", GLOBAL_SECTION, NAME_KEY);
 	}
 
 	private static final void createIO(final StartupContainer os) {
@@ -122,8 +171,8 @@ public class Main implements Module {
 	 * @return the value in the config, or defaultValue if the key in given
 	 *         section does not exist
 	 */
-	public final String getConfigValue(final String section,
-			final String key, final String defaultValue) {
+	public final String getConfigValue(final String section, final String key,
+			final String defaultValue) {
 		synchronized (configOld) {
 			synchronized (configNew) {
 				final Map<String, String> map0 = configNew.get(section);
@@ -175,7 +224,6 @@ public class Main implements Module {
 		}
 	}
 
-
 	/**
 	 * Not supported and will throw an UnsupportedOperationException. Call
 	 * {@link #run(StartupContainer, Flag)} instead.
@@ -185,7 +233,6 @@ public class Main implements Module {
 	public final void run() {
 		throw new UnsupportedOperationException();
 	}
-
 
 	/**
 	 * The actual main method executing this main module.
@@ -208,9 +255,8 @@ public class Main implements Module {
 				try {
 					sc.finishInit(flags); // sync barrier 1
 					@SuppressWarnings("resource")
-					final InputStream in =
-							io.openIn(homeSetting.toFile(),
-									FileSystem.UTF8);
+					final InputStream in = io.openIn(homeSetting.toFile(),
+							FileSystem.UTF8);
 					final StringBuilder sb = new StringBuilder();
 					String section = null;
 					try {
@@ -256,17 +302,15 @@ public class Main implements Module {
 	 * @param key
 	 * @param value
 	 */
-	public final void setConfigValue(final String section,
-			final String key, final String value) {
+	public final void setConfigValue(final String section, final String key,
+			final String value) {
 		synchronized (configOld) {
 			synchronized (configNew) {
 				if (value == null) {
 					if (getConfigValue(section, key, null) != null) {
-						final Map<String, String> map0 =
-								configNew.get(section);
+						final Map<String, String> map0 = configNew.get(section);
 						if (map0 == null) {
-							final Map<String, String> map1 =
-									new HashMap<>();
+							final Map<String, String> map1 = new HashMap<>();
 							map1.put(key, null);
 							configNew.put(section, map1);
 						} else {
@@ -274,10 +318,8 @@ public class Main implements Module {
 						}
 					}
 				} else {
-					final Map<String, String> mapOld =
-							configOld.get(section);
-					final Map<String, String> map0 =
-							configNew.get(section);
+					final Map<String, String> mapOld = configOld.get(section);
+					final Map<String, String> map0 = configNew.get(section);
 					if (mapOld != null) {
 						final String valueOld = mapOld.get(key);
 						if ((valueOld != null) && valueOld.equals(value)) {
@@ -302,8 +344,7 @@ public class Main implements Module {
 		}
 	}
 
-	final String
-			parseConfig(final StringBuilder line, final String section) {
+	final String parseConfig(final StringBuilder line, final String section) {
 		int idx = 0;
 		if (line.length() == 0)
 			return section;
@@ -336,5 +377,4 @@ public class Main implements Module {
 		return section;
 
 	}
-
 }
