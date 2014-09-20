@@ -73,7 +73,7 @@ public class Main implements Module {
 		return sb.toString();
 	}
 
-	private static final int VERSION = 7;
+	private static final int VERSION = 8;
 
 	/**
 	 * The users homeDir

@@ -3,18 +3,13 @@ package stone.modules;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
@@ -46,8 +41,6 @@ import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.ProgressMonitor;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -65,13 +58,11 @@ import stone.io.IOHandler;
 import stone.io.InputStream;
 import stone.io.OutputStream;
 import stone.modules.versionControl.CommitComparator;
-import stone.modules.versionControl.EditorPlugin;
 import stone.modules.versionControl.NoYesPlugin;
 import stone.modules.versionControl.SecretKeyPlugin;
 import stone.modules.versionControl.SortingComparator;
 import stone.modules.versionControl.UpdateType;
 import stone.util.BooleanOption;
-import stone.util.FileSystem;
 import stone.util.Flag;
 import stone.util.MaskedStringOption;
 import stone.util.Option;
@@ -380,9 +371,6 @@ public final class VersionControl implements Module {
 							false);
 					return;
 				}
-			} else if (remoteURL == null) {
-				io.printError("For commits a valid url is needed", false);
-				return;
 			}
 		}
 		try {
@@ -1162,20 +1150,6 @@ public final class VersionControl implements Module {
 			reset.setMode(ResetCommand.ResetType.HARD);
 			reset.call();
 		}
-	}
-
-	private final void setConfig(final Git gitSession) {
-		final StoredConfig config = gitSession.getRepository().getConfig();
-		final String branch = BRANCH.value();
-		final String url;
-		if (USE_SSH.getValue()) {
-			url = GIT_URL_SSH.value();
-		} else {
-			url = GIT_URL_HTTPS.value();
-		}
-		config.setString("branch", branch, "merge", "refs/heads/master");
-		config.setString("branch", branch, "remote", "origin");
-		config.setString("remote", "origin", "url", url);
 	}
 
 	/*
