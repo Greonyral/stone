@@ -10,15 +10,16 @@ import java.util.HashMap;
  */
 public final class Time {
 
-	private static final HashMap<Long, Long> daysSince1970 = new HashMap<>();
-	private static final int[] daysOfMonth = new int[] { 31, 28, 31, 30, 31,
-		30, 31, 31, 30, 31, 30, 31 };
+	private static final HashMap<Long, Long> daysSince1970 =
+			new HashMap<>();
+	private static final int[] daysOfMonth = new int[] { 31, 28, 31, 30,
+			31, 30, 31, 31, 30, 31, 30, 31 };
 	private static final String[] namesOfMonth = new String[] { "January",
-		"February", "March", "April", "May", "June", "July", "August",
-		"September", "October", "November", "December" };
-	private static final String[] shortNamesOfMonth = new String[] { "Jan",
-		"Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
-		"Nov", "Dec" };
+			"February", "March", "April", "May", "June", "July", "August",
+			"September", "October", "November", "December" };
+	private static final String[] shortNamesOfMonth = new String[] {
+			"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+			"Oct", "Nov", "Dec" };
 
 	/**
 	 * Converts millis into a human readable time.
@@ -65,14 +66,9 @@ public final class Time {
 		final String timeString =
 				String.format("%02d:%02d:%02d", ++hours % 24, ++mins % 60,
 						++secs % 60)
-						+ " "
-						+ ++days
-						+ " "
-						+ ++month
-						+ " "
-						+ year;
-		//		System.out.println("calculated: " + timeString + " ("
-		//				+ getMonthName(String.valueOf(month)) + ")");
+						+ " " + ++days + " " + ++month + " " + year;
+		// System.out.println("calculated: " + timeString + " ("
+		// + getMonthName(String.valueOf(month)) + ")");
 		return timeString;
 	}
 
@@ -87,18 +83,23 @@ public final class Time {
 		final long seconds = millis / 1000;
 		final long minutes = seconds / 60;
 		final long hours = minutes / 60;
-		if (hours == 0)
+		if (hours == 0) {
 			return minutes + " minute" + (minutes == 0 ? "" : "s");
+		}
 		final long days = hours / 24;
-		if (days == 0)
-			return hours + " hour" + (hours == 1 ? "" : "") + " and " + minutes
-					+ " minute" + ((minutes % 60) == 0 ? "" : "s");
+		if (days == 0) {
+			return hours + " hour" + (hours == 1 ? "" : "") + " and "
+					+ minutes + " minute"
+					+ ((minutes % 60) == 0 ? "" : "s");
+		}
 		final long weeks = days / 7;
-		if (weeks == 0)
-			return days + " day" + (days == 1 ? "" : "s") + " and " + (hours
-					% 60) + " hour" + ((hours % 60) == 1 ? "" : "s");
-		return weeks + " week" + (weeks == 1 ? "" : "s") + " and " + (days % 7)
-				+ " day" + ((days % 7) == 1 ? "" : "s");
+		if (weeks == 0) {
+			return days + " day" + (days == 1 ? "" : "s") + " and "
+					+ (hours % 24) + " hour"
+					+ ((hours % 24) == 1 ? "" : "s");
+		}
+		return weeks + " week" + (weeks == 1 ? "" : "s") + " and "
+				+ (days % 7) + " day" + ((days % 7) == 1 ? "" : "s");
 	}
 
 	/**
@@ -114,7 +115,8 @@ public final class Time {
 	 * @return an array containing all month names
 	 */
 	public final static String[] getMonthNames() {
-		final String[] namesOfMonth_ = new String[Time.namesOfMonth.length];
+		final String[] namesOfMonth_ =
+				new String[Time.namesOfMonth.length];
 		System.arraycopy(Time.namesOfMonth, 0, namesOfMonth_, 0,
 				namesOfMonth_.length);
 		return namesOfMonth_;
@@ -133,7 +135,8 @@ public final class Time {
 	 * @return an array containing all shortened month names
 	 */
 	public final static String[] getShortMonthNames() {
-		final String[] namesOfMonth_ = new String[Time.shortNamesOfMonth.length];
+		final String[] namesOfMonth_ =
+				new String[Time.shortNamesOfMonth.length];
 		System.arraycopy(Time.shortNamesOfMonth, 0, namesOfMonth_, 0,
 				namesOfMonth_.length);
 		return namesOfMonth_;
@@ -141,8 +144,9 @@ public final class Time {
 
 	private final static long getDays(long year) {
 		final Long entry = Time.daysSince1970.get(year);
-		if (entry != null)
+		if (entry != null) {
 			return entry;
+		}
 		long days = 0;
 		for (long y = 1970; y < year; ++y) {
 			final boolean leap = isLeap(y);

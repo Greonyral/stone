@@ -83,7 +83,8 @@ public class IOHandler {
 				try {
 					final JarEntry iconEntry = jar.getJarEntry(iconFile);
 					if (iconEntry != null) {
-						icon_ = ImageIO.read(jar.getInputStream(iconEntry));
+						icon_ =
+								ImageIO.read(jar.getInputStream(iconEntry));
 					} else {
 						System.out.println("Icon not found");
 					}
@@ -170,15 +171,18 @@ public class IOHandler {
 	 *            number of bytes of file content to discard
 	 */
 	@SuppressWarnings("resource")
-	public final void append(final File fileToAppendTo, final File content,
-			int bytesToDiscard) {
+	public final void append(final File fileToAppendTo,
+			final File content, int bytesToDiscard) {
 		OutputStream out = null;
 		InputStream in = null;
-		if (!content.exists())
+		if (!content.exists()) {
 			return;
+		}
 		try {
 			try {
-				out = new OutputStream(fileToAppendTo, FileSystem.UTF8, true);
+				out =
+						new OutputStream(fileToAppendTo, FileSystem.UTF8,
+								true);
 				openStreams.add(out);
 				in = new InputStream(content, FileSystem.UTF8);
 				openStreams.add(in);
@@ -301,7 +305,8 @@ public class IOHandler {
 	}
 
 	/**
-	 * Calls {@link stone.io.GUIInterface#getOptions(Collection)} with given options
+	 * Calls {@link stone.io.GUIInterface#getOptions(Collection)} with given
+	 * options
 	 * 
 	 * @param options
 	 */
@@ -329,8 +334,8 @@ public class IOHandler {
 		if (!handle.suppress()) {
 			if (!closed) {
 				exception.printStackTrace();
-				gui.printErrorMessage(exception.toString().replaceAll(": ",
-						"\n"));
+				gui.printErrorMessage(exception.toString().replaceAll(
+						": ", "\n"));
 			}
 			if (handle.terminate()) {
 				close();
@@ -398,7 +403,8 @@ public class IOHandler {
 	 */
 	public final OutputStream openOut(final File file) {
 		try {
-			final OutputStream stream = new OutputStream(file, FileSystem.UTF8);
+			final OutputStream stream =
+					new OutputStream(file, FileSystem.UTF8);
 			openStreams.add(stream);
 			return stream;
 		} catch (final IOException e) {
@@ -408,8 +414,8 @@ public class IOHandler {
 	}
 
 	/**
-	 * Opens a new stream associated to given file using given
-	 * encoding for writing
+	 * Opens a new stream associated to given file using given encoding for
+	 * writing
 	 * 
 	 * @param file
 	 * @param cs
@@ -435,8 +441,9 @@ public class IOHandler {
 	 * @return the uncompressed entries
 	 */
 	public final Set<String> openZipIn(final stone.util.Path zipFile) {
-		if (!zipFile.exists())
+		if (!zipFile.exists()) {
 			return null;
+		}
 		final Set<String> entriesRet = new HashSet<>();
 		try {
 			final ZipFile zip = new ZipFile(zipFile.toFile());
@@ -447,9 +454,10 @@ public class IOHandler {
 				final ZipEntry zipEntry = entries.nextElement();
 				@SuppressWarnings("resource")
 				final OutputStream out =
-				openOut(zipFile.getParent().resolve(zipEntry.getName())
-						.toFile());
-				final java.io.InputStream in = zip.getInputStream(zipEntry);
+						openOut(zipFile.getParent().resolve(
+								zipEntry.getName()).toFile());
+				final java.io.InputStream in =
+						zip.getInputStream(zipEntry);
 				int read;
 				while ((read = in.read(content)) > 0) {
 					out.write(content, 0, read);
@@ -494,8 +502,8 @@ public class IOHandler {
 	 *            will print the message on stderr or require confirmation if
 	 *            set to <i>true</i>
 	 */
-	public final void printMessage(final String title, final String message,
-			boolean bringGUItoFront) {
+	public final void printMessage(final String title,
+			final String message, boolean bringGUItoFront) {
 		gui.printMessage(title, message, bringGUItoFront);
 	}
 
@@ -519,8 +527,9 @@ public class IOHandler {
 	 *         if interrupted
 	 * @throws InterruptedException
 	 */
-	public final Set<String> selectModules(final Collection<String> modules)
-			throws InterruptedException {
+	public final Set<String>
+			selectModules(final Collection<String> modules)
+					throws InterruptedException {
 		return gui.selectModules(modules);
 	}
 
@@ -639,8 +648,8 @@ public class IOHandler {
 	 * @param offset
 	 * @param length
 	 */
-	public final void write(final OutputStream out, byte[] bytes, int offset,
-			int length) {
+	public final void write(final OutputStream out, byte[] bytes,
+			int offset, int length) {
 		try {
 			out.write(bytes, offset, length);
 		} catch (final IOException e) {

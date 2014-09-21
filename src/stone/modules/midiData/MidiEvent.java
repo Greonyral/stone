@@ -23,21 +23,22 @@ public abstract class MidiEvent {
 		this.type = type;
 	}
 
-	//	final static List<MidiEvent> convert(final Track track, final MidiParser parser) {
-	//		final List<MidiEvent> events = new ArrayList<>(track.size());
-	//		long lasttick = 0;
-	//		for (int i = 0; i < track.size(); i++) {
-	//			final javax.sound.midi.MidiEvent event = track.get(i);
-	//			final long tick = event.getTick();
-	//			final int delta = (int) (tick - lasttick);
-	//			lasttick = tick;
-	//			final MidiEvent createdEvent =
-	//					parser.createEvent(event.getMessage().getMessage(), delta);
-	//			if (createdEvent != null)
-	//				events.add(createdEvent);
-	//		}
-	//		return events;
-	//	}
+	// final static List<MidiEvent> convert(final Track track, final MidiParser
+	// parser) {
+	// final List<MidiEvent> events = new ArrayList<>(track.size());
+	// long lasttick = 0;
+	// for (int i = 0; i < track.size(); i++) {
+	// final javax.sound.midi.MidiEvent event = track.get(i);
+	// final long tick = event.getTick();
+	// final int delta = (int) (tick - lasttick);
+	// lasttick = tick;
+	// final MidiEvent createdEvent =
+	// parser.createEvent(event.getMessage().getMessage(), delta);
+	// if (createdEvent != null)
+	// events.add(createdEvent);
+	// }
+	// return events;
+	// }
 
 	/**
 	 * Returns a string representation of this midi event. All subclasses have

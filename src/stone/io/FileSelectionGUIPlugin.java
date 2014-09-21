@@ -40,9 +40,11 @@ public class FileSelectionGUIPlugin extends GUIPlugin {
 	 * @return the path of selected file
 	 */
 	public final Path getSelection() {
-		if (selected == null)
+		if (selected == null) {
 			return null;
-		return Path.getPath(selected.toString().split("\\" + FileSystem.getFileSeparator()));
+		}
+		return Path.getPath(selected.toString().split(
+				"\\" + FileSystem.getFileSeparator()));
 	}
 
 	/** */

@@ -16,6 +16,7 @@ import stone.util.Path;
 import stone.util.StringOption;
 import stone.util.TaskPool;
 
+
 /**
  * Dummy module to support updating the core
  * 
@@ -24,6 +25,23 @@ import stone.util.TaskPool;
 public class Main implements Module {
 
 	private static final int MAX_LENGTH_INFO = 80;
+
+	private static final int VERSION = 8;
+
+	/**
+	 * Should be called only once. Creates an option to adjust the user's name.
+	 * 
+	 * @param oc
+	 * @return the option for the name of user.
+	 */
+	public final static StringOption createNameOption(
+			final OptionContainer oc) {
+		return new StringOption(oc, "Name",
+				"Should be your ingame name. Used as part of commit messages and as"
+						+ " meta-tag in created files.",
+				"Name for Commits", 'n', "name", Main.GLOBAL_SECTION,
+				Main.NAME_KEY);
+	}
 
 	public final static String formatMaxLength(final Path base,
 			final String filename) {
@@ -34,14 +52,14 @@ public class Main implements Module {
 			final String filename, final String a, final String b) {
 
 		if (filename == null) {
-			return formatMaxLength(base, "", a == null ? "" : a, b == null ? ""
-					: b);
+			return formatMaxLength(base, "", a == null ? "" : a,
+					b == null ? "" : b);
 		}
-		if (a == null || b == null) {
+		if ((a == null) || (b == null)) {
 			return formatMaxLength(base, filename, a == null ? "" : a,
 					b == null ? "" : b);
 		}
-		int length = base.toString().length();
+		base.toString().length();
 		final StringBuilder sb = new StringBuilder();
 		int pos = 0;
 		int lengthSB = a.length();
@@ -53,7 +71,7 @@ public class Main implements Module {
 			if (lengthSB > 0) {
 				sb.append(FileSystem.getFileSeparator());
 				++lengthSB;
-				if (lengthSB + c.length() >= MAX_LENGTH_INFO) {
+				if ((lengthSB + c.length()) >= Main.MAX_LENGTH_INFO) {
 					sb.append("\n");
 					lengthSB = 0;
 				}
@@ -61,19 +79,25 @@ public class Main implements Module {
 			sb.append(c);
 			lengthSB += c.length();
 		}
-		if (lengthSB > 0 && lengthSB + filename.length() >= MAX_LENGTH_INFO) {
+		if ((lengthSB > 0)
+				&& ((lengthSB + filename.length()) >= Main.MAX_LENGTH_INFO)) {
 			sb.append("\n");
 		}
 		sb.append(FileSystem.getFileSeparator());
 		sb.append(filename);
 		sb.append("\"");
-		if (lengthSB + b.length() >= MAX_LENGTH_INFO)
+		if ((lengthSB + b.length()) >= Main.MAX_LENGTH_INFO) {
 			sb.append("\n");
+		}
 		sb.append(b);
 		return sb.toString();
 	}
 
-	private static final int VERSION = 8;
+	private static final void createIO(final StartupContainer os) {
+		final String icon;
+		icon = "Icon.png";
+		os.createFinalIO(new IOHandler(os, icon));
+	}
 
 	/**
 	 * The users homeDir
@@ -92,12 +116,10 @@ public class Main implements Module {
 	 * The name to be used for naming the config-file and the title.
 	 */
 	public static final String TOOLNAME = "SToNe";
-
 	/**
 	 * Section in the config file for VersionControl
 	 */
 	public static final String VC_SECTION = "[vc]";
-
 	/**
 	 * Key within the VersionControl section for naming the path to local
 	 * repository
@@ -107,11 +129,13 @@ public class Main implements Module {
 	 * Section in the config file for global setting
 	 */
 	public static final String GLOBAL_SECTION = "[global]";
+
 	/**
 	 * Key within the global section for naming the path, where the relative
 	 * paths shall start from
 	 */
 	public static final String PATH_KEY = "path";
+
 	/**
 	 * Key within the global section for the name
 	 */
@@ -123,25 +147,6 @@ public class Main implements Module {
 	public static final String REPAIR = "Repair";
 
 	/**
-	 * Should be called only once. Creates an option to adjust the user's name.
-	 * 
-	 * @param oc
-	 * @return the option for the name of user.
-	 */
-	public final static StringOption createNameOption(final OptionContainer oc) {
-		return new StringOption(oc, "Name",
-				"Should be your ingame name. Used as part of commit messages and as"
-						+ " meta-tag in created files.", "Name for Commits",
-				'n', "name", GLOBAL_SECTION, NAME_KEY);
-	}
-
-	private static final void createIO(final StartupContainer os) {
-		final String icon;
-		icon = "Icon.png";
-		os.createFinalIO(new IOHandler(os, icon));
-	}
-
-	/**
 	 * Creates a new instance providing the parsed entries of the config
 	 */
 	public Main() {
@@ -151,8 +156,9 @@ public class Main implements Module {
 	 * Flushes the configuration
 	 */
 	public final void flushConfig() {
-		if (configNew.isEmpty())
+		if (configNew.isEmpty()) {
 			return;
+		}
 
 		final Runnable r = new MainConfigWriter(this);
 		if (taskPool == null) {
@@ -171,21 +177,23 @@ public class Main implements Module {
 	 * @return the value in the config, or defaultValue if the key in given
 	 *         section does not exist
 	 */
-	public final String getConfigValue(final String section, final String key,
-			final String defaultValue) {
+	public final String getConfigValue(final String section,
+			final String key, final String defaultValue) {
 		synchronized (configOld) {
 			synchronized (configNew) {
 				final Map<String, String> map0 = configNew.get(section);
 				final Map<String, String> map1 = configOld.get(section);
 				if (map0 != null) {
 					final String value0 = map0.get(key);
-					if (value0 != null)
+					if (value0 != null) {
 						return value0;
+					}
 				}
 				if (map1 != null) {
 					final String value1 = map1.get(key);
-					if (value1 != null)
+					if (value1 != null) {
 						return value1;
+					}
 				}
 				return defaultValue;
 			}
@@ -245,8 +253,9 @@ public class Main implements Module {
 		taskPool = sc.createTaskPool();
 		createIO(sc);
 		io = sc.getIO();
-		if (io == null)
+		if (io == null) {
 			return;
+		}
 		taskPool.runMaster();
 		taskPool.addTask(new Runnable() {
 
@@ -255,8 +264,9 @@ public class Main implements Module {
 				try {
 					sc.finishInit(flags); // sync barrier 1
 					@SuppressWarnings("resource")
-					final InputStream in = io.openIn(homeSetting.toFile(),
-							FileSystem.UTF8);
+					final InputStream in =
+							io.openIn(homeSetting.toFile(),
+									FileSystem.UTF8);
 					final StringBuilder sb = new StringBuilder();
 					String section = null;
 					try {
@@ -302,15 +312,17 @@ public class Main implements Module {
 	 * @param key
 	 * @param value
 	 */
-	public final void setConfigValue(final String section, final String key,
-			final String value) {
+	public final void setConfigValue(final String section,
+			final String key, final String value) {
 		synchronized (configOld) {
 			synchronized (configNew) {
 				if (value == null) {
 					if (getConfigValue(section, key, null) != null) {
-						final Map<String, String> map0 = configNew.get(section);
+						final Map<String, String> map0 =
+								configNew.get(section);
 						if (map0 == null) {
-							final Map<String, String> map1 = new HashMap<>();
+							final Map<String, String> map1 =
+									new HashMap<>();
 							map1.put(key, null);
 							configNew.put(section, map1);
 						} else {
@@ -318,13 +330,16 @@ public class Main implements Module {
 						}
 					}
 				} else {
-					final Map<String, String> mapOld = configOld.get(section);
-					final Map<String, String> map0 = configNew.get(section);
+					final Map<String, String> mapOld =
+							configOld.get(section);
+					final Map<String, String> map0 =
+							configNew.get(section);
 					if (mapOld != null) {
 						final String valueOld = mapOld.get(key);
 						if ((valueOld != null) && valueOld.equals(value)) {
-							if (map0 == null)
+							if (map0 == null) {
 								return;
+							}
 							map0.remove(key);
 							if (map0.isEmpty()) {
 								configNew.remove(section);
@@ -344,14 +359,17 @@ public class Main implements Module {
 		}
 	}
 
-	final String parseConfig(final StringBuilder line, final String section) {
+	final String
+			parseConfig(final StringBuilder line, final String section) {
 		int idx = 0;
-		if (line.length() == 0)
+		if (line.length() == 0) {
 			return section;
+		}
 		while (line.charAt(idx) == ' ') {
 			++idx;
-			if (idx == line.length())
+			if (idx == line.length()) {
 				return section;
+			}
 		}
 		if (line.charAt(idx) == '[') {
 			final int end = line.indexOf("]", idx) + 1;

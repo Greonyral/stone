@@ -43,15 +43,15 @@ final class MidiParserImpl extends MidiParser {
 	 * @throws ParsingException
 	 */
 	private final void parse1(final InputStream in) throws IOException,
-	ParsingException {
+			ParsingException {
 		in.read(midiHeaderBufferBytes);
 		while ((activeTrack < ntracks) && !master.isInterrupted()) {
 			parseEvents(in);
 		}
 	}
 
-	private final void parseEvents(final InputStream in) throws IOException,
-	ParsingException {
+	private final void parseEvents(final InputStream in)
+			throws IOException, ParsingException {
 		final int n_ = activeTrack;
 		final MidiEvent event = parse(in);
 		if (event != null) {
@@ -95,13 +95,15 @@ final class MidiParserImpl extends MidiParser {
 				renumberMap.put(n_, ++nextN);
 			}
 			empty = true;
-		} else if (master.isInterrupted())
+		} else if (master.isInterrupted()) {
 			return;
+		}
 	}
 
 	@SuppressWarnings("resource")
 	@Override
-	protected final void createMidiMap() throws ParsingException, IOException {
+	protected final void createMidiMap() throws ParsingException,
+			IOException {
 		final InputStream in = io.openIn(midi.toFile());
 		in.registerProgressMonitor(io);
 		try {
@@ -131,62 +133,65 @@ final class MidiParserImpl extends MidiParser {
 	protected final void decodeMidiMap() {
 		io.startProgress("Decoding midi", eventCount);
 		eventsEncoded.remove(0);
-		for (final Integer track : new java.util.TreeSet<>(
-				eventsEncoded.keySet())) {
+		for (final Integer track : new java.util.TreeSet<>(eventsEncoded
+				.keySet())) {
 			final ArrayDeque<MidiEvent> eventList =
 					new ArrayDeque<>(eventsEncoded.get(track));
-					int deltaAbs = 0;
-					double durationTrack = 0;
-					while (!eventList.isEmpty()) {
-						if (master.isInterrupted())
-							return;
+			int deltaAbs = 0;
+			double durationTrack = 0;
+			while (!eventList.isEmpty()) {
+				if (master.isInterrupted()) {
+					return;
+				}
 
-						final MidiEvent event = eventList.remove();
-						deltaAbs += event.delta;
+				final MidiEvent event = eventList.remove();
+				deltaAbs += event.delta;
 
-						switch (event.getType()) {
-							//					case NOTE_OFF:
-							//						io.updateProgress(1);
-							//						break;
-							case NOTE_ON:
-								// search for NOTE_OFF
-								final double start = d.getMinutes(deltaAbs);
-								final TempoChangeState ts = d.lastChange.getValue();
-								final NoteOnEvent noteOn = (NoteOnEvent) event;
-								int durationTicks = 0;
-								for (final MidiEvent iter : eventList) {
-									durationTicks += iter.delta;
-									if (iter.getType() == EventType.NOTE_OFF) {
-										final NoteOffEvent noteOff =
-												(NoteOffEvent) iter;
-										if (noteOff.getKey() == noteOn.getKey()) {
-											final double end =
-													start
+				switch (event.getType()) {
+				// case NOTE_OFF:
+				// io.updateProgress(1);
+				// break;
+					case NOTE_ON:
+						// search for NOTE_OFF
+						final double start = d.getMinutes(deltaAbs);
+						final TempoChangeState ts =
+								d.lastChange.getValue();
+						final NoteOnEvent noteOn = (NoteOnEvent) event;
+						int durationTicks = 0;
+						for (final MidiEvent iter : eventList) {
+							durationTicks += iter.delta;
+							if (iter.getType() == EventType.NOTE_OFF) {
+								final NoteOffEvent noteOff =
+										(NoteOffEvent) iter;
+								if (noteOff.getKey() == noteOn.getKey()) {
+									final double end =
+											start
 													+ ts.getMinutes(durationTicks);
-											if (end > durationTrack) {
-												durationTrack = end;
-												if (end > duration) {
-													duration = end;
-												}
-											}
-											eventsDecoded.addNote(
-													renumberMap.get(track) - 1,
-													noteOn.getKey(), start, end,
-													noteOn.getVelocity());
-											break;
+									if (end > durationTrack) {
+										durationTrack = end;
+										if (end > duration) {
+											duration = end;
 										}
 									}
+									eventsDecoded.addNote(renumberMap
+											.get(track) - 1, noteOn
+											.getKey(), start, end, noteOn
+											.getVelocity());
+									break;
 								}
-								io.updateProgress(1);
-								break;
-							default:
-								io.updateProgress(1);
+							}
 						}
-					}
-					System.out.printf("duration of track %2d -> %2d: %02d:%02d,%03d\n",
-							track, renumberMap.get(track), (int) durationTrack,
-							(int) ((durationTrack * 60) % 60),
-							(int) ((durationTrack * 60 * 1000) % 1000));
+						io.updateProgress(1);
+						break;
+					default:
+						io.updateProgress(1);
+				}
+			}
+			System.out.printf(
+					"duration of track %2d -> %2d: %02d:%02d,%03d\n",
+					track, renumberMap.get(track), (int) durationTrack,
+					(int) ((durationTrack * 60) % 60),
+					(int) ((durationTrack * 60 * 1000) % 1000));
 		}
 		io.endProgress();
 	}
@@ -223,13 +228,14 @@ final class MidiParserImpl extends MidiParser {
 		format = ((0xff & format_H) << 8) | (0xff & format_L);
 		ntracks = ((0xff & ntracks_H) << 8) | (0xff & ntracks_L);
 		deltaTicksPerQuarter =
-				((0xff & deltaTicksPerQuarter_H) << 8) | (0xff
-						& deltaTicksPerQuarter_L);
-		if (format != 1)
+				((0xff & deltaTicksPerQuarter_H) << 8)
+						| (0xff & deltaTicksPerQuarter_L);
+		if (format != 1) {
 			throw new IOException(
 					"Invalid format: unable to parse selected midi");
-		else if (format == 0)
+		} else if (format == 0) {
 			throw new RuntimeException("Format 0 not supported");
+		}
 
 		this.midi = midi;
 		d.reset();

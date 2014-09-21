@@ -15,7 +15,8 @@ import javax.swing.JPanel;
  * @param <T>
  */
 public interface DropTarget<C extends Container, D extends Container, T extends Container>
-extends Comparable<DropTarget<?, ?, ?>>, Iterable<DragObject<C, D, T>> {
+		extends Comparable<DropTarget<?, ?, ?>>,
+		Iterable<DragObject<C, D, T>> {
 
 	/**
 	 * @param key

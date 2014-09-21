@@ -66,7 +66,8 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 		panel.add(scroll);
 		panel.add(pathLabel, BorderLayout.NORTH);
 		panel.add(panelButton, BorderLayout.SOUTH);
-		panelButton.add(GUIInterface.Button.OK.getButton(), BorderLayout.EAST);
+		panelButton.add(GUIInterface.Button.OK.getButton(),
+				BorderLayout.EAST);
 		panelButton.add(GUIInterface.Button.ABORT.getButton(),
 				BorderLayout.WEST);
 		displayDir(panelSelection, scroll);
@@ -93,8 +94,8 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 			final JCheckBox box =
 					p == currentDir.getParent() ? null : new JCheckBox();
 			final JLabel label =
-					new JLabel(box == null ? "  ../  [" + p.getFileName() + "]"
-							: dir);
+					new JLabel(box == null ? "  ../  [" + p.getFileName()
+							+ "]" : dir);
 
 			if (box != null) {
 				if (selection.contains(p)) {
@@ -119,8 +120,8 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 				contentPanel.add(box, BorderLayout.WEST);
 			}
 
-			contentPanel.addMouseListener(new DirMouseListener(this, dirs, p,
-					songs, panel, scroll));
+			contentPanel.addMouseListener(new DirMouseListener(this, dirs,
+					p, songs, panel, scroll));
 			label.setForeground(Color.ORANGE);
 			panel.add(contentPanel);
 		}

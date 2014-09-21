@@ -86,8 +86,9 @@ public abstract class MidiParser {
 		abstract ParseState getNext(byte read) throws ParsingException;
 
 		void parse(byte read) throws ParsingException {
-			if (trackLen-- <= 0)
+			if (trackLen-- <= 0) {
 				throw new NoEOT();
+			}
 			state = getNext(read);
 		}
 
@@ -105,8 +106,9 @@ public abstract class MidiParser {
 		final ParseState getNext(byte read) {
 			delta <<= 7;
 			delta += 0x7f & read;
-			if ((read & 0x80) != 0)
+			if ((read & 0x80) != 0) {
 				return this;
+			}
 			return TYPE;
 		}
 
@@ -123,12 +125,15 @@ public abstract class MidiParser {
 
 		@Override
 		final ParseState getNext(byte read) throws ParsingException {
-			if (read != 0)
+			if (read != 0) {
 				return null;
-			if (trackLen != 0)
+			}
+			if (trackLen != 0) {
 				throw new MissingBytesAtEOT();
+			}
 			if (activeChannel >= 0) {
-				tracksToChannel.put(activeTrack, (byte) (0xff & activeChannel));
+				tracksToChannel.put(activeTrack,
+						(byte) (0xff & activeChannel));
 			}
 			++activeTrack;
 			activeChannel = -1;
@@ -162,8 +167,9 @@ public abstract class MidiParser {
 					first4Bytes <<= 8;
 					first4Bytes += 0xff & bytes.remove();
 				}
-				if (first4Bytes != MidiParser.TRACK_HEADER_INT)
+				if (first4Bytes != MidiParser.TRACK_HEADER_INT) {
 					throw new InvalidMidiTrackHeader();
+				}
 				trackLen = 0xff & bytes.remove();
 				for (int i = 1; i < 4; i++) {
 					trackLen <<= 8;
@@ -189,15 +195,15 @@ public abstract class MidiParser {
 		@Override
 		final ParseState getNext(byte read) {
 			switch (read) {
-				//				case 0x02:
-				//					return COPYRIGHT;
+			// case 0x02:
+			// return COPYRIGHT;
 				case 0x03:
 					return NAME;
-					//				case 0x04:
-					//					return INSTRUMENT;
+					// case 0x04:
+					// return INSTRUMENT;
 				case 0x20:
 					return CHANNEL;
-					//				case 0x21:
+					// case 0x21:
 				case 0x2f:
 					return EOT;
 				case 0x51:
@@ -235,8 +241,8 @@ public abstract class MidiParser {
 					channel = activeChannel;
 				}
 				lastEvent =
-						new NoteOffEvent((byte) k, (byte) v, (byte) channel,
-								DELTA.delta, format);
+						new NoteOffEvent((byte) k, (byte) v,
+								(byte) channel, DELTA.delta, format);
 				return DELTA;
 			}
 			return null;
@@ -278,8 +284,8 @@ public abstract class MidiParser {
 									(byte) channel, DELTA.delta, format);
 				} else {
 					lastEvent =
-							new NoteOnEvent((byte) k, (byte) v, (byte) channel,
-									DELTA.delta, format);
+							new NoteOnEvent((byte) k, (byte) v,
+									(byte) channel, DELTA.delta, format);
 				}
 				return DELTA;
 			}
@@ -345,8 +351,9 @@ public abstract class MidiParser {
 				} else {
 					bytes.add(read);
 				}
-				if ((trackLen -= len) < 0)
+				if ((trackLen -= len) < 0) {
 					throw new NoEOT();
+				}
 			} else {
 				bytes.add(read);
 			}
@@ -461,8 +468,10 @@ public abstract class MidiParser {
 					return DISCARD_N;
 				case 0xc:
 					// program change
-					if (runningStatus)
-						throw new IllegalStateException("Running state 0xc.");
+					if (runningStatus) {
+						throw new IllegalStateException(
+								"Running state 0xc.");
+					}
 					PROGRAM_CHANGE.channel = data;
 					return PROGRAM_CHANGE;
 				case 0xd:
@@ -516,513 +525,523 @@ public abstract class MidiParser {
 	/** Header of a track within a midi file, byte equivalent */
 	protected static final int TRACK_HEADER_INT = 0x4d54726b;
 
-	final static Set<ParseState> instancesOfParseState =
-			new HashSet<>();
+	final static Set<ParseState> instancesOfParseState = new HashSet<>();
 
-			/**
-			 * Creates a new Parser using giving implementation.
-			 * 
-			 * @param sc
-			 * @return the selected parser
-			 */
-			public final static MidiParser createInstance(final StartupContainer sc) {
-				return new MidiParserImpl(sc);
+	/**
+	 * Creates a new Parser using giving implementation.
+	 * 
+	 * @param sc
+	 * @return the selected parser
+	 */
+	public final static MidiParser
+			createInstance(final StartupContainer sc) {
+		return new MidiParserImpl(sc);
+	}
+
+	/** The master thread, to check for interruption */
+	protected final MasterThread master;
+
+	/** A map holding the parsed data */
+	protected final Map<Integer, List<MidiEvent>> eventsEncoded =
+			new HashMap<>();
+	/** A map holding the parsed data */
+	protected final MidiMap eventsDecoded = new MidiMap(this);
+
+	/** A map to keep track of skipped tracks and resulting renumbering */
+	protected final Map<Integer, Integer> renumberMap = new HashMap<>();
+
+	/** IOHandler to use */
+	protected final IOHandler io;
+
+	/** Usable StringBuilder, no guarantee on the content */
+	protected final StringBuilder sb = new StringBuilder();
+
+	/** implementing sub classes have to set the actual parsed duration */
+	protected double duration;
+	/** File currently being handled in this parser */
+	protected Path midi;
+
+	/** Number of tracks */
+	protected int ntracks;
+
+	/** Number of track currently parsed */
+	protected int activeTrack;
+
+	/** Format of this midi */
+	protected int format;
+
+	final ParseState CHANNEL = new ParseState_ReadN(1) {
+
+		@Override
+		final void end() {
+			final byte c = bytes.remove();
+			tracksToChannel.put(activeTrack, c);
+			activeChannel = 0xff & c;
+		}
+	};
+	final ParseState_Delta DELTA = new ParseState_Delta();
+	final ParseState DISCARD_UNTIL_EOX = new ParseState() {
+
+		@Override
+		final ParseState getNext(byte read) {
+			if (read == (byte) 0xf7) {
+				return DELTA;
 			}
+			return this;
+		}
 
-			/** The master thread, to check for interruption */
-			protected final MasterThread master;
+		@Override
+		final void reset() {
+			// nothing to reste
+		}
 
-			/** A map holding the parsed data */
-			protected final Map<Integer, List<MidiEvent>> eventsEncoded =
-					new HashMap<>();
-					/** A map holding the parsed data */
-					protected final MidiMap eventsDecoded = new MidiMap(this);
+	};
 
-					/** A map to keep track of skipped tracks and resulting renumbering */
-					protected final Map<Integer, Integer> renumberMap = new HashMap<>();
+	final ParseState_ReadN DISCARD_N = new ParseState_ReadN() {
 
-					/** IOHandler to use */
-					protected final IOHandler io;
+		@Override
+		final void end() {
+			bytes.clear();
+			if (DELTA.delta != 0) {
+				lastEvent = new Break(DELTA.delta);
+			}
+		}
+	};
+	final ParseState EOT = new ParseState_EOT();
+	final ParseState_Header HEADER = new ParseState_Header();
+	final ParseState_Type TYPE = new ParseState_Type();
+	final ParseState META = new ParseState_Meta();
+	final ParseState NAME = new ParseState_ReadN() {
 
-					/** Usable StringBuilder, no guarantee on the content */
-					protected final StringBuilder sb = new StringBuilder();
+		@Override
+		final void end() {
+			sb.setLength(0);
+			while (!bytes.isEmpty()) {
+				sb.append((char) bytes.remove().byteValue());
+			}
+			if (sb.length() > 60) {
+				sb.setLength(60);
+			}
+			titles.put(activeTrack, sb.toString().trim());
+		}
 
-					/** implementing sub classes have to set the actual parsed duration */
-					protected double duration;
-					/** File currently being handled in this parser */
-					protected Path midi;
+	};
+	final ParseState_NoteOn NOTE_ON = new ParseState_NoteOn();
+	final ParseState_NoteOff NOTE_OFF = new ParseState_NoteOff();
+	final ParseState_ProgramChange PROGRAM_CHANGE =
+			new ParseState_ProgramChange();
 
-					/** Number of tracks */
-					protected int ntracks;
+	final ParseState TEMPO = new ParseState_Tempo();
 
-					/** Number of track currently parsed */
-					protected int activeTrack;
+	final ParseState TIME = new ParseState_Time();
 
-					/** Format of this midi */
-					protected int format;
+	/** A map mapping channels to instruments */
+	final Map<Byte, Byte> channelsToInstrument = new HashMap<>();
+	/** A map holding the instruments */
+	private final Map<Integer, MidiInstrument> instruments =
+			new HashMap<>();
+	/** A map holding the titles */
+	final Map<Integer, String> titles = new HashMap<>();
+	/** A map mapping tracks to channels */
+	final Map<Integer, Byte> tracksToChannel = new HashMap<>();
+	final ArrayDeque<Byte> bytes = new ArrayDeque<>();
+	/** Number of channel currently parsed */
+	int activeChannel = -1;
+	MidiEvent lastEvent;
+	private Path lastParsedMidi = null;
+	private int lock = 0;
+	private int lockRead = 0;
+	private long mod;
+	ParseState state = HEADER;
 
-					final ParseState CHANNEL = new ParseState_ReadN(1) {
+	int trackLen;
 
-						@Override
-						final void end() {
-							final byte c = bytes.remove();
-							tracksToChannel.put(activeTrack, c);
-							activeChannel = 0xff & c;
-						}
-					};
-					final ParseState_Delta DELTA = new ParseState_Delta();
-					final ParseState DISCARD_UNTIL_EOX = new ParseState() {
+	/**
+	 * @param io
+	 * @param master
+	 */
+	protected MidiParser(final IOHandler io, final MasterThread master) {
+		this.io = io;
+		this.master = master;
+	}
 
-						@Override
-						final ParseState getNext(byte read) {
-							if (read == (byte) 0xf7)
-								return DELTA;
-							return this;
-						}
+	/**
+	 * @return the duration of entire song in seconds
+	 */
+	public final double getDuration() {
+		return duration;
+	}
 
-						@Override
-						final void reset() {
-							// nothing to reste
-						}
+	/**
+	 * @return the currently used midi-file
+	 */
+	public final String getMidi() {
+		return midi.getFileName();
+	}
 
-					};
-
-					final ParseState_ReadN DISCARD_N = new ParseState_ReadN() {
-
-						@Override
-						final void end() {
-							bytes.clear();
-							if (DELTA.delta != 0) {
-								lastEvent = new Break(DELTA.delta);
+	/**
+	 * Parses the selected midi file and returns the instruments.
+	 * <p>
+	 * This method is thread-safe
+	 * </p>
+	 * 
+	 * @return a map with parsed instruments
+	 */
+	public final Map<Integer, MidiInstrument> instruments() {
+		synchronized (this) {
+			while (lock > 0) {
+				try {
+					wait();
+				} catch (final InterruptedException e) {
+					Thread.currentThread().interrupt();
+					return null;
+				}
+			}
+			++lockRead;
+		}
+		try {
+			parseIfNeeded();
+			if (lastParsedMidi == null) {
+				synchronized (this) {
+					--lockRead;
+					notifyAll();
+				}
+				return null;
+			}
+			final Map<Integer, MidiInstrument> map =
+					new TreeMap<>(instruments);
+			for (final Integer track : eventsEncoded.keySet()) {
+				if (track == 0) {
+					continue;
+				}
+				if (track == -1) {
+					break;
+				}
+				if (!map.containsKey(track)) {
+					final Byte channelObject = tracksToChannel.get(track);
+					final byte channel =
+							(byte) (channelObject == null ? track
+									.byteValue() - 1 : channelObject
+									.byteValue());
+					if ((channel == 9) || (channel == 10)) {
+						map.put(track, MidiInstrument.DRUMS);
+					} else {
+						final MidiInstrument i;
+						if (channel == -1) {
+							i = MidiInstrument.get(track.byteValue());
+						} else {
+							final Byte instrument =
+									channelsToInstrument.get(channel);
+							if (instrument == null) {
+								i = null;
+							} else {
+								i = MidiInstrument.get(instrument);
 							}
 						}
-					};
-					final ParseState EOT = new ParseState_EOT();
-					final ParseState_Header HEADER = new ParseState_Header();
-					final ParseState_Type TYPE = new ParseState_Type();
-					final ParseState META = new ParseState_Meta();
-					final ParseState NAME = new ParseState_ReadN() {
-
-						@Override
-						final void end() {
-							sb.setLength(0);
-							while (!bytes.isEmpty()) {
-								sb.append((char) bytes.remove().byteValue());
-							}
-							if (sb.length() > 60) {
-								sb.setLength(60);
-							}
-							titles.put(activeTrack, sb.toString().trim());
-						}
-
-					};
-					final ParseState_NoteOn NOTE_ON = new ParseState_NoteOn();
-					final ParseState_NoteOff NOTE_OFF = new ParseState_NoteOff();
-					final ParseState_ProgramChange PROGRAM_CHANGE =
-							new ParseState_ProgramChange();
-
-					final ParseState TEMPO = new ParseState_Tempo();
-
-					final ParseState TIME = new ParseState_Time();
-
-					/** A map mapping channels to instruments */
-					final Map<Byte, Byte> channelsToInstrument = new HashMap<>();
-					/** A map holding the instruments */
-					private final Map<Integer, MidiInstrument> instruments = new HashMap<>();
-					/** A map holding the titles */
-					final Map<Integer, String> titles = new HashMap<>();
-					/** A map mapping tracks to channels */
-					final Map<Integer, Byte> tracksToChannel = new HashMap<>();
-					final ArrayDeque<Byte> bytes = new ArrayDeque<>();
-					/** Number of channel currently parsed */
-					int activeChannel = -1;
-					MidiEvent lastEvent;
-					private Path lastParsedMidi = null;
-					private int lock = 0;
-					private int lockRead = 0;
-					private long mod;
-					ParseState state = HEADER;
-
-					int trackLen;
-
-					/**
-					 * @param io
-					 * @param master
-					 */
-					protected MidiParser(final IOHandler io, final MasterThread master) {
-						this.io = io;
-						this.master = master;
+						map.put(track, i);
 					}
+				}
+			}
+			return map;
+		} catch (final FileNotFoundException e) {
+			io.printError("Selected midi does not exist", true);
+			return null;
+		} finally {
+			synchronized (this) {
+				--lockRead;
+				notifyAll();
+			}
+		}
 
-					/**
-					 * @return the duration of entire song in seconds
-					 */
-					public final double getDuration() {
-						return duration;
+	}
+
+	/**
+	 * Creates the files remap.exe of BruTE is expecting. These are the midigram
+	 * and the mftext from the midi with the like the midi2abc tool does.
+	 * 
+	 * @param wd
+	 *            working directory for BruTE
+	 */
+	// public final void midi2abc(final Path wd) {
+	// final io.OutputStream gram = io.openOut(wd.resolve("out.gram").toFile());
+	// final io.OutputStream mf = io.openOut(wd.resolve("out.mf").toFile());
+	// // make midi2abc yourself
+	// io.close(gram);
+	// io.close(mf);
+	// throw new RuntimeException("Not yet implemented");
+	// }
+
+	/**
+	 * Parses the selected midi file.
+	 * <p>
+	 * This method is thread-safe
+	 * </p>
+	 * 
+	 * @return a map of all midi events
+	 */
+	public final MidiMap parse() {
+		synchronized (this) {
+			while ((lock > 0) || (lockRead > 0)) {
+				try {
+					wait();
+				} catch (final InterruptedException e) {
+					Thread.currentThread().interrupt();
+					return null;
+				}
+			}
+			++lockRead;
+		}
+		try {
+			parseIfNeeded();
+			if (lastParsedMidi == null) {
+				return null;
+			}
+			final MidiMap eventsDecoded_ = eventsDecoded.clone();
+			return eventsDecoded_;
+		} catch (final FileNotFoundException e) {
+			io.printError("Selected midi does not exist", true);
+			return null;
+		} finally {
+			synchronized (this) {
+				// exception will decrement sooner
+				--lockRead;
+				notifyAll();
+			}
+		}
+
+	}
+
+	/**
+	 * @return the map mapping ids of midi-tracks to subsequent numbers
+	 */
+	public final Map<Integer, Integer> renumberMap() {
+		return new HashMap<>(renumberMap);
+	}
+
+	/**
+	 * Sets given midi to be parsed
+	 * 
+	 * @param midi
+	 * @return <i>true</i> on success, <i>false</i> otherwise
+	 */
+	public final boolean setMidi(final Path midi) {
+		if (midi == null) {
+			throw new IllegalArgumentException();
+		}
+		synchronized (this) {
+			++lock;
+			while (lockRead > 0) {
+				try {
+					wait();
+				} catch (final InterruptedException e) {
+					--lock;
+					notifyAll();
+					return false;
+				}
+			}
+			lockRead = 1;
+		}
+		if ((this.midi == midi) && (mod == midi.toFile().lastModified())) {
+			synchronized (this) {
+				lockRead = 0;
+				--lock;
+				notifyAll();
+			}
+			return true;
+		}
+		this.midi = null;
+		duration = 0;
+		lastParsedMidi = null;
+		tracksToChannel.clear();
+		channelsToInstrument.clear();
+		titles.clear();
+		eventsEncoded.clear();
+		renumberMap.clear();
+		bytes.clear();
+		for (final ParseState ps : MidiParser.instancesOfParseState) {
+			ps.reset();
+		}
+		state = HEADER;
+		activeTrack = 0;
+		activeChannel = -1;
+		ntracks = -1;
+		try {
+			prepareMidi(midi);
+			this.midi = midi;
+			mod = midi.toFile().lastModified();
+			return true;
+		} catch (final Exception e) {
+			io.handleException(ExceptionHandle.CONTINUE, e);
+			return false;
+		} finally {
+			synchronized (this) {
+				lockRead = 0;
+				--lock;
+				notifyAll();
+			}
+		}
+	}
+
+	/**
+	 * Parses the selected midi file and returns the titles.
+	 * <p>
+	 * This method is thread-safe
+	 * </p>
+	 * 
+	 * @return a map with parsed titles
+	 */
+	public final Map<Integer, String> titles() {
+		synchronized (this) {
+			while ((lock > 0) || (lockRead > 0)) {
+				try {
+					wait();
+				} catch (final InterruptedException e) {
+					Thread.currentThread().interrupt();
+					return null;
+				}
+			}
+			++lockRead;
+		}
+		try {
+			parseIfNeeded();
+			return new HashMap<>(titles);
+		} catch (final FileNotFoundException e) {
+			io.printError("Selected midi does not exist", true);
+			return null;
+		} finally {
+			synchronized (this) {
+				--lockRead;
+				notifyAll();
+			}
+		}
+
+	}
+
+	/**
+	 * @return a set of all indices of last parsed midi.
+	 */
+	public final Set<Integer> tracks() {
+		return eventsEncoded.keySet();
+	}
+
+	private final void parseIfNeeded() throws FileNotFoundException {
+		if (lastParsedMidi != midi) {
+			if (midi != null) {
+				if (!midi.exists()) {
+					throw new FileNotFoundException();
+				}
+				try {
+					createMidiMap();
+					decodeMidiMap();
+				} catch (final IOException e) {
+					lastParsedMidi = null;
+					synchronized (this) {
+						notifyAll();
 					}
+					e.printStackTrace();
+					io.handleException(ExceptionHandle.CONTINUE, e);
+					return;
+				} catch (final DecodingException e) {
+					lastParsedMidi = null;
+					io.printError(e.toString(), false);
+					return;
+				} catch (final ParsingException e) {
+					lastParsedMidi = null;
+					io.printError(e.toString(), false);
+					return;
+				}
+			}
+		} else if (lastParsedMidi == null) {
+			throw new IllegalStateException("Nothing parsed");
+		}
+		if (Thread.currentThread().isInterrupted()) {
+			return;
+		}
+		lastParsedMidi = midi;
+	}
 
-					/**
-					 * @return the currently used midi-file
-					 */
-					public final String getMidi() {
-						return midi.getFileName();
-					}
+	/**
+	 * Creates a new midi event described by given bytes and delta ticks. Header
+	 * chunks are not allowed (starting with MT).
+	 * 
+	 * @param message
+	 *            bytes to parse
+	 * @param delta
+	 *            a time offset to prior event in milliseconds
+	 * @return the parsed event
+	 * @throws ParsingException
+	 */
+	protected final MidiEvent createEvent(byte[] message, int delta)
+			throws ParsingException {
+		if (state == HEADER) {
+			state = DELTA;
+		}
+		assert (state == DELTA) || (state == HEADER);
+		lastEvent = null;
+		DELTA.delta = delta;
+		state = TYPE;
+		for (final byte element : message) {
+			state.parse(element);
+		}
+		assert (state == DELTA) || (state == HEADER);
+		DELTA.delta = 0;
 
-					/**
-					 * Parses the selected midi file and returns the instruments.
-					 * <p>
-					 * This method is thread-safe
-					 * </p>
-					 * 
-					 * @return a map with parsed instruments
-					 */
-					public final Map<Integer, MidiInstrument> instruments() {
-						synchronized (this) {
-							while (lock > 0) {
-								try {
-									wait();
-								} catch (final InterruptedException e) {
-									Thread.currentThread().interrupt();
-									return null;
-								}
-							}
-							++lockRead;
-						}
-						try {
-							parseIfNeeded();
-							if (lastParsedMidi == null) {
-								synchronized (this) {
-									--lockRead;
-									notifyAll();
-								}
-								return null;
-							}
-							final Map<Integer, MidiInstrument> map = new TreeMap<>(instruments);
-							for (final Integer track : eventsEncoded.keySet()) {
-								if (track == 0) {
-									continue;
-								}
-								if (track == -1) {
-									break;
-								}
-								if (!map.containsKey(track)) {
-									final Byte channelObject = tracksToChannel.get(track);
-									final byte channel =
-											(byte) (channelObject == null ? track.byteValue() - 1
-													: channelObject.byteValue());
-									if ((channel == 9) || (channel == 10)) {
-										map.put(track, MidiInstrument.DRUMS);
-									} else {
-										final MidiInstrument i;
-										if (channel == -1) {
-											i = MidiInstrument.get(track.byteValue());
-										} else {
-											final Byte instrument =
-													channelsToInstrument.get(channel);
-											if (instrument == null) {
-												i = null;
-											} else {
-												i = MidiInstrument.get(instrument);
-											}
-										}
-										map.put(track, i);
-									}
-								}
-							}
-							return map;
-						} catch (final FileNotFoundException e) {
-							io.printError("Selected midi does not exist", true);
-							return null;
-						} finally {
-							synchronized (this) {
-								--lockRead;
-								notifyAll();
-							}
-						}
+		return lastEvent;
+	}
 
-					}
+	/**
+	 * Reads the given midi-file
+	 * 
+	 * @throws ParsingException
+	 *             if any errors occur while parsing
+	 * @throws IOException
+	 *             if an I/O-Error occurs
+	 */
+	protected abstract void createMidiMap() throws ParsingException,
+			IOException;
 
-					/**
-					 * Creates the files remap.exe of BruTE is expecting.
-					 * These are the midigram and the mftext from the midi with the like the
-					 * midi2abc tool does.
-					 * 
-					 * @param wd
-					 *            working directory for BruTE
-					 */
-					//	public final void midi2abc(final Path wd) {
-					//		final io.OutputStream gram = io.openOut(wd.resolve("out.gram").toFile());
-					//		final io.OutputStream mf = io.openOut(wd.resolve("out.mf").toFile());
-					//		// make midi2abc yourself
-					//		io.close(gram);
-					//		io.close(mf);
-					//		throw new RuntimeException("Not yet implemented");
-					//	}
+	/**
+	 * Decodes the previously read midi-map
+	 * 
+	 * @throws DecodingException
+	 */
+	protected abstract void decodeMidiMap() throws DecodingException;
 
-					/**
-					 * Parses the selected midi file.
-					 * <p>
-					 * This method is thread-safe
-					 * </p>
-					 * 
-					 * @return a map of all midi events
-					 */
-					public final MidiMap parse() {
-						synchronized (this) {
-							while ((lock > 0) || (lockRead > 0)) {
-								try {
-									wait();
-								} catch (final InterruptedException e) {
-									Thread.currentThread().interrupt();
-									return null;
-								}
-							}
-							++lockRead;
-						}
-						try {
-							parseIfNeeded();
-							if (lastParsedMidi == null)
-								return null;
-							final MidiMap eventsDecoded_ = eventsDecoded.clone();
-							return eventsDecoded_;
-						} catch (final FileNotFoundException e) {
-							io.printError("Selected midi does not exist", true);
-							return null;
-						} finally {
-							synchronized (this) {
-								// exception will decrement sooner
-								--lockRead;
-								notifyAll();
-							}
-						}
+	/**
+	 * Parses a single midi event reading from given InputStream.
+	 * 
+	 * @param in
+	 *            InputStream to read from
+	 * @return next midi event
+	 * @throws IOException
+	 *             if an I/O-Error occurs.
+	 * @throws ParsingException
+	 *             if the midi file breaks the grammar of midi-files
+	 */
+	protected final MidiEvent parse(final InputStream in)
+			throws IOException, ParsingException {
+		if (Thread.currentThread().isInterrupted()) {
+			return null;
+		}
+		assert (state == DELTA) || (state == HEADER);
+		lastEvent = null;
+		DELTA.delta = 0;
+		while ((state == DELTA) || (state == HEADER)) {
+			state.parse((byte) in.read());
+		}
+		do {
+			state.parse((byte) in.read());
+		} while ((state != DELTA) && (state != HEADER));
+		return lastEvent;
+	}
 
-					}
-
-					/**
-					 * @return the map mapping ids of midi-tracks to subsequent numbers
-					 */
-					public final Map<Integer, Integer> renumberMap() {
-						return new HashMap<>(renumberMap);
-					}
-
-					/**
-					 * Sets given midi to be parsed
-					 * 
-					 * @param midi
-					 * @return <i>true</i> on success, <i>false</i> otherwise
-					 */
-					public final boolean setMidi(final Path midi) {
-						if (midi == null)
-							throw new IllegalArgumentException();
-						synchronized (this) {
-							++lock;
-							while (lockRead > 0) {
-								try {
-									wait();
-								} catch (final InterruptedException e) {
-									--lock;
-									notifyAll();
-									return false;
-								}
-							}
-							lockRead = 1;
-						}
-						if ((this.midi == midi) && (mod == midi.toFile().lastModified())) {
-							synchronized (this) {
-								lockRead = 0;
-								--lock;
-								notifyAll();
-							}
-							return true;
-						}
-						this.midi = null;
-						duration = 0;
-						lastParsedMidi = null;
-						tracksToChannel.clear();
-						channelsToInstrument.clear();
-						titles.clear();
-						eventsEncoded.clear();
-						renumberMap.clear();
-						bytes.clear();
-						for (final ParseState ps : MidiParser.instancesOfParseState) {
-							ps.reset();
-						}
-						state = HEADER;
-						activeTrack = 0;
-						activeChannel = -1;
-						ntracks = -1;
-						try {
-							prepareMidi(midi);
-							this.midi = midi;
-							mod = midi.toFile().lastModified();
-							return true;
-						} catch (final Exception e) {
-							io.handleException(ExceptionHandle.CONTINUE, e);
-							return false;
-						} finally {
-							synchronized (this) {
-								lockRead = 0;
-								--lock;
-								notifyAll();
-							}
-						}
-					}
-
-					/**
-					 * Parses the selected midi file and returns the titles.
-					 * <p>
-					 * This method is thread-safe
-					 * </p>
-					 * 
-					 * @return a map with parsed titles
-					 */
-					public final Map<Integer, String> titles() {
-						synchronized (this) {
-							while ((lock > 0) || (lockRead > 0)) {
-								try {
-									wait();
-								} catch (final InterruptedException e) {
-									Thread.currentThread().interrupt();
-									return null;
-								}
-							}
-							++lockRead;
-						}
-						try {
-							parseIfNeeded();
-							return new HashMap<>(titles);
-						} catch (final FileNotFoundException e) {
-							io.printError("Selected midi does not exist", true);
-							return null;
-						} finally {
-							synchronized (this) {
-								--lockRead;
-								notifyAll();
-							}
-						}
-
-					}
-
-					/**
-					 * @return a set of all indices of last parsed midi.
-					 */
-					public final Set<Integer> tracks() {
-						return eventsEncoded.keySet();
-					}
-
-					private final void parseIfNeeded() throws FileNotFoundException {
-						if (lastParsedMidi != midi) {
-							if (midi != null) {
-								if (!midi.exists())
-									throw new FileNotFoundException();
-								try {
-									createMidiMap();
-									decodeMidiMap();
-								} catch (final IOException e) {
-									lastParsedMidi = null;
-									synchronized (this) {
-										notifyAll();
-									}
-									e.printStackTrace();
-									io.handleException(ExceptionHandle.CONTINUE, e);
-									return;
-								} catch (final DecodingException e) {
-									lastParsedMidi = null;
-									io.printError(e.toString(), false);
-									return;
-								} catch (final ParsingException e) {
-									lastParsedMidi = null;
-									io.printError(e.toString(), false);
-									return;
-								}
-							}
-						} else if (lastParsedMidi == null)
-							throw new IllegalStateException("Nothing parsed");
-						if (Thread.currentThread().isInterrupted())
-							return;
-						lastParsedMidi = midi;
-					}
-
-					/**
-					 * Creates a new midi event described by given bytes and delta ticks.
-					 * Header chunks are not allowed (starting with MT).
-					 * 
-					 * @param message
-					 *            bytes to parse
-					 * @param delta
-					 *            a time offset to prior event in milliseconds
-					 * @return the parsed event
-					 * @throws ParsingException
-					 */
-					protected final MidiEvent createEvent(byte[] message, int delta)
-							throws ParsingException {
-						if (state == HEADER) {
-							state = DELTA;
-						}
-						assert (state == DELTA) || (state == HEADER);
-						lastEvent = null;
-						DELTA.delta = delta;
-						state = TYPE;
-						for (final byte element : message) {
-							state.parse(element);
-						}
-						assert (state == DELTA) || (state == HEADER);
-						DELTA.delta = 0;
-
-						return lastEvent;
-					}
-
-					/**
-					 * Reads the given midi-file
-					 * 
-					 * @throws ParsingException
-					 *             if any errors occur while parsing
-					 * @throws IOException
-					 *             if an I/O-Error occurs
-					 */
-					protected abstract void createMidiMap() throws ParsingException,
-					IOException;
-
-					/**
-					 * Decodes the previously read midi-map
-					 * 
-					 * @throws DecodingException
-					 */
-					protected abstract void decodeMidiMap() throws DecodingException;
-
-					/**
-					 * Parses a single midi event reading from given InputStream.
-					 * 
-					 * @param in
-					 *            InputStream to read from
-					 * @return next midi event
-					 * @throws IOException
-					 *             if an I/O-Error occurs.
-					 * @throws ParsingException
-					 *             if the midi file breaks the grammar of midi-files
-					 */
-					protected final MidiEvent parse(final InputStream in) throws IOException,
-					ParsingException {
-						if (Thread.currentThread().isInterrupted())
-							return null;
-						assert (state == DELTA) || (state == HEADER);
-						lastEvent = null;
-						DELTA.delta = 0;
-						while ((state == DELTA) || (state == HEADER)) {
-							state.parse((byte) in.read());
-						}
-						do {
-							state.parse((byte) in.read());
-						} while ((state != DELTA) && (state != HEADER));
-						return lastEvent;
-					}
-
-					/**
-					 * Requests to delete and clear all cached data to prepare next parsing
-					 * routine
-					 * 
-					 * @param newMidi
-					 * @throws Exception
-					 */
-					protected abstract void prepareMidi(final Path newMidi) throws Exception;
+	/**
+	 * Requests to delete and clear all cached data to prepare next parsing
+	 * routine
+	 * 
+	 * @param newMidi
+	 * @throws Exception
+	 */
+	protected abstract void prepareMidi(final Path newMidi)
+			throws Exception;
 }

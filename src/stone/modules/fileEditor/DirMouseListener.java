@@ -10,6 +10,7 @@ import javax.swing.JScrollPane;
 
 import stone.util.Path;
 
+
 final class DirMouseListener implements MouseListener {
 	/**
 	 * 
@@ -21,8 +22,8 @@ final class DirMouseListener implements MouseListener {
 	private final JPanel panel;
 	private final JScrollPane scroll;
 
-	DirMouseListener(FileEditorPlugin fileEditorPlugin, String[] dirs, Path p, String[] songs,
-			JPanel panel, JScrollPane scroll) {
+	DirMouseListener(FileEditorPlugin fileEditorPlugin, String[] dirs,
+			Path p, String[] songs, JPanel panel, JScrollPane scroll) {
 		this.fileEditorPlugin = fileEditorPlugin;
 		this.dirs = dirs;
 		this.p = p;
@@ -71,7 +72,8 @@ final class DirMouseListener implements MouseListener {
 			}
 			if (all) {
 				for (final String song : songs) {
-					final Path path = fileEditorPlugin.currentDir.resolve(song);
+					final Path path =
+							fileEditorPlugin.currentDir.resolve(song);
 					if (!fileEditorPlugin.selection.contains(path)) {
 						all = false;
 						break;
@@ -81,7 +83,8 @@ final class DirMouseListener implements MouseListener {
 			}
 			if (all) {
 				fileEditorPlugin.selection.removeAll(paths);
-				fileEditorPlugin.selection.add(fileEditorPlugin.currentDir);
+				fileEditorPlugin.selection
+						.add(fileEditorPlugin.currentDir);
 			}
 		} else if (fileEditorPlugin.selection.remove(p)) {
 			fileEditorPlugin.selection.remove(p);
@@ -91,7 +94,8 @@ final class DirMouseListener implements MouseListener {
 				}
 				fileEditorPlugin.selection.add(p.resolve(dir));
 			}
-			for (final String song : fileEditorPlugin.fileEditor.getFiles(p)) {
+			for (final String song : fileEditorPlugin.fileEditor
+					.getFiles(p)) {
 				fileEditorPlugin.selection.add(p.resolve(song));
 			}
 		}

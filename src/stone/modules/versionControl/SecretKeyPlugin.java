@@ -60,7 +60,8 @@ public class SecretKeyPlugin extends GUIPlugin {
 		panel.add(panelButton, BorderLayout.SOUTH);
 		panelButton.add(GUIInterface.Button.ABORT.getButton(),
 				BorderLayout.EAST);
-		panelButton.add(GUIInterface.Button.OK.getButton(), BorderLayout.EAST);
+		panelButton.add(GUIInterface.Button.OK.getButton(),
+				BorderLayout.EAST);
 		return false;
 	}
 

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import stone.util.FileSystem;
 
+
 final class MainConfigWriter implements Runnable {
 
 	/**
@@ -31,8 +32,8 @@ final class MainConfigWriter implements Runnable {
 					final Map<String, String> map =
 							main.configOld.get(entryMap.getKey());
 					if (map == null) {
-						main.configOld.put(entryMap.getKey(),
-								entryMap.getValue());
+						main.configOld.put(entryMap.getKey(), entryMap
+								.getValue());
 					} else {
 						map.putAll(entryMap.getValue());
 					}

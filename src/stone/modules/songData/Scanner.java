@@ -89,8 +89,9 @@ public final class Scanner implements Runnable {
 		while (true) {
 			final ModEntry song;
 			synchronized (queue) {
-				if (queue.isEmpty())
+				if (queue.isEmpty()) {
 					return;
+				}
 				song = queue.remove();
 			}
 			if (song == ModEntry.TERMINATE) {
@@ -103,8 +104,9 @@ public final class Scanner implements Runnable {
 
 			final SongData data = getVoices(song);
 			if (data == null) {
-				if (master.isInterrupted())
+				if (master.isInterrupted()) {
 					return;
+				}
 				synchronized (songsFound) {
 					songsFound.remove(song.getKey());
 				}
@@ -117,8 +119,9 @@ public final class Scanner implements Runnable {
 					io.write(out, bytes.array(), 0, bytes.position());
 				}
 				tree.put(data);
-				if (master.isInterrupted())
+				if (master.isInterrupted()) {
 					return;
+				}
 			}
 			io.updateProgress();
 		}
@@ -211,8 +214,9 @@ public final class Scanner implements Runnable {
 						io.handleException(ExceptionHandle.TERMINATE, e);
 					}
 				}
-				if (error)
+				if (error) {
 					return null;
+				}
 				if (voices.isEmpty()) {
 					io.printError(String.format("Warning: %-50s %s", song
 							.getKey().toString(), "has no voices"), true);

@@ -35,17 +35,18 @@ final class GlobalParamsMouseListener extends ReleaseListener {
 			final JPanel optionPanel = new JPanel();
 			final JButton button = new JButton(m.toString());
 			final MenuListener listener =
-					new MenuListener(GlobalParamsMouseListener.this, button) {
+					new MenuListener(GlobalParamsMouseListener.this,
+							button) {
 
-				@Override
-				protected final void trigger() {
-					globalMenuPanel.removeAll();
-					final JPanel panel0 = new JPanel();
-					globalMenuPanel.add(panel0);
-					m.display(panel0);
-					globalMenu.revalidate();
-				}
-			};
+						@Override
+						protected final void trigger() {
+							globalMenuPanel.removeAll();
+							final JPanel panel0 = new JPanel();
+							globalMenuPanel.add(panel0);
+							m.display(panel0);
+							globalMenu.revalidate();
+						}
+					};
 			button.addChangeListener(listener);
 			button.addMouseListener(listener);
 			optionPanel.add(button);
@@ -54,13 +55,14 @@ final class GlobalParamsMouseListener extends ReleaseListener {
 		final JPanel optionPanelClose = new JPanel();
 		final JButton closeButton = new JButton("Close");
 		final MenuListener listener =
-				new MenuListener(GlobalParamsMouseListener.this, closeButton) {
+				new MenuListener(GlobalParamsMouseListener.this,
+						closeButton) {
 
-			@Override
-			protected final void trigger() {
-				exit();
-			}
-		};
+					@Override
+					protected final void trigger() {
+						exit();
+					}
+				};
 		closeButton.addMouseListener(listener);
 		closeButton.addChangeListener(listener);
 		optionPanelClose.add(closeButton);

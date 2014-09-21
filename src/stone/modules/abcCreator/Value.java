@@ -37,9 +37,9 @@ abstract class Value<E> {
 	 * @return the param value saved at object for given target
 	 */
 	abstract
-	<A extends Container, B extends Container, C extends Container>
-	Value<E> localInstance(DragObject<A, B, C> object,
-			DropTarget<A, B, C> target, final E value);
+			<A extends Container, B extends Container, C extends Container>
+			Value<E> localInstance(DragObject<A, B, C> object,
+					DropTarget<A, B, C> target, final E value);
 
 	abstract E parse(String string);
 

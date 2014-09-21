@@ -41,8 +41,9 @@ class Variable extends NameSchemeElement {
 
 	@Override
 	public final boolean equals(final Object o) {
-		if (VariableDep.class.isInstance(o))
+		if (VariableDep.class.isInstance(o)) {
 			return VariableDep.class.cast(o).equals(this);
+		}
 		return this == o;
 	}
 

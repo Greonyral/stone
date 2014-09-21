@@ -15,8 +15,9 @@ class DoubleMap<K0, K1, V> {
 
 	public V get(final K0 key0, final K1 key1) {
 		final Map<K1, V> e0 = map.get(key0);
-		if (e0 == null)
+		if (e0 == null) {
 			return null;
+		}
 		return e0.get(key1);
 	}
 

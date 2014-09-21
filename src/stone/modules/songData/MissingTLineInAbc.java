@@ -2,6 +2,7 @@ package stone.modules.songData;
 
 import stone.util.Path;
 
+
 final class MissingTLineInAbc extends AbtractEoWInAbc {
 
 	MissingTLineInAbc(final Path song, int line) {

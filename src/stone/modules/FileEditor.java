@@ -67,33 +67,39 @@ public class FileEditor implements Module {
 			final OptionContainer oc) {
 		return new BooleanOption(oc, "changeNumbering",
 				"Changes the numbering of one or more songs.",
-				"Change song numbering", Flag.NoShortFlag, "change-numbering", FileEditor.SECTION,
+				"Change song numbering", Flag.NoShortFlag,
+				"change-numbering", FileEditor.SECTION, null, false);
+	}
+
+	final static BooleanOption createChangeTitleOption(
+			final OptionContainer oc) {
+		return new BooleanOption(oc, "changeTitle",
+				"Changes the title of one or more songs.",
+				"Change song title", 't', "change-title",
+				FileEditor.SECTION, null, false);
+	}
+
+	final static BooleanOption
+			createModDateOption(final OptionContainer oc) {
+		return new BooleanOption(
+				oc,
+				"modDate",
+				"Restores the modification date of files in your repository.",
+				"Restore mod-date", 'm', "rst-mod", FileEditor.SECTION,
 				null, false);
 	}
 
-	final static BooleanOption
-	createChangeTitleOption(final OptionContainer oc) {
-		return new BooleanOption(oc, "changeTitle",
-				"Changes the title of one or more songs.", "Change song title",
-				't', "change-title", FileEditor.SECTION, null, false);
-	}
-
-	final static BooleanOption createModDateOption(final OptionContainer oc) {
-		return new BooleanOption(oc, "modDate",
-				"Restores the modification date of files in your repository.",
-				"Restore mod-date", 'm', "rst-mod", FileEditor.SECTION, null, false);
-	}
-
-	final static StringOption createSongSchemeOption(final OptionContainer oc) {
+	final static StringOption createSongSchemeOption(
+			final OptionContainer oc) {
 		return new StringOption(oc, "uniformScheme",
 				"Changes the scheme for the uniform-songs option. Please have look"
 						+ "in tha manual for the syntax", "Name scheme",
-						Flag.NoShortFlag, "song-scheme", FileEditor.SECTION, "scheme",
-						FileEditor.DEFAULT_SCHEME);
+				Flag.NoShortFlag, "song-scheme", FileEditor.SECTION,
+				"scheme", FileEditor.DEFAULT_SCHEME);
 	}
 
-	final static BooleanOption
-	createUniformSongsOption(final OptionContainer oc) {
+	final static BooleanOption createUniformSongsOption(
+			final OptionContainer oc) {
 		return new BooleanOption(oc, "uniform",
 				"Changes the titles of songs, matching a name scheme.",
 				"Uniform song titles", Flag.NoShortFlag, "uniform-songs",
@@ -107,9 +113,11 @@ public class FileEditor implements Module {
 	final BooleanOption UNIFORM_SONGS;
 
 	private final IOHandler io;
-	private final CanonicalTreeParser treeParserNew = new CanonicalTreeParser();
+	private final CanonicalTreeParser treeParserNew =
+			new CanonicalTreeParser();
 
-	private final CanonicalTreeParser treeParserOld = new CanonicalTreeParser();
+	private final CanonicalTreeParser treeParserOld =
+			new CanonicalTreeParser();
 
 	private final Map<String, Integer> changed = new HashMap<>();
 
@@ -149,15 +157,19 @@ public class FileEditor implements Module {
 		io = sc.getIO();
 		master = sc.getMaster();
 		container =
-				(SongDataContainer) sc.getContainer(SongDataContainer.class
-						.getCanonicalName());
+				(SongDataContainer) sc
+						.getContainer(SongDataContainer.class
+								.getCanonicalName());
 		MOD_DATE = FileEditor.createModDateOption(sc.getOptionContainer());
 		CHANGE_TITLE =
-				FileEditor.createChangeTitleOption(sc.getOptionContainer());
+				FileEditor
+						.createChangeTitleOption(sc.getOptionContainer());
 		CHANGE_NUMBERING =
-				FileEditor.createChangeNumberingOption(sc.getOptionContainer());
+				FileEditor.createChangeNumberingOption(sc
+						.getOptionContainer());
 		UNIFORM_SONGS =
-				FileEditor.createUniformSongsOption(sc.getOptionContainer());
+				FileEditor.createUniformSongsOption(sc
+						.getOptionContainer());
 		SONG_SCHEME =
 				FileEditor.createSongSchemeOption(sc.getOptionContainer());
 		main = sc.getMain();
@@ -214,8 +226,9 @@ public class FileEditor implements Module {
 					true);
 			return;
 		}
-		if (master.isInterrupted())
+		if (master.isInterrupted()) {
 			return;
+		}
 		try {
 			if (UNIFORM_SONGS.getValue()) {
 				container.fill();
@@ -231,8 +244,9 @@ public class FileEditor implements Module {
 				io.handleGUIPlugin(plugin);
 				changeTitle(plugin.getSelection());
 			}
-			if (master.isInterrupted())
+			if (master.isInterrupted()) {
 				return;
+			}
 			if (CHANGE_NUMBERING.getValue()) {
 				container.fill();
 				final FileEditorPlugin plugin =
@@ -240,8 +254,9 @@ public class FileEditor implements Module {
 				io.handleGUIPlugin(plugin);
 				changeNumbering(plugin.getSelection());
 			}
-			if (master.isInterrupted())
+			if (master.isInterrupted()) {
 				return;
+			}
 			for (final SongChangeData scd : changes.values()) {
 				scd.revalidate(io, getNameScheme());
 			}
@@ -259,8 +274,9 @@ public class FileEditor implements Module {
 		for (final Path song : selectionFiles) {
 			final SongChangeData data = get(song);
 			final NumberingGUI plugin = new NumberingGUI(data, io);
-			if (master.isInterrupted())
+			if (master.isInterrupted()) {
 				return;
+			}
 			io.handleGUIPlugin(plugin);
 			if (io.getGUI().getPressedButton() == Button.ABORT) {
 				master.interrupt();
@@ -285,8 +301,8 @@ public class FileEditor implements Module {
 
 	private final void diff(final Git session, final RevWalk walk,
 			final RevCommit commitNew, final ObjectReader reader)
-					throws MissingObjectException, IncorrectObjectTypeException,
-					IOException {
+			throws MissingObjectException, IncorrectObjectTypeException,
+			IOException {
 		int i = 0;
 		if (commitNew.getParentCount() == 0) {
 
@@ -297,8 +313,8 @@ public class FileEditor implements Module {
 			try {
 				final List<DiffEntry> diffs =
 						session.diff().setOldTree(new EmptyTreeIterator())
-						.setNewTree(treeParserNew)
-						.setShowNameAndStatusOnly(true).call();
+								.setNewTree(treeParserNew)
+								.setShowNameAndStatusOnly(true).call();
 				final Iterator<DiffEntry> diffsIterator = diffs.iterator();
 				while (diffsIterator.hasNext()) {
 					changed.put(diffsIterator.next().getNewPath(), time);
@@ -321,12 +337,14 @@ public class FileEditor implements Module {
 					try {
 						final List<DiffEntry> diffs =
 								session.diff().setOldTree(treeParserOld)
-								.setNewTree(treeParserNew)
-								.setShowNameAndStatusOnly(true).call();
+										.setNewTree(treeParserNew)
+										.setShowNameAndStatusOnly(true)
+										.call();
 						final Iterator<DiffEntry> diffsIterator =
 								diffs.iterator();
 						while (diffsIterator.hasNext()) {
-							changed.put(diffsIterator.next().getNewPath(), time);
+							changed.put(diffsIterator.next().getNewPath(),
+									time);
 						}
 					} catch (final GitAPIException e) {
 						io.handleException(ExceptionHandle.CONTINUE, e);
@@ -339,8 +357,9 @@ public class FileEditor implements Module {
 
 	private final SongChangeData get(final Path file) {
 		final SongChangeData change = changes.get(file);
-		if (change != null)
+		if (change != null) {
 			return change;
+		}
 		final SongChangeData data =
 				new SongChangeData(container.getVoices(file), main);
 		changes.put(file, data);
@@ -348,7 +367,8 @@ public class FileEditor implements Module {
 	}
 
 
-	private final NameScheme getNameScheme() throws InvalidNameSchemeException {
+	private final NameScheme getNameScheme()
+			throws InvalidNameSchemeException {
 		if (scheme == null) {
 			scheme = new NameScheme(SONG_SCHEME.value());
 		}
@@ -358,13 +378,14 @@ public class FileEditor implements Module {
 	private final void resetModDate() {
 		final Path repo =
 				container.getRoot().resolve(
-						main.getConfigValue(Main.VC_SECTION, Main.REPO_KEY,
-								"band"));
+						main.getConfigValue(Main.VC_SECTION,
+								Main.REPO_KEY, "band"));
 		try {
 			final Git session = Git.open(repo.toFile());
 			try {
 				final ObjectId head =
-						session.getRepository().getRef("HEAD").getObjectId();
+						session.getRepository().getRef("HEAD")
+								.getObjectId();
 				final RevWalk walk = new RevWalk(session.getRepository());
 
 				final RevCommit commit = walk.parseCommit(head);
@@ -374,7 +395,8 @@ public class FileEditor implements Module {
 				diff(session, walk, commit, reader);
 				reader.release();
 
-				for (final Map.Entry<String, Integer> mod : changed.entrySet()) {
+				for (final Map.Entry<String, Integer> mod : changed
+						.entrySet()) {
 					final File f = repo.resolve(mod.getKey()).toFile();
 					if (f.exists()) {
 						f.setLastModified(TimeUnit.SECONDS.toMillis(mod
@@ -382,8 +404,8 @@ public class FileEditor implements Module {
 					}
 				}
 
-				io.printMessage(null, "update of modification time completed",
-						true);
+				io.printMessage(null,
+						"update of modification time completed", true);
 			} finally {
 				session.close();
 			}
@@ -420,8 +442,9 @@ public class FileEditor implements Module {
 		io.startProgress("Appying name scheme to " + selectionFiles.size()
 				+ " files", selectionFiles.size());
 		for (final Path file : selectionFiles) {
-			if (master.isInterrupted())
+			if (master.isInterrupted()) {
 				return;
+			}
 			final SongChangeData scd = get(file);
 			scd.uniform(io, getNameScheme());
 			io.updateProgress();

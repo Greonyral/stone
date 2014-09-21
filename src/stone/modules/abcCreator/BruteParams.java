@@ -19,7 +19,8 @@ import stone.io.IOHandler;
 
 /**
  * @author Nelphindal
- * @param <E> Type of underlying value. May be Integer or Double.
+ * @param <E>
+ *            Type of underlying value. May be Integer or Double.
  */
 public class BruteParams<E> implements DndPluginCallerParams<E> {
 	/** Pitch with floating limits */
@@ -63,8 +64,9 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 */
 	public final static BruteParams<?> valueOf(final String s) {
 		for (final BruteParams<?> value : BruteParams.values) {
-			if (value.s.equalsIgnoreCase(s))
+			if (value.s.equalsIgnoreCase(s)) {
 				return value;
+			}
 		}
 		return null;
 	}

@@ -16,8 +16,9 @@ import stone.modules.abcCreator.DropTargetContainer;
 
 
 class EmptyMidiInstrumentDropTarget implements
-DropTarget<JPanel, JPanel, JPanel> {
-	final Set<DragObject<JPanel, JPanel, JPanel>> objects = new HashSet<>();
+		DropTarget<JPanel, JPanel, JPanel> {
+	final Set<DragObject<JPanel, JPanel, JPanel>> objects =
+			new HashSet<>();
 	private final DropTargetContainer<JPanel, JPanel, JPanel> container;
 
 	EmptyMidiInstrumentDropTarget(
@@ -38,7 +39,8 @@ DropTarget<JPanel, JPanel, JPanel> {
 	}
 
 	@Override
-	public final DropTargetContainer<JPanel, JPanel, JPanel> getContainer() {
+	public final DropTargetContainer<JPanel, JPanel, JPanel>
+			getContainer() {
 		return container;
 	}
 

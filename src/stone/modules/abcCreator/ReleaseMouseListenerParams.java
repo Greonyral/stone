@@ -4,6 +4,7 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
+
 public interface ReleaseMouseListenerParams {
 
 	JPanel globalMenu();

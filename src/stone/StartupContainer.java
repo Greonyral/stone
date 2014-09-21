@@ -235,8 +235,9 @@ public class StartupContainer {
 	 * threads to parse the config-file.
 	 */
 	public final synchronized void waitForInit() {
-		if (--wait <= 0)
+		if (--wait <= 0) {
 			return;
+		}
 		while (wait != 0) {
 			try {
 				wait();

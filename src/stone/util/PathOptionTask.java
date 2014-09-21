@@ -7,6 +7,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JTextField;
 
+
 final class PathOptionTask implements Runnable {
 	/**
 	 * 
@@ -28,8 +29,7 @@ final class PathOptionTask implements Runnable {
 		} else {
 			value = path.toString();
 		}
-		final JFileChooser fileChooser =
-				new JFileChooser(value);
+		final JFileChooser fileChooser = new JFileChooser(value);
 		final JFrame frame = new JFrame();
 		fileChooser.setFileFilter(pathOption.filter);
 		fileChooser.setDialogTitle(pathOption.getDescription());

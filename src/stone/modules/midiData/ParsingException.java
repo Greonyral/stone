@@ -1,8 +1,8 @@
 package stone.modules.midiData;
 
 /**
- * Exception indicating that an error occured while parsing selected file
- * and generating the midi-events
+ * Exception indicating that an error occured while parsing selected file and
+ * generating the midi-events
  * 
  * @author Nelphindal
  */

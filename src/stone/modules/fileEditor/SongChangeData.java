@@ -40,10 +40,12 @@ public class SongChangeData {
 		}
 
 		final double toLength() {
-			if (beats == 0)
+			if (beats == 0) {
 				return 0.0;
-			if (base == SongChangeData.TIME_BASE)
+			}
+			if (base == SongChangeData.TIME_BASE) {
 				return beats / tempo;
+			}
 			return (beats / tempo) * (base / SongChangeData.TIME_BASE);
 		}
 	}
@@ -54,16 +56,19 @@ public class SongChangeData {
 	private static final double TIME_BASE = 0.25;
 
 	private static Path basePath;
+
 	private static final String testDuration(final String durationS) {
 		String[] split = durationS.split(":");
 		if (split.length != 2) {
 			split = durationS.split("\\.");
-			if (split.length != 2)
+			if (split.length != 2) {
 				return null;
+			}
 		}
 		for (final String s : split) {
-			if (s.length() > 2)
+			if (s.length() > 2) {
 				return null;
+			}
 			final char[] cA = s.toCharArray();
 			boolean start = true, end = true;
 			for (final char c : cA) {
@@ -73,23 +78,28 @@ public class SongChangeData {
 					}
 					continue;
 				}
-				if (!end)
+				if (!end) {
 					return null;
-				if ((c < '0') || (c > '9'))
+				}
+				if ((c < '0') || (c > '9')) {
 					return null;
+				}
 				start = false;
 
 			}
 		}
 		return split[0].trim() + ":" + split[1].trim();
 	}
+
 	private static final String testIndices(final String indicesS) {
 		final String[] split = indicesS.split("/");
-		if (split.length != 2)
+		if (split.length != 2) {
 			return null;
+		}
 		for (final String s : split[0].split(",")) {
-			if (s.length() > 2)
+			if (s.length() > 2) {
 				return null;
+			}
 			final char[] cA = s.toCharArray();
 			boolean start = true, end = true;
 			for (final char c : cA) {
@@ -99,25 +109,30 @@ public class SongChangeData {
 					}
 					continue;
 				}
-				if (!end)
+				if (!end) {
 					return null;
-				if ((c < '0') || (c > '9'))
+				}
+				if ((c < '0') || (c > '9')) {
 					return null;
+				}
 				start = false;
 			}
 		}
 		final char[] cA = split[1].toCharArray();
 		for (final char c : cA) {
-			if ((c < '0') || (c > '9'))
+			if ((c < '0') || (c > '9')) {
 				return null;
+			}
 		}
 		return indicesS;
 	}
+
 	final static Set<Instrument> parse(final String string) {
 		final Set<Instrument> ret = new HashSet<>();
 		final stone.util.StringBuilder part =
 				new stone.util.StringBuilder(string);
-		final stone.util.StringBuilder tmp = new stone.util.StringBuilder();
+		final stone.util.StringBuilder tmp =
+				new stone.util.StringBuilder();
 		final Set<Integer> numbers = new HashSet<>();
 
 		InstrumentType t = null;
@@ -180,7 +195,7 @@ public class SongChangeData {
 			}
 			part.substring(1);
 		} while (!part.isEmpty());
-		if (!tmp.isEmpty())
+		if (!tmp.isEmpty()) {
 			if (tmpContainsNumber) {
 				numbers.add(Integer.parseInt(tmp.toString()));
 			} else {
@@ -190,14 +205,17 @@ public class SongChangeData {
 				}
 				t = InstrumentType.get(tmp.toLowerCase());
 			}
+		}
 		if (t != null) {
 			ret.add(new Instrument(t, numbers));
 		}
 		return ret;
 	}
+
 	private final Map<Integer, String> titles = new HashMap<>();
 
-	private final Map<Integer, Set<Instrument>> instruments = new HashMap<>();
+	private final Map<Integer, Set<Instrument>> instruments =
+			new HashMap<>();
 
 	private final Map<Integer, String> indices = new HashMap<>();
 
@@ -226,12 +244,15 @@ public class SongChangeData {
 	 */
 	public SongChangeData(final SongData voices, final Main main) {
 		this.main = main;
-		date = stone.util.Time.date(voices.getLastModification()).split(" ");
+		date =
+				stone.util.Time.date(voices.getLastModification()).split(
+						" ");
 		file = voices.getPath();
 		System.out.println(file);
 		for (final Map.Entry<Integer, String> titleEntry : voices.voices()
 				.entrySet()) {
-			instruments.put(titleEntry.getKey(), new HashSet<Instrument>());
+			instruments
+					.put(titleEntry.getKey(), new HashSet<Instrument>());
 
 			String title = titleEntry.getValue();
 
@@ -247,8 +268,9 @@ public class SongChangeData {
 			System.out.printf("Analyzation complete: %s\n"
 					+ "title:        %s\n" + "duration:     %s\n"
 					+ "instrument:   %s\n" + "indices:      %s\n\n",
-					titleEntry.getValue(), titles.get(key), duration.get(key),
-					instruments.get(key), indices.get(key));
+					titleEntry.getValue(), titles.get(key), duration
+							.get(key), instruments.get(key), indices
+							.get(key));
 
 
 		}
@@ -259,10 +281,12 @@ public class SongChangeData {
 	 */
 	public final String getTitle() {
 		final Set<String> set = new HashSet<>(titles.values());
-		if (set.isEmpty())
+		if (set.isEmpty()) {
 			return file.getFileName().replaceFirst("\\.abc", "");
-		if (set.size() == 1)
+		}
+		if (set.size() == 1) {
 			return set.iterator().next();
+		}
 		System.out.println("no global title");
 		final Iterator<String> iter = set.iterator();
 		String ret = iter.next();
@@ -281,12 +305,15 @@ public class SongChangeData {
 	 * @param io
 	 * @param scheme
 	 */
-	public final void revalidate(final IOHandler io, final NameScheme scheme) {
-		if (!dirty)
+	public final void revalidate(final IOHandler io,
+			final NameScheme scheme) {
+		if (!dirty) {
 			return;
+		}
 		final Path tmp = writeChunks(io, scheme);
-		if (tmp == null)
+		if (tmp == null) {
 			return;
+		}
 		dirty = false;
 		tmp.renameTo(file);
 	}
@@ -342,7 +369,8 @@ public class SongChangeData {
 		final String rel = file.relativize(getBase());
 		final Path base =
 				SongChangeData.basePath.getParent().resolve(
-						SongChangeData.basePath.getFileName() + "_rewritten");
+						SongChangeData.basePath.getFileName()
+								+ "_rewritten");
 		tmp.renameTo(base.resolve(rel.split("/")));
 	}
 
@@ -367,7 +395,8 @@ public class SongChangeData {
 							tempo.reset();
 							break;
 						case 'Q':
-							final int posQ = Math.max(2, line.indexOf('=') + 1);
+							final int posQ =
+									Math.max(2, line.indexOf('=') + 1);
 							tempo.tempo =
 									Integer.parseInt(line.substring(posQ)
 											.trim());
@@ -405,10 +434,11 @@ public class SongChangeData {
 					} else if (ignore) {
 						ignore = c != '+';
 						continue;
-					} else if (chord && chordLength)
+					} else if (chord && chordLength) {
 						if (c != ']') {
 							continue;
 						}
+					}
 					switch (c) {
 						case '-':
 						case ',':
@@ -484,7 +514,8 @@ public class SongChangeData {
 						default:
 							if ((c == 'z') || (c == 'Z')) {
 								lastIsBreak = true;
-							} else if (((c >= 'a') && (c < 'z')) || ((c >= 'A') && (c < 'Z'))) {
+							} else if (((c >= 'a') && (c < 'z'))
+									|| ((c >= 'A') && (c < 'Z'))) {
 								lastIsBreak = false;
 							}
 							if (!readN || (n > 0)) {
@@ -536,16 +567,18 @@ public class SongChangeData {
 	}
 
 
-	private final String extractDuration(final Integer i, final String title) {
+	private final String extractDuration(final Integer i,
+			final String title) {
 		final int startDuration = title.indexOf("(");
 		if (startDuration >= 0) {
 			final int end = title.indexOf(")", startDuration) + 1;
 			if (end > 0) {
 				String durationS;
 				if ((durationS =
-						testDuration(title
-								.substring(startDuration + 1, end - 1))) == null)
+						testDuration(title.substring(startDuration + 1,
+								end - 1))) == null) {
 					return title;
+				}
 				duration.put(i, durationS);
 				String durationNew;
 				if (startDuration > 0) {
@@ -567,8 +600,10 @@ public class SongChangeData {
 					end = title.length();
 				}
 				final String durationS;
-				if ((durationS = testDuration(title.substring(start + 1, end))) == null)
+				if ((durationS =
+						testDuration(title.substring(start + 1, end))) == null) {
 					return title;
+				}
 				duration.put(i, durationS);
 				String durationNew;
 				if (start > 0) {
@@ -586,7 +621,8 @@ public class SongChangeData {
 
 	}
 
-	private final String extractIndices(final Integer key, final String title) {
+	private final String extractIndices(final Integer key,
+			final String title) {
 		int idx = title.indexOf("/");
 		if (idx > 0) {
 			int start = title.lastIndexOf(" ", idx - 2);
@@ -599,8 +635,9 @@ public class SongChangeData {
 			}
 			final String indicesS =
 					testIndices(title.substring(start + 1, end));
-			if (indicesS == null)
+			if (indicesS == null) {
 				return title;
+			}
 			final String[] split = indicesS.split("/");
 			indices.put(key, split[0]);
 			total.add(Integer.parseInt(split[1].trim()));
@@ -608,7 +645,8 @@ public class SongChangeData {
 			if (start > 0) {
 				titleNew_ = title.substring(0, start);
 				if (titleNew_.endsWith("part")) {
-					titleNew_ = titleNew_.substring(0, titleNew_.length() - 4);
+					titleNew_ =
+							titleNew_.substring(0, titleNew_.length() - 4);
 				}
 			} else {
 				titleNew_ = "";
@@ -640,7 +678,8 @@ public class SongChangeData {
 		return title;
 	}
 
-	private final String extractInstrument(final Integer i, final String title) {
+	private final String extractInstrument(final Integer i,
+			final String title) {
 		int startInstrument = title.indexOf("[");
 		if (startInstrument >= 0) {
 			final int end = title.indexOf("]", startInstrument) + 1;
@@ -664,19 +703,21 @@ public class SongChangeData {
 						continue;
 					}
 					if (start == 0) {
-						titleNew_ = titleNew_.substring(instr.name().length());
+						titleNew_ =
+								titleNew_.substring(instr.name().length());
 						if (titleNew_.startsWith(":")) {
 							titleNew_ = titleNew_.substring(1);
 						}
 					} else {
 						titleNew_ =
 								titleNew_.substring(0, start)
-								+ titleNew_.substring(start
-										+ instr.name().length());
+										+ titleNew_.substring(start
+												+ instr.name().length());
 						if (titleNew_.startsWith(":", start)) {
 							titleNew_ =
 									titleNew_.substring(0, start)
-									+ titleNew_.substring(start + 1);
+											+ titleNew_
+													.substring(start + 1);
 						}
 					}
 
@@ -700,7 +741,8 @@ public class SongChangeData {
 				titleNew_ += title.substring(end + 1);
 			}
 			for (final Instrument instr : is) {
-				final int start = titleNew_.indexOf(instr.name().toLowerCase());
+				final int start =
+						titleNew_.indexOf(instr.name().toLowerCase());
 				if (start < 0) {
 					continue;
 				}
@@ -712,12 +754,12 @@ public class SongChangeData {
 				} else {
 					titleNew_ =
 							titleNew_.substring(0, start)
-							+ titleNew_.substring(start
-									+ instr.name().length());
+									+ titleNew_.substring(start
+											+ instr.name().length());
 					if (titleNew_.startsWith(":", start)) {
 						titleNew_ =
 								titleNew_.substring(0, start)
-								+ titleNew_.substring(start + 1);
+										+ titleNew_.substring(start + 1);
 					}
 				}
 			}
@@ -729,10 +771,12 @@ public class SongChangeData {
 	private final String extractModification(final String title) {
 		final String month = Time.getMonthName(date[2]);
 		final String monthShort = Time.getShortMonthName(date[2]);
-		if (title.contains(month + " " + date[1]))
+		if (title.contains(month + " " + date[1])) {
 			return title.replace(month + " " + date[1], "");
-		if (title.contains(monthShort + " " + date[1]))
+		}
+		if (title.contains(monthShort + " " + date[1])) {
 			return title.replace(monthShort + " " + date[1], "");
+		}
 		for (final String monthE : Time.getShortMonthNames()) {
 			final int start = title.indexOf(monthE);
 			if (start < 0) {
@@ -788,18 +832,23 @@ public class SongChangeData {
 	}
 
 	private Path getBase() {
-		if (SongChangeData.basePath != null)
+		if (SongChangeData.basePath != null) {
 			return SongChangeData.basePath;
+		}
 		final String baseString =
-				main.getConfigValue(Main.GLOBAL_SECTION, Main.PATH_KEY, null);
-		if (baseString == null)
+				main.getConfigValue(Main.GLOBAL_SECTION, Main.PATH_KEY,
+						null);
+		if (baseString == null) {
 			return null;
-		return SongChangeData.basePath = Path.getPath(baseString.split("/")).resolve("Music");
+		}
+		return SongChangeData.basePath =
+				Path.getPath(baseString.split("/")).resolve("Music");
 	}
 
 
 	@SuppressWarnings("resource")
-	private final Path writeChunks(final IOHandler io, final NameScheme scheme) {
+	private final Path writeChunks(final IOHandler io,
+			final NameScheme scheme) {
 		final Path tmp = MasterThread.tmp().resolve(file.getFileName());
 		final Path headerChunk =
 				tmp.getParent().resolve(file.getFileName() + "_head");
@@ -847,8 +896,9 @@ public class SongChangeData {
 		if (titleNew != null) {
 			scheme.title(titleNew);
 		}
-		if (!writeChunks(io, headerChunk, partsToChunk, scheme))
+		if (!writeChunks(io, headerChunk, partsToChunk, scheme)) {
 			return null;
+		}
 		out = io.openOut(tmp.toFile());
 		io.write(io.openIn(headerChunk.toFile()), out);
 		headerChunk.delete();

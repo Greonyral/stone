@@ -25,7 +25,7 @@ class ValueFloat extends Value<Double> {
 					Integer.valueOf(max));
 			label.setText(String.format("%s %.2f", value == 0 ? " "
 					: value > 0 ? "+" : "-", Double.valueOf(Math
-							.abs(value))));
+					.abs(value))));
 		}
 	}
 
@@ -65,7 +65,7 @@ class ValueFloat extends Value<Double> {
 		slider.setMinorTickSpacing(ticks);
 		label.setText(String.format("%s %.2f", value == 0 ? " "
 				: value > 0 ? "+" : "-", Double.valueOf(Math.abs(value)
-						/ factor)));
+				/ factor)));
 		if (object != null) {
 			bruteParams.setLocalValue(object, target, Double
 					.valueOf(value));
@@ -110,8 +110,8 @@ class ValueFloat extends Value<Double> {
 
 	@Override
 	final <A extends Container, B extends Container, C extends Container>
-	Value<Double> localInstance(final DragObject<A, B, C> object,
-			final DropTarget<A, B, C> target, final Double value) {
+			Value<Double> localInstance(final DragObject<A, B, C> object,
+					final DropTarget<A, B, C> target, final Double value) {
 		throw new UnsupportedOperationException();
 	}
 }

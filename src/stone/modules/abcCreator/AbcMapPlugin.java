@@ -282,8 +282,9 @@ public final class AbcMapPlugin extends
 	/** */
 	@Override
 	protected final void emptyCenter() {
-		if (empty != null)
+		if (empty != null) {
 			return;
+		}
 		empty = center.getParent();
 		final Container c =
 				(Container) ((Container) center.getComponent(0))

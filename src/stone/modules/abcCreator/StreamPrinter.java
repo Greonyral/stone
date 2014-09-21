@@ -16,6 +16,7 @@ public class StreamPrinter implements Runnable {
 	/** String builder to fill */
 	protected final StringBuilder builder;
 	private final boolean stdErr;
+
 	/**
 	 * @param stream
 	 *            the InputStream to print
@@ -45,8 +46,9 @@ public class StreamPrinter implements Runnable {
 				e.printStackTrace();
 				return;
 			}
-			if (read < 0)
+			if (read < 0) {
 				return;
+			}
 			builder.append((char) read);
 			if (read == '\n') {
 				action();
@@ -56,8 +58,7 @@ public class StreamPrinter implements Runnable {
 	}
 
 	protected void action() {
-		(stdErr ? System.err : System.out).print(builder
-				.toString());
+		(stdErr ? System.err : System.out).print(builder.toString());
 	}
 
 }

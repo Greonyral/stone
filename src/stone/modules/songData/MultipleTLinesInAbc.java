@@ -2,6 +2,7 @@ package stone.modules.songData;
 
 import stone.util.Path;
 
+
 final class MultipleTLinesInAbc extends AbtractEoWInAbc {
 
 	MultipleTLinesInAbc(int line, final Path path) {

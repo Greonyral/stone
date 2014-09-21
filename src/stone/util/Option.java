@@ -9,6 +9,7 @@ import javax.swing.JTextArea;
 
 import stone.io.GUI;
 
+
 /**
  * Superclass for all Options
  * 
@@ -38,7 +39,8 @@ public abstract class Option {
 	/** gui used to display */
 	protected stone.io.GUIInterface gui;
 
-	private final Map<JTextArea, ColorEntry> colorsTextArea = new HashMap<>();
+	private final Map<JTextArea, ColorEntry> colorsTextArea =
+			new HashMap<>();
 	private final OptionContainer optionContainer;
 	private String value;
 
@@ -64,8 +66,9 @@ public abstract class Option {
 	 *            boolean, Option)
 	 * @param argExpected
 	 */
-	protected Option(final OptionContainer optionContainer, final String name,
-			final String toolTip, final String guiDescription, char shortFlag,
+	protected Option(final OptionContainer optionContainer,
+			final String name, final String toolTip,
+			final String guiDescription, char shortFlag,
 			final String longFlag, boolean argExpected) {
 		this(optionContainer, name, toolTip, guiDescription, shortFlag,
 				longFlag, argExpected, null, null, null);
@@ -103,13 +106,15 @@ public abstract class Option {
 	 * @param defaultValue
 	 *            the default value for
 	 *            {@link stone.modules.Main#getConfigValue(String, String, String)}
-	 *            * @see stone.util.OptionContainer#addOption(String, String, char,
-	 *            String, boolean, Option)
+	 *            * @see stone.util.OptionContainer#addOption(String, String,
+	 *            char, String, boolean, Option)
 	 */
-	protected Option(final OptionContainer optionContainer, final String name,
-			final String toolTip, final String guiDescription, char shortFlag,
-			final String longFlag, boolean argExpected, final String section,
-			final String key, final String defaultValue) {
+	protected Option(final OptionContainer optionContainer,
+			final String name, final String toolTip,
+			final String guiDescription, char shortFlag,
+			final String longFlag, boolean argExpected,
+			final String section, final String key,
+			final String defaultValue) {
 		desc = guiDescription;
 		this.name = name;
 		this.toolTip = toolTip;
@@ -210,8 +215,9 @@ public abstract class Option {
 	 * @return a string representing the value of <i>this</i> option
 	 */
 	public String value() {
-		if (optionContainer == null)
+		if (optionContainer == null) {
 			return value;
+		}
 		return optionContainer.getConfigValue(section, key, defaultValue);
 	}
 

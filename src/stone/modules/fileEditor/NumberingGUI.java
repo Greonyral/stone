@@ -50,8 +50,8 @@ public class NumberingGUI extends GUIPlugin {
 	}
 
 	/**
-	 * After returning from {@link IOHandler#handleGUIPlugin(GUIPlugin)} this method should be called to transfer the entered data to the
-	 * container(s).
+	 * After returning from {@link IOHandler#handleGUIPlugin(GUIPlugin)} this
+	 * method should be called to transfer the entered data to the container(s).
 	 */
 	public final void copyFieldsToMaps() {
 		final Map<Integer, Integer> mapIdx = buildRenumberIdxMap();
@@ -70,10 +70,12 @@ public class NumberingGUI extends GUIPlugin {
 
 	private Map<Integer, Integer> buildRenumberIdxMap() {
 		final Map<Integer, Integer> map = new HashMap<>();
-		for (final Map.Entry<Integer, JTextField> idcs : idxToField.entrySet()) {
+		for (final Map.Entry<Integer, JTextField> idcs : idxToField
+				.entrySet()) {
 			final Integer idxNew;
 			try {
-				idxNew = Integer.parseInt(idcs.getValue().getText().trim());
+				idxNew =
+						Integer.parseInt(idcs.getValue().getText().trim());
 			} catch (final Exception e) {
 				io.printError("Error parsing index\n"
 						+ "Song will remain unchanged", false);
@@ -101,7 +103,8 @@ public class NumberingGUI extends GUIPlugin {
 		panel.setLayout(new GridLayout(0, 1));
 		final Font xFieldFont = Font.decode("Arial 12 bold");
 		final Dimension xFieldSize =
-				new Dimension(xFieldFont.getSize() * 4, xFieldFont.getSize());
+				new Dimension(xFieldFont.getSize() * 4, xFieldFont
+						.getSize());
 		{
 			final JPanel headerPanel = new JPanel();
 			final JLabel headerLabelW = new JLabel("     Idx        ");
@@ -126,9 +129,9 @@ public class NumberingGUI extends GUIPlugin {
 				final String titleString = titles.get(key);
 				title =
 						(titleString == null ? "<No title>" : titleString)
-						+ " "
-						+ (instruments_ == null ? "[?]" : instruments_
-								.toString());
+								+ " "
+								+ (instruments_ == null ? "[?]"
+										: instruments_.toString());
 			}
 			trackPanel.setLayout(new BorderLayout());
 			idxPanel.setLayout(new GridLayout(1, 0));

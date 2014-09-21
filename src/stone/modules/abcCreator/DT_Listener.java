@@ -6,7 +6,7 @@ import java.util.Set;
 
 
 final class DT_Listener<C extends Container, D extends Container, T extends Container>
-extends DNDListener<C, D, T> {
+		extends DNDListener<C, D, T> {
 
 	private final DropTarget<C, D, T> target;
 
@@ -29,15 +29,15 @@ extends DNDListener<C, D, T> {
 				markAlias(active, o.getAliases());
 			}
 			o.getDisplayableComponent().setBackground(
-					active ? DNDListener.C_SELECTED0 : DNDListener.C_INACTIVE);
+					active ? DNDListener.C_SELECTED0
+							: DNDListener.C_INACTIVE);
 		}
-		target.getContainer()
-		.getDisplayableComponent()
-		.setBackground(
+		target.getContainer().getDisplayableComponent().setBackground(
 				active ? DNDListener.C_SELECTED0
 						: DNDListener.C_INACTIVE_TARGET);
 		target.getDisplayableComponent().setBackground(
-				active ? DNDListener.C_ACTIVE : DNDListener.C_INACTIVE_TARGET);
+				active ? DNDListener.C_ACTIVE
+						: DNDListener.C_INACTIVE_TARGET);
 		for (final DropTarget<?, ?, ?> t : target.getContainer()) {
 			if (t == target) {
 				continue;
@@ -63,12 +63,15 @@ extends DNDListener<C, D, T> {
 			for (final DropTarget<?, ?, ?> t : o) {
 				if ((t != target) && (t != state.emptyTarget)) {
 					t.getDisplayableComponent().setBackground(
-							active ? DNDListener.C_CLONE : DNDListener.C_INACTIVE_TARGET);
+							active ? DNDListener.C_CLONE
+									: DNDListener.C_INACTIVE_TARGET);
 				}
 			}
 			if (o.getTargetContainer() != target.getContainer()) {
 				o.getTargetContainer().getDisplayableComponent()
-				.setBackground(active ? DNDListener.C_CLONE : DNDListener.C_INACTIVE_TARGET);
+						.setBackground(
+								active ? DNDListener.C_CLONE
+										: DNDListener.C_INACTIVE_TARGET);
 			}
 		}
 	}

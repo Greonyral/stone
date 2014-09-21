@@ -42,6 +42,7 @@ import stone.util.Path;
 import stone.util.PathOption;
 import stone.util.StringOption;
 
+
 /**
  * Simple GUI handling all interaction with the user
  * 
@@ -270,8 +271,9 @@ public class GUI implements GUIInterface {
 	@Override
 	public final void destroy() {
 		synchronized (this) {
-			if (destroyed)
+			if (destroyed) {
 				return;
+			}
 			destroyed = true;
 		}
 		master.interrupt();
@@ -374,8 +376,8 @@ public class GUI implements GUIInterface {
 	 * @param initialDirectory
 	 * @return the selected path or <i>null</i> if user aborted the dialog
 	 */
-	public final Path getPath(final String titleMsg, final FileFilter filter,
-			final File initialDirectory) {
+	public final Path getPath(final String titleMsg,
+			final FileFilter filter, final File initialDirectory) {
 		final JFileChooser chooser;
 		final JLabel title = new JLabel(titleMsg);
 		mainFrame.isAlwaysOnTop();
@@ -383,15 +385,17 @@ public class GUI implements GUIInterface {
 		chooser.setDialogTitle(title.getText());
 		chooser.setDialogType(JFileChooser.OPEN_DIALOG);
 		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		chooser.removeChoosableFileFilter(chooser.getChoosableFileFilters()[0]);
+		chooser.removeChoosableFileFilter(chooser
+				.getChoosableFileFilters()[0]);
 		chooser.setFileFilter(filter);
 		chooser.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				synchronized (Button.class) {
-					if (pressed != null)
+					if (pressed != null) {
 						return;
+					}
 					if (e.getActionCommand().equals("ApproveSelection")) {
 						pressed = Button.YES;
 					} else {
@@ -412,11 +416,13 @@ public class GUI implements GUIInterface {
 
 		mainFrame.setAlwaysOnTop(aot);
 
-		if (pressed != Button.YES)
+		if (pressed != Button.YES) {
 			return null;
+		}
 		final File file = chooser.getSelectedFile();
-		if (file == null)
+		if (file == null) {
 			return null;
+		}
 		return Path.getPath(file.toString());
 	}
 
@@ -470,8 +476,8 @@ public class GUI implements GUIInterface {
 
 	/** */
 	@Override
-	public final void printMessage(final String title, final String message,
-			boolean toFront) {
+	public final void printMessage(final String title,
+			final String message, boolean toFront) {
 		printMessageFunc(title, message, toFront);
 	}
 
@@ -492,9 +498,10 @@ public class GUI implements GUIInterface {
 
 	/** */
 	@Override
-	public final Set<String> selectModules(final Collection<String> modules) {
+	public final Set<String>
+			selectModules(final Collection<String> modules) {
 		mainFrame.getContentPane().removeAll();
-		text.setText("Please select the actions you want to use. Selected actions\n" 
+		text.setText("Please select the actions you want to use. Selected actions\n"
 				+ "may update themselves if outdated. In this case reselect them\n"
 				+ "after the tool restarted.");
 		text.setBackground(mainFrame.getBackground());
@@ -656,8 +663,9 @@ public class GUI implements GUIInterface {
 	private final void waitForButton() {
 		try {
 			synchronized (Button.class) {
-				if (master.isInterrupted())
+				if (master.isInterrupted()) {
 					return;
+				}
 				revalidate(true, true);
 				pressed = null;
 				Button.class.wait();
@@ -680,8 +688,9 @@ public class GUI implements GUIInterface {
 	}
 
 	final void revalidate(boolean pack, boolean toFront) {
-		if (master.isInterrupted())
+		if (master.isInterrupted()) {
 			return;
+		}
 		if (pack) {
 			mainFrame.pack();
 		}

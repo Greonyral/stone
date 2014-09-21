@@ -44,29 +44,38 @@ public class PathOption extends Option {
 	 * @param guiDescription
 	 *            a short string usable to label <i>this</i> option
 	 * @param shortFlag
-	 *            a unique printable char to register at flags or {@link stone.util.Flag#NoShortFlag} to enable this option
+	 *            a unique printable char to register at flags or
+	 *            {@link stone.util.Flag#NoShortFlag} to enable this option
 	 * @param longFlag
-	 *            a unique printable string to register at flags or {@link stone.util.Flag#NoLongFlag} to enable this option
+	 *            a unique printable string to register at flags or
+	 *            {@link stone.util.Flag#NoLongFlag} to enable this option
 	 * @param fileFilter
 	 *            FileFilter to use for displaying
 	 * @param selectionMode
 	 *            the mode for selection
 	 * @param section
-	 *            the section identifier for this option, to access by {@link stone.modules.Main#getConfigValue(String, String, String)} and
+	 *            the section identifier for this option, to access by
+	 *            {@link stone.modules.Main#getConfigValue(String, String, String)}
+	 *            and
 	 *            {@link stone.modules.Main#setConfigValue(String, String, String)}
 	 * @param key
-	 *            the key identifier for this option, to access by {@link stone.modules.Main#getConfigValue(String, String, String)} and
+	 *            the key identifier for this option, to access by
+	 *            {@link stone.modules.Main#getConfigValue(String, String, String)}
+	 *            and
 	 *            {@link stone.modules.Main#setConfigValue(String, String, String)}
 	 * @param defaultValue
-	 *            the default value for {@link stone.modules.Main#getConfigValue(String, String, String)} * @see
-	 *            util.OptionContainer#addOption(String, String, char, String,
-	 *            boolean, Option)
+	 *            the default value for
+	 *            {@link stone.modules.Main#getConfigValue(String, String, String)}
+	 *            * @see util.OptionContainer#addOption(String, String, char,
+	 *            String, boolean, Option)
 	 */
 	public PathOption(final OptionContainer optionContainer,
-			final TaskPool taskPool, final String name, final String toolTip,
-			final String guiDescription, char shortFlag, final String longFlag,
-			final PathOptionFileFilter fileFilter, final int selectionMode,
-			final String section, final String key, final String defaultValue) {
+			final TaskPool taskPool, final String name,
+			final String toolTip, final String guiDescription,
+			char shortFlag, final String longFlag,
+			final PathOptionFileFilter fileFilter,
+			final int selectionMode, final String section,
+			final String key, final String defaultValue) {
 		super(optionContainer, name, toolTip, guiDescription, shortFlag,
 				longFlag, true, section, key, defaultValue);
 		filter = fileFilter;
@@ -123,7 +132,8 @@ public class PathOption extends Option {
 			@Override
 			public final void mouseReleased(final MouseEvent e) {
 				e.consume();
-				taskPool.addTask(new PathOptionTask(PathOption.this, textField));
+				taskPool.addTask(new PathOptionTask(PathOption.this,
+						textField));
 
 			}
 		});
@@ -143,8 +153,9 @@ public class PathOption extends Option {
 	public final Path getValue() {
 		final String rel = super.value();
 		final String base = readBase();
-		if (rel == null)
+		if (rel == null) {
 			return null;
+		}
 		return Path.getPath(base.split("/")).resolve(rel.split("/"));
 	}
 
@@ -190,8 +201,8 @@ public class PathOption extends Option {
 
 	private final String readBase() {
 		return optionContainer.getConfigValue(
-				stone.modules.Main.GLOBAL_SECTION, stone.modules.Main.PATH_KEY,
-				null);
+				stone.modules.Main.GLOBAL_SECTION,
+				stone.modules.Main.PATH_KEY, null);
 	}
 
 	@Override
@@ -201,7 +212,9 @@ public class PathOption extends Option {
 
 	final void value(final File fileSelected) {
 		final File file = filter.value(fileSelected);
-		final Path path = Path.getPath(file.toString().split("\\" + FileSystem.getFileSeparator()));
+		final Path path =
+				Path.getPath(file.toString().split(
+						"\\" + FileSystem.getFileSeparator()));
 		final String base = readBase();
 		super.value(path.relativize(Path.getPath(base.split("/"))));
 	}

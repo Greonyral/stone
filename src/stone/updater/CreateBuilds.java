@@ -29,11 +29,12 @@ public class CreateBuilds {
 		final URL url =
 				CreateBuilds.class.getClassLoader().getResource(
 						CreateBuilds.class.getCanonicalName().toString()
-						.replace('.', '/')
-						+ ".class");
+								.replace('.', '/')
+								+ ".class");
 		final Path root = Path.getPath(url).getParent().getParent();
 		final Path p = root.resolve("modules");
-		final Path info = root.getParent().getParent().resolve("moduleInfo");
+		final Path info =
+				root.getParent().getParent().resolve("moduleInfo");
 
 		info.toFile().mkdirs();
 
@@ -42,11 +43,15 @@ public class CreateBuilds {
 
 				@SuppressWarnings("unchecked")
 				public Class<Module> loadClass0(final String moduleName) {
-					if (moduleName.contains("$"))
+					if (moduleName.contains("$")) {
 						return null;
-					if (!moduleName.startsWith("stone.modules.") || moduleName.endsWith("Module")
-							|| moduleName.endsWith("EnableModuleListener") || moduleName.endsWith("ConfigWriter"))
+					}
+					if (!moduleName.startsWith("stone.modules.")
+							|| moduleName.endsWith("Module")
+							|| moduleName.endsWith("EnableModuleListener")
+							|| moduleName.endsWith("ConfigWriter")) {
 						return null;
+					}
 					try {
 						return (Class<Module>) loadClass(moduleName);
 					} catch (final Exception e) {
@@ -59,19 +64,23 @@ public class CreateBuilds {
 						try {
 							final Class<Module> clazz =
 									loadClass0("stone.modules."
-											+ s.substring(0, s.length() - 6));
-							if (clazz == null)
+											+ s.substring(0,
+													s.length() - 6));
+							if (clazz == null) {
 								return;
+							}
 							final Method m = clazz.getMethod("getVersion");
 							final int version =
-									((Integer) m.invoke(clazz.newInstance()))
-									.intValue();
+									((Integer) m.invoke(clazz
+											.newInstance())).intValue();
 							final java.io.OutputStream out =
-									new java.io.FileOutputStream(info.resolve(
-											s.substring(0, s.length() - 6))
-											.toFile());
-							out.write(ByteBuffer.allocate(4).putInt(version)
-									.array());
+									new java.io.FileOutputStream(
+											info.resolve(
+													s.substring(0, s
+															.length() - 6))
+													.toFile());
+							out.write(ByteBuffer.allocate(4).putInt(
+									version).array());
 							out.flush();
 							out.close();
 							System.out.println(s + " version:" + version);

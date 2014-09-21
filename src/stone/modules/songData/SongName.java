@@ -27,11 +27,12 @@ public class SongName implements Map<Integer, String> {
 		Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec;
 	}
 
-	private static final int findEnd(final StringBuilder sb, final String line,
-			int pos) {
+	private static final int findEnd(final StringBuilder sb,
+			final String line, int pos) {
 		while (true) {
-			if (line.length() == pos)
+			if (line.length() == pos) {
 				return pos;
+			}
 			int i = pos;
 			final char c = line.charAt(i++);
 			switch (c) {
@@ -113,8 +114,8 @@ public class SongName implements Map<Integer, String> {
 	 * @param instrument
 	 * @param xIdx
 	 */
-	public final void addPart(final Integer[] idx, final String instrument,
-			int xIdx) {
+	public final void addPart(final Integer[] idx,
+			final String instrument, int xIdx) {
 		partsIndices.put(xIdx, idx);
 		partsName.put(xIdx, instrument);
 
@@ -173,8 +174,9 @@ public class SongName implements Map<Integer, String> {
 			}
 		}
 		final Integer x = renumberMap.get(xIdx);
-		if (x != null)
+		if (x != null) {
 			return getTitle(x.intValue(), io);
+		}
 		final StringBuilder sb = new StringBuilder(60);
 		sb.append("X:");
 		sb.append(xIdx);
@@ -316,15 +318,18 @@ public class SongName implements Map<Integer, String> {
 	private final void align() {
 		init = true;
 		final Set<Integer> toRenumber = new TreeSet<>();
-		for (final Map.Entry<Integer, Integer[]> e : partsIndices.entrySet()) {
+		for (final Map.Entry<Integer, Integer[]> e : partsIndices
+				.entrySet()) {
 			if (e.getKey().intValue() > partsIndices.size()) {
 				toRenumber.add(e.getKey());
 			}
 		}
-		if (toRenumber.isEmpty())
+		if (toRenumber.isEmpty()) {
 			return;
+		}
 		final Iterator<Integer> toRenumberIter = toRenumber.iterator();
-		for (int i = 1; toRenumberIter.hasNext() && (i <= partsIndices.size()); i++) {
+		for (int i = 1; toRenumberIter.hasNext()
+				&& (i <= partsIndices.size()); i++) {
 			if (partsIndices.get(i) == null) {
 				final Integer old = toRenumberIter.next();
 				final Integer[] idx = partsIndices.remove(old);
@@ -399,7 +404,8 @@ public class SongName implements Map<Integer, String> {
 							line.substring(2).trim().split("/");
 					base =
 							Double.parseDouble(baseParts[0].trim())
-							/ Double.parseDouble(baseParts[1].trim());
+									/ Double.parseDouble(baseParts[1]
+											.trim());
 					continue;
 				} else if (line.startsWith("M:")) {
 					// meter change within a tune body not allowed
@@ -407,20 +413,23 @@ public class SongName implements Map<Integer, String> {
 							line.substring(2).trim().split("/");
 					meter =
 							Double.parseDouble(meterParts[0].trim())
-							/ Double.parseDouble(meterParts[1].trim());
+									/ Double.parseDouble(meterParts[1]
+											.trim());
 					continue;
 				} else if (line.startsWith("Q:")) {
 					if (line.contains("=")) {
 						final String[] lineParts = line.split("=");
 						final String[] baseParts =
-								lineParts[0].substring(2).trim().split("/");
+								lineParts[0].substring(2).trim()
+										.split("/");
 						base =
 								Double.parseDouble(baseParts[0].trim())
-								/ Double.parseDouble(baseParts[1]
-										.trim());
+										/ Double.parseDouble(baseParts[1]
+												.trim());
 						quantity = Integer.parseInt(lineParts[1].trim());
 					} else {
-						quantity = Integer.parseInt(line.substring(2).trim());
+						quantity =
+								Integer.parseInt(line.substring(2).trim());
 					}
 					continue;
 				} else if ((line.length() >= 2) && (line.charAt(1) == ':')) {
@@ -430,7 +439,8 @@ public class SongName implements Map<Integer, String> {
 				double max_accord = 0;
 				boolean accord = false;
 				while (pos < line.length()) {
-					if ((line.charAt(pos) == '|') || (line.charAt(pos) == ' ')) {
+					if ((line.charAt(pos) == '|')
+							|| (line.charAt(pos) == ' ')) {
 						++pos;
 					} else if (line.charAt(pos) == '[') {
 						accord = true;
@@ -453,7 +463,8 @@ public class SongName implements Map<Integer, String> {
 						final StringBuilder sb = new StringBuilder();
 						pos = SongName.findEnd(sb, line, ++pos);
 
-						final String[] meterParts = sb.toString().split("/");
+						final String[] meterParts =
+								sb.toString().split("/");
 						if (meterParts.length == 0) {
 							d = Math.pow(2, -sb.length());
 						} else {
@@ -465,7 +476,7 @@ public class SongName implements Map<Integer, String> {
 							} else {
 								d =
 										Double.parseDouble(meterParts[0])
-										/ Double.parseDouble(meterParts[1]);
+												/ Double.parseDouble(meterParts[1]);
 							}
 						}
 						breakDuration += d;
@@ -474,7 +485,8 @@ public class SongName implements Map<Integer, String> {
 						// find end of note
 						final StringBuilder sb = new StringBuilder();
 						pos = SongName.findEnd(sb, line, ++pos);
-						final String[] meterParts = sb.toString().split("/");
+						final String[] meterParts =
+								sb.toString().split("/");
 						if (meterParts.length == 0) {
 							d = Math.pow(2, -sb.length());
 						} else {
@@ -486,7 +498,7 @@ public class SongName implements Map<Integer, String> {
 							} else {
 								d =
 										Double.parseDouble(meterParts[0])
-										/ Double.parseDouble(meterParts[1]);
+												/ Double.parseDouble(meterParts[1]);
 							}
 						}
 						if (breakDuration != 0) {

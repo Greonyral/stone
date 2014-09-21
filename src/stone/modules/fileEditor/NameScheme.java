@@ -35,8 +35,10 @@ public class NameScheme {
 		sb.append(idcs);
 	}
 
-	final static StringBuilder printInstrumentName(final InstrumentType type) {
-		final StringBuilder name = new StringBuilder(type.name().toLowerCase());
+	final static StringBuilder printInstrumentName(
+			final InstrumentType type) {
+		final StringBuilder name =
+				new StringBuilder(type.name().toLowerCase());
 		name.setCharAt(0, name.substring(0, 1).toUpperCase().charAt(0));
 		return name;
 	}
@@ -44,8 +46,9 @@ public class NameScheme {
 
 	final static void printInstrumentNumbers(final StringBuilder sb,
 			final Set<Integer> numbers) {
-		if (numbers.isEmpty())
+		if (numbers.isEmpty()) {
 			return;
+		}
 		final Iterator<Integer> i = numbers.iterator();
 		sb.append(" ");
 		sb.append(i.next());
@@ -54,35 +57,37 @@ public class NameScheme {
 			sb.append(i.next());
 		}
 	}
+
 	final Map<Integer, Set<Instrument>> map = new HashMap<>();
 	private final Variable DURATION = new Variable("DURATION"),
 			PART_NUM = new Variable("PART_NUM") {
 
-		@Override
-		final void print(final StringBuilder sb, int track) {
-			NameScheme.printIdx(sb, indices.get(track));
-		}
-
-	}, TOTAL_NUM = new Variable("TOTAL_NUM"), TITLE = new Variable(
-			"TITLE"), MOD_DATE = new Variable("MOD_DATE"),
-			INSTRUMENT = new Variable("INSTRUMENT") {
-
-		@Override
-		final void print(final StringBuilder sb, int track) {
-			boolean first = true;
-			for (final Instrument i : map.get(track)) {
-				if (!first) {
-					sb.append(", ");
-				} else {
-					first = false;
+				@Override
+				final void print(final StringBuilder sb, int track) {
+					NameScheme.printIdx(sb, indices.get(track));
 				}
-				i.print(sb);
-			}
-		}
-	};
+
+			}, TOTAL_NUM = new Variable("TOTAL_NUM"),
+			TITLE = new Variable("TITLE"), MOD_DATE = new Variable(
+					"MOD_DATE"), INSTRUMENT = new Variable("INSTRUMENT") {
+
+				@Override
+				final void print(final StringBuilder sb, int track) {
+					boolean first = true;
+					for (final Instrument i : map.get(track)) {
+						if (!first) {
+							sb.append(", ");
+						} else {
+							first = false;
+						}
+						i.print(sb);
+					}
+				}
+			};
 	private final Map<String, Variable> variables = buildVariableMap();
 
-	private final ArrayDeque<NameSchemeElement> elements = new ArrayDeque<>();
+	private final ArrayDeque<NameSchemeElement> elements =
+			new ArrayDeque<>();
 
 	private final Map<InstrumentType, Integer> countMap = new HashMap<>();
 
@@ -92,7 +97,8 @@ public class NameScheme {
 	 * @param string
 	 * @throws InvalidNameSchemeException
 	 */
-	public NameScheme(final String string) throws InvalidNameSchemeException {
+	public NameScheme(final String string)
+			throws InvalidNameSchemeException {
 		int pos = 0;
 		int[] idcs = null;
 		while (pos < string.length()) {
@@ -103,8 +109,9 @@ public class NameScheme {
 					idcs = null;
 					continue;
 				case '$':
-					if (idcs != null)
+					if (idcs != null) {
 						throw new InvalidNameSchemeException();
+					}
 					final int endIdx = string.indexOf('{', pos);
 					final String idx = string.substring(pos + 1, endIdx);
 					final String[] idcsS = idx.split(",");
@@ -118,7 +125,8 @@ public class NameScheme {
 					final Variable v;
 					int end = pos;
 					do {
-						final String variableTmp = string.substring(pos, ++end);
+						final String variableTmp =
+								string.substring(pos, ++end);
 						final Variable vTmp = variables.get(variableTmp);
 						if (vTmp != null) {
 							v = vTmp;
@@ -135,7 +143,8 @@ public class NameScheme {
 			}
 			final int[] ends =
 					new int[] { string.indexOf('%', pos),
-					string.indexOf('$', pos), string.indexOf('}', pos) };
+							string.indexOf('$', pos),
+							string.indexOf('}', pos) };
 			int end = string.length();
 			for (final int endI : ends) {
 				if (endI >= 0) {
@@ -153,7 +162,10 @@ public class NameScheme {
 		}
 	}
 
-	/** @return the title matching the name-scheme. Non existing parts will be omitted. */
+	/**
+	 * @return the title matching the name-scheme. Non existing parts will be
+	 *         omitted.
+	 */
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -212,7 +224,8 @@ public class NameScheme {
 
 	final void partNum(final Map<Integer, String> newIndices) {
 		int seq = 1;
-		for (final Map.Entry<Integer, String> entry : newIndices.entrySet()) {
+		for (final Map.Entry<Integer, String> entry : newIndices
+				.entrySet()) {
 			if (entry.getValue().isEmpty()) {
 				indices.put(entry.getKey(), Integer.valueOf(seq)
 						.toString());

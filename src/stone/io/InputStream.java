@@ -17,9 +17,11 @@ import java.util.Queue;
  */
 public class InputStream extends java.io.InputStream {
 
-	private final static byte[] merge(final Queue<byte[]> parts, int stackSize) {
-		if (parts.size() == 1)
+	private final static byte[] merge(final Queue<byte[]> parts,
+			int stackSize) {
+		if (parts.size() == 1) {
 			return parts.poll();
+		}
 		final byte[] ret = new byte[stackSize];
 		int offset = 0;
 		while (!parts.isEmpty()) {
@@ -113,8 +115,8 @@ public class InputStream extends java.io.InputStream {
 	}
 
 	/**
-	 * Returns relative offset from current position in <i>this</i> stream to
-	 * a previously marked location.
+	 * Returns relative offset from current position in <i>this</i> stream to a
+	 * previously marked location.
 	 * 
 	 * @return relative offset from current position in <i>this</i> stream to
 	 *         marked location, -1 if there is no more mark
@@ -137,8 +139,9 @@ public class InputStream extends java.io.InputStream {
 	 */
 	@Override
 	public final int read() throws IOException {
-		if (EOFreached())
+		if (EOFreached()) {
 			return -1;
+		}
 		if (io != null) {
 			io.updateProgress();
 		}
@@ -156,14 +159,16 @@ public class InputStream extends java.io.InputStream {
 	 */
 	@Override
 	public final int read(byte[] buffer) throws IOException {
-		if (EOFreached())
+		if (EOFreached()) {
 			return -1;
+		}
 		int read = 0;
 		while (true) {
 			read += fillExternalBuffer(buffer, read, buffer.length - read);
 			// offset += read; done by fillExternal Buffer
-			if (EOFreached() || (read == buffer.length))
+			if (EOFreached() || (read == buffer.length)) {
 				return read;
+			}
 		}
 	}
 
@@ -185,16 +190,22 @@ public class InputStream extends java.io.InputStream {
 	@Override
 	public final int read(byte[] buffer, int offset, int length)
 			throws IOException {
-		if (EOFreached())
+		if (EOFreached()) {
 			return -1;
-		if ((length > buffer.length) || (length < 0) || (offset >= buffer.length)
-				|| (offset < 0) || (length > (buffer.length - offset)))
+		}
+		if ((length > buffer.length) || (length < 0)
+				|| (offset >= buffer.length) || (offset < 0)
+				|| (length > (buffer.length - offset))) {
 			throw new IllegalArgumentException();
+		}
 		int read = 0;
 		while (true) {
-			read += fillExternalBuffer(buffer, read + offset, length - read);
-			if (EOFreached() || (read == length))
+			read +=
+					fillExternalBuffer(buffer, read + offset, length
+							- read);
+			if (EOFreached() || (read == length)) {
 				return read;
+			}
 		}
 	}
 
@@ -215,8 +226,7 @@ public class InputStream extends java.io.InputStream {
 
 	/**
 	 * Reads all bytes until next byte indicating new line (i.e. 0x0a) is
-	 * reached. The byte 0x0a is removed as well as Windows line (0x0d
-	 * 0x0a)
+	 * reached. The byte 0x0a is removed as well as Windows line (0x0d 0x0a)
 	 * 
 	 * @return bytes between current position and a 0x0a byte
 	 * @throws IOException
@@ -224,17 +234,18 @@ public class InputStream extends java.io.InputStream {
 	 */
 	public final String readLine() throws IOException {
 		final byte[] line;
-		if (EOFreached())
+		if (EOFreached()) {
 			return null;
+		}
 		line = readTo((byte) 10);
-		if ((line.length != 0) && (line[line.length - 1] == '\r'))
+		if ((line.length != 0) && (line[line.length - 1] == '\r')) {
 			return new String(line, 0, line.length - 1, cs);
+		}
 		return new String(line, cs);
 	}
 
 	/**
-	 * Reads all bytes until next byte matching given terminal is
-	 * reached.
+	 * Reads all bytes until next byte matching given terminal is reached.
 	 * 
 	 * @param terminal
 	 *            byte to stop reading at
@@ -247,8 +258,8 @@ public class InputStream extends java.io.InputStream {
 	}
 
 	/**
-	 * Reads all bytes until next byte matching given terminal is
-	 * reached. All positions of bytes matching given byte mark are marked
+	 * Reads all bytes until next byte matching given terminal is reached. All
+	 * positions of bytes matching given byte mark are marked
 	 * 
 	 * @param terminal
 	 *            byte to stop reading at
@@ -259,12 +270,14 @@ public class InputStream extends java.io.InputStream {
 	 *             if an error occurs reading the file
 	 * @see #getMarkedLoc()
 	 */
-	public final byte[] readTo(byte terminal, byte mark) throws IOException {
+	public final byte[] readTo(byte terminal, byte mark)
+			throws IOException {
 		return readTo(terminal, 0xff & mark);
 	}
 
 	/**
-	 * Registers an IO-Handler for managing a ProgressMonitor for {@link #read()}
+	 * Registers an IO-Handler for managing a ProgressMonitor for
+	 * {@link #read()}
 	 * 
 	 * @param io
 	 */
@@ -304,89 +317,89 @@ public class InputStream extends java.io.InputStream {
 	 * @throws IOException
 	 *             if an error occurs reading one of the streams
 	 */
-	//	public final boolean compare(final InputStream o) throws IOException {
-	//		while (!eof && !o.eof) {
-	//			fillBuff();
-	//			o.fillBuff();
-	//			if (len - offset < o.len - o.offset) {
-	//				while (offset <= len) {
-	//					if (buffer[offset++] != o.buffer[o.offset++]) {
-	//						return false;
-	//					}
-	//				}
-	//			} else {
-	//				while (o.offset < o.len) {
-	//					if (buffer[offset++] != o.buffer[o.offset++]) {
-	//						return false;
-	//					}
-	//				}
-	//			}
-	//		}
-	//		final int rem0 = len - offset;
-	//		final int rem1 = o.len - o.offset;
-	//		if (eof && o.eof) {
-	//			if (rem0 != rem1) {
-	//				return false;
-	//			} else {
-	//				while (offset < len) {
-	//					if (buffer[offset++] != o.buffer[o.offset++]) {
-	//						return false;
-	//					}
-	//				}
-	//				return true;
-	//			}
-	//		} else if (eof) {
-	//			if (rem1 > rem0) {
-	//				return false;
-	//			} else {
-	//				while (!o.eof) {
-	//					while (o.offset < o.len && offset < len) {
-	//						if (buffer[offset++] != o.buffer[o.offset++]) {
-	//							return false;
-	//						}
-	//					}
-	//					o.fillBuff();
-	//					if (offset > len) {
-	//						return false;
-	//					}
-	//				}
-	//				if (o.len - o.offset == len - offset) {
-	//					while (offset < len) {
-	//						if (buffer[offset++] != o.buffer[o.offset++]) {
-	//							return false;
-	//						}
-	//					}
-	//					return true;
-	//				}
-	//				return false;
-	//			}
-	//		} else {
-	//			if (rem1 < rem0) {
-	//				return false;
-	//			} else {
-	//				while (!eof) {
-	//					while (o.offset < o.len && offset < len) {
-	//						if (buffer[offset++] != o.buffer[o.offset++]) {
-	//							return false;
-	//						}
-	//					}
-	//					fillBuff();
-	//					if (o.offset > o.len) {
-	//						return false;
-	//					}
-	//				}
-	//				if (o.len - o.offset == len - offset) {
-	//					while (o.offset < o.len) {
-	//						if (buffer[offset++] != o.buffer[o.offset++]) {
-	//							return false;
-	//						}
-	//					}
-	//					return true;
-	//				}
-	//				return false;
-	//			}
-	//		}
-	//	}
+	// public final boolean compare(final InputStream o) throws IOException {
+	// while (!eof && !o.eof) {
+	// fillBuff();
+	// o.fillBuff();
+	// if (len - offset < o.len - o.offset) {
+	// while (offset <= len) {
+	// if (buffer[offset++] != o.buffer[o.offset++]) {
+	// return false;
+	// }
+	// }
+	// } else {
+	// while (o.offset < o.len) {
+	// if (buffer[offset++] != o.buffer[o.offset++]) {
+	// return false;
+	// }
+	// }
+	// }
+	// }
+	// final int rem0 = len - offset;
+	// final int rem1 = o.len - o.offset;
+	// if (eof && o.eof) {
+	// if (rem0 != rem1) {
+	// return false;
+	// } else {
+	// while (offset < len) {
+	// if (buffer[offset++] != o.buffer[o.offset++]) {
+	// return false;
+	// }
+	// }
+	// return true;
+	// }
+	// } else if (eof) {
+	// if (rem1 > rem0) {
+	// return false;
+	// } else {
+	// while (!o.eof) {
+	// while (o.offset < o.len && offset < len) {
+	// if (buffer[offset++] != o.buffer[o.offset++]) {
+	// return false;
+	// }
+	// }
+	// o.fillBuff();
+	// if (offset > len) {
+	// return false;
+	// }
+	// }
+	// if (o.len - o.offset == len - offset) {
+	// while (offset < len) {
+	// if (buffer[offset++] != o.buffer[o.offset++]) {
+	// return false;
+	// }
+	// }
+	// return true;
+	// }
+	// return false;
+	// }
+	// } else {
+	// if (rem1 < rem0) {
+	// return false;
+	// } else {
+	// while (!eof) {
+	// while (o.offset < o.len && offset < len) {
+	// if (buffer[offset++] != o.buffer[o.offset++]) {
+	// return false;
+	// }
+	// }
+	// fillBuff();
+	// if (o.offset > o.len) {
+	// return false;
+	// }
+	// }
+	// if (o.len - o.offset == len - offset) {
+	// while (o.offset < o.len) {
+	// if (buffer[offset++] != o.buffer[o.offset++]) {
+	// return false;
+	// }
+	// }
+	// return true;
+	// }
+	// return false;
+	// }
+	// }
+	// }
 
 	private final int addToStack(final Queue<byte[]> stack, int start) {
 		final int len = _offset - start;
@@ -418,7 +431,8 @@ public class InputStream extends java.io.InputStream {
 				}
 			} else if (cs.toString().equals("UTF-8")) {
 				// EF BB BF
-				if ((_buffer[0] == -17) && (_buffer[1] == -69) && (_buffer[2] == -65)) {
+				if ((_buffer[0] == -17) && (_buffer[1] == -69)
+						&& (_buffer[2] == -65)) {
 					_offset += 3;
 				}
 			}
@@ -430,7 +444,8 @@ public class InputStream extends java.io.InputStream {
 		_length = buffered;
 		if (stream.available() > 0) {
 			final int read =
-					stream.read(_buffer, buffered, _buffer.length - buffered);
+					stream.read(_buffer, buffered, _buffer.length
+							- buffered);
 			_length += read;
 		}
 	}
@@ -447,10 +462,12 @@ public class InputStream extends java.io.InputStream {
 		return lengthRet;
 	}
 
-	private final byte[] readTo(byte terminal, int mark) throws IOException {
+	private final byte[] readTo(byte terminal, int mark)
+			throws IOException {
 		marked.clear();
-		if (EOFreached())
+		if (EOFreached()) {
 			return null;
+		}
 		final Queue<byte[]> stack = new ArrayDeque<>();
 		int start = _offset, length = 0;
 		while (true) {

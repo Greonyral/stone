@@ -8,21 +8,19 @@ package stone.modules.versionControl;
 public enum UpdateType {
 
 	/** Reset missing file */
-	RESTORE_MISSING(
-			"Detected missing file",
+	RESTORE_MISSING("Detected missing file",
 			"Do you want to restore it?\nThe file will be the version of last commit."),
-			/** Delete missing file */
-			DELETE(
-					RESTORE_MISSING.p0,
-					"Do you want to remove it from the remote and your\nlocal repository?"),
-					/** Add untracked file */
-					ADD(
-							"Detected new file",
-							"Do you want to add it?\n It will be part of the remote and your\nlocal repository."),
-							/** Add changed file */
-							UPDATE("Detected changed file", ADD.p1),
-							/** Reset changed file */
-							RESTORE_CHANGED(UPDATE.p0, RESTORE_MISSING.p1);
+	/** Delete missing file */
+	DELETE(RESTORE_MISSING.p0,
+			"Do you want to remove it from the remote and your\nlocal repository?"),
+	/** Add untracked file */
+	ADD(
+			"Detected new file",
+			"Do you want to add it?\n It will be part of the remote and your\nlocal repository."),
+	/** Add changed file */
+	UPDATE("Detected changed file", ADD.p1),
+	/** Reset changed file */
+	RESTORE_CHANGED(UPDATE.p0, RESTORE_MISSING.p1);
 
 	private final String p0, p1;
 

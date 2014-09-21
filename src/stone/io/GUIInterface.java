@@ -88,8 +88,7 @@ public interface GUIInterface {
 
 	/**
 	 * Like {@link #printMessage(String, String, boolean)} but needs always
-	 * confirmation
-	 * and different colors will be used to indicate an error.
+	 * confirmation and different colors will be used to indicate an error.
 	 * 
 	 * @see #printMessage
 	 * @param errorMessage
@@ -106,7 +105,9 @@ public interface GUIInterface {
 	 * @param bringGUItoFront
 	 *            user has have to confirm the message
 	 */
-	void printMessage(String title, String message, boolean bringGUItoFront);
+	void
+			printMessage(String title, String message,
+					boolean bringGUItoFront);
 
 	/**
 	 * Displays a no default GUI operation with given plugin.
@@ -140,7 +141,8 @@ public interface GUIInterface {
 	void setProgressSize(int size);
 
 	/**
-	 * Works like combined {@link #setProgressTitle(String)} and {@link #setProgressSize(int)}. {@link #initProgress()} will be called as
+	 * Works like combined {@link #setProgressTitle(String)} and
+	 * {@link #setProgressSize(int)}. {@link #initProgress()} will be called as
 	 * needed.
 	 * 
 	 * @param size

@@ -36,7 +36,7 @@ import stone.util.TaskPool;
  *            Implementing class for container
  */
 public abstract class DragAndDropPlugin<C extends Container, D extends Container, T extends Container>
-extends GUIPlugin {
+		extends GUIPlugin {
 
 	class State {
 
@@ -61,7 +61,8 @@ extends GUIPlugin {
 		State(final IOHandler io,
 				final List<DropTargetContainer<C, D, T>> targets) {
 			this.io = io;
-			emptyTarget = targets.get(targets.size() - 1).createNewTarget();
+			emptyTarget =
+					targets.get(targets.size() - 1).createNewTarget();
 		}
 
 	}
@@ -109,7 +110,8 @@ extends GUIPlugin {
 	 */
 	protected DragAndDropPlugin(final DndPluginCaller<C, D, T> caller,
 			final TaskPool taskPool, final MidiParser parser,
-			final List<DropTargetContainer<C, D, T>> targets, final IOHandler io) {
+			final List<DropTargetContainer<C, D, T>> targets,
+			final IOHandler io) {
 		this.parser = parser;
 		this.targets = targets;
 		this.taskPool = taskPool;
@@ -183,12 +185,14 @@ extends GUIPlugin {
 					}
 
 					@Override
-					public final void windowDeactivated(final WindowEvent e) {
+					public final void
+							windowDeactivated(final WindowEvent e) {
 						// nothing to do
 					}
 
 					@Override
-					public final void windowDeiconified(final WindowEvent e) {
+					public final void
+							windowDeiconified(final WindowEvent e) {
 						// nothing to do
 					}
 
@@ -223,7 +227,7 @@ extends GUIPlugin {
 		state.object = null;
 
 		assert (panelCenter.getComponentCount() == 0)
-		&& (panelLeft.getComponentCount() == 0);
+				&& (panelLeft.getComponentCount() == 0);
 		initListLeft.clear();
 		taskPool.waitForTasks();
 
@@ -261,9 +265,11 @@ extends GUIPlugin {
 			final Map<Integer, DragObject<C, D, T>> initListLeft);
 
 	/**
-	 * @return the map needed for {@link #initLeft(Map)} and {@link #initCenter(Map)}
+	 * @return the map needed for {@link #initLeft(Map)} and
+	 *         {@link #initCenter(Map)}
 	 */
-	protected abstract Map<Integer, DragObject<C, D, T>> initInitListLeft();
+	protected abstract Map<Integer, DragObject<C, D, T>>
+			initInitListLeft();
 
 	/**
 	 * @param initListLeft

@@ -170,8 +170,9 @@ public class StringBuilder {
 	 * @return the length of currently contained string
 	 */
 	public final int length() {
-		if (tail < head)
+		if (tail < head) {
 			return (content[cIdx].length - head) + tail;
+		}
 		return tail - head;
 	}
 
@@ -181,8 +182,9 @@ public class StringBuilder {
 	 * @return the removed char or -1 if <i>this</i> has been empty
 	 */
 	public final int removeLast() {
-		if (tail == head)
+		if (tail == head) {
 			return -1;
+		}
 		final char c = content[cIdx][tail];
 		if (--tail == 0) {
 			copy();
@@ -234,8 +236,9 @@ public class StringBuilder {
 	 */
 	@Override
 	public String toString() {
-		if (head == tail)
+		if (head == tail) {
 			return "";
+		}
 		if (head > tail) {
 			grow();
 			final int l = content[cIdx].length - head;
@@ -258,8 +261,9 @@ public class StringBuilder {
 				|| (head < (StringBuilder.PATTERN_SIZE >> 2))) {
 			System.arraycopy(content[cIdx], head, content[cIdxNext],
 					StringBuilder.PATTERN_SIZE, length);
-		} else
+		} else {
 			return;
+		}
 		head = StringBuilder.PATTERN_SIZE;
 		tail = head + length;
 		switchBuffer();
@@ -460,8 +464,9 @@ public class StringBuilder {
 	}
 
 	private final void removeFirst() {
-		if (head == tail)
+		if (head == tail) {
 			return;
+		}
 		if (length() == 1) {
 			head = StringBuilder.PATTERN_SIZE;
 			tail = StringBuilder.PATTERN_SIZE;
@@ -482,8 +487,9 @@ public class StringBuilder {
 	 *         <i>this</i> is empty.
 	 */
 	final protected int getLast() {
-		if (tail == head)
+		if (tail == head) {
 			return -1;
+		}
 		final char c = content[cIdx][tail];
 		return c;
 	}
@@ -513,8 +519,9 @@ public class StringBuilder {
 			cursor[0] = length();
 		}
 		if (e.isControlDown()) {
-			if (handleControl(e.getKeyCode(), cursor, e.isAltDown()))
+			if (handleControl(e.getKeyCode(), cursor, e.isAltDown())) {
 				return;
+			}
 		}
 		final int c = e.getKeyCode();
 		switch (c) {
@@ -559,8 +566,9 @@ public class StringBuilder {
 				}
 				return;
 			case KeyEvent.VK_BACK_SPACE:
-				if ((cursor[1] == cursor[2]) && (cursor[0] == 0))
+				if ((cursor[1] == cursor[2]) && (cursor[0] == 0)) {
 					return;
+				}
 				--cursor[0];
 				remove(cursor);
 				if (length() < cursor[0]) {
@@ -572,8 +580,9 @@ public class StringBuilder {
 				return;
 		}
 		final char key = e.getKeyChar();
-		if (key == KeyEvent.CHAR_UNDEFINED)
+		if (key == KeyEvent.CHAR_UNDEFINED) {
 			return;
+		}
 		insert(key, cursor);
 	}
 

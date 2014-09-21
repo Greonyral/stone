@@ -23,30 +23,37 @@ public final class BooleanOption extends Option {
 	 *            OptionContainer
 	 * @param toolTip
 	 *            a description for <i>this</i> option to use it for example as
-	 *            a
-	 *            tool-tip in any GUIs
+	 *            a tool-tip in any GUIs
 	 * @param guiDescription
 	 *            a short string usable to label <i>this</i> option
 	 * @param shortFlag
-	 *            a unique printable char to register at flags or {@link stone.util.Flag#NoShortFlag} to enable this option
+	 *            a unique printable char to register at flags or
+	 *            {@link stone.util.Flag#NoShortFlag} to enable this option
 	 * @param longFlag
-	 *            a unique printable string to register at flags or {@link stone.util.Flag#NoLongFlag} to enable this option
+	 *            a unique printable string to register at flags or
+	 *            {@link stone.util.Flag#NoLongFlag} to enable this option
 	 * @param section
-	 *            the section identifier for this option, to access by {@link stone.modules.Main#getConfigValue(String, String, String)} and
+	 *            the section identifier for this option, to access by
+	 *            {@link stone.modules.Main#getConfigValue(String, String, String)}
+	 *            and
 	 *            {@link stone.modules.Main#setConfigValue(String, String, String)}
 	 * @param key
-	 *            the key identifier for this option, to access by {@link stone.modules.Main#getConfigValue(String, String, String)} and
+	 *            the key identifier for this option, to access by
+	 *            {@link stone.modules.Main#getConfigValue(String, String, String)}
+	 *            and
 	 *            {@link stone.modules.Main#setConfigValue(String, String, String)}
 	 * @param defaultValue
-	 *            the default value for {@link stone.modules.Main#getConfigValue(String, String, String)}
+	 *            the default value for
+	 *            {@link stone.modules.Main#getConfigValue(String, String, String)}
 	 */
 	public BooleanOption(final OptionContainer optionContainer,
 			final String name, final String toolTip,
-			final String guiDescription, char shortFlag, final String longFlag,
-			final String section, final String key, boolean defaultValue) {
+			final String guiDescription, char shortFlag,
+			final String longFlag, final String section, final String key,
+			boolean defaultValue) {
 		super(optionContainer, name, toolTip, guiDescription, shortFlag,
-				longFlag, false, section, key, Boolean.valueOf(defaultValue)
-				.toString());
+				longFlag, false, section, key, Boolean.valueOf(
+						defaultValue).toString());
 	}
 
 	/**
@@ -110,8 +117,9 @@ public final class BooleanOption extends Option {
 	/** */
 	@Override
 	public final String value() {
-		if (key == null)
+		if (key == null) {
 			return value;
+		}
 		return super.value();
 	}
 

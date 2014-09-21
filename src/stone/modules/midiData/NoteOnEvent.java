@@ -14,11 +14,14 @@ final class NoteOnEvent extends MidiEvent {
 
 	@Override
 	public final String toString() {
-		if (format == 1)
+		if (format == 1) {
 			return delta + " on: " + k + " " + v;
-		if (format == 0)
+		}
+		if (format == 0) {
 			return delta + " on: " + k + " " + v + "@" + channel;
-		return delta + " on: " + k + " " + v + "@" + channel + "," + format;
+		}
+		return delta + " on: " + k + " " + v + "@" + channel + ","
+				+ format;
 	}
 
 	@Override

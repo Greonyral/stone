@@ -3,6 +3,7 @@ package stone.modules.fileEditor;
 import java.util.HashSet;
 import java.util.Set;
 
+
 class Instrument {
 
 	private final InstrumentType type;
@@ -28,7 +29,8 @@ class Instrument {
 
 	@Override
 	public final String toString() {
-		final StringBuilder sb = new StringBuilder(type.name().toLowerCase());
+		final StringBuilder sb =
+				new StringBuilder(type.name().toLowerCase());
 		sb.setCharAt(0, (char) ((sb.charAt(0) + 'A') - 'a'));
 		for (final Integer number : numbers) {
 			sb.append(" ");

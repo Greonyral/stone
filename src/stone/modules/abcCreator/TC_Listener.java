@@ -4,7 +4,7 @@ import java.awt.Container;
 
 
 final class TC_Listener<C extends Container, D extends Container, T extends Container>
-extends DNDListener<C, D, T> {
+		extends DNDListener<C, D, T> {
 
 	private final DropTargetContainer<C, D, T> targetC;
 
@@ -25,7 +25,8 @@ extends DNDListener<C, D, T> {
 		}
 		if (enter && (state.dragging != null)) {
 			targetC.getDisplayableComponent().setBackground(
-					enter ? DNDListener.C_DROP : DNDListener.C_INACTIVE_TARGET);
+					enter ? DNDListener.C_DROP
+							: DNDListener.C_INACTIVE_TARGET);
 		} else {
 			targetC.getDisplayableComponent().setBackground(
 					enter ? DNDListener.C_ACTIVE

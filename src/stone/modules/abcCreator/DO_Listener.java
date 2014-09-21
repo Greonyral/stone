@@ -16,7 +16,7 @@ import javax.swing.JPanel;
 
 
 final class DO_Listener<C extends Container, D extends Container, T extends Container>
-extends DNDListener<C, D, T> {
+		extends DNDListener<C, D, T> {
 
 	private final DragObject<C, D, T> object;
 	private final DndPluginCaller<C, D, T> caller;
@@ -28,16 +28,19 @@ extends DNDListener<C, D, T> {
 
 	DO_Listener(final DragObject<C, D, T> object,
 			final DragAndDropPlugin<C, D, T>.State state,
-			final BruteParams<?>[] params, final DndPluginCaller<C, D, T> caller) {
+			final BruteParams<?>[] params,
+			final DndPluginCaller<C, D, T> caller) {
 		super(state);
 		this.object = object;
 		this.caller = caller;
 		this.params = params;
-		object.getDisplayableComponent().setBackground(DNDListener.C_INACTIVE);
+		object.getDisplayableComponent().setBackground(
+				DNDListener.C_INACTIVE);
 	}
 
 	private final void displayParamMenu() {
-		if (object.getTargetContainer() != state.emptyTarget.getContainer()) {
+		if (object.getTargetContainer() != state.emptyTarget
+				.getContainer()) {
 			panelOption = new JPanel();
 			panelOption.setLayout(new GridLayout(0, 2));
 			for (final BruteParams<?> ps : params) {
@@ -100,9 +103,10 @@ extends DNDListener<C, D, T> {
 							: DNDListener.C_INACTIVE_TARGET;
 			final Color ct2 =
 					active ? Color.CYAN : DNDListener.C_INACTIVE_TARGET;
-			//			final Color co0 = active ? C_SELECTED0 : C_INACTIVE;
+			// final Color co0 = active ? C_SELECTED0 : C_INACTIVE;
 			final Color co1 =
-					active ? DNDListener.C_SELECTED1 : DNDListener.C_INACTIVE;
+					active ? DNDListener.C_SELECTED1
+							: DNDListener.C_INACTIVE;
 			final Color co2 =
 					active ? DNDListener.C_CLONE : DNDListener.C_INACTIVE;
 			for (final DropTarget<?, ?, ?> t : object) {
@@ -117,10 +121,12 @@ extends DNDListener<C, D, T> {
 					}
 				}
 			}
-			object.getDisplayableComponent().setBackground(
-					active ? DNDListener.C_ACTIVE : DNDListener.C_INACTIVE);
+			object.getDisplayableComponent()
+					.setBackground(
+							active ? DNDListener.C_ACTIVE
+									: DNDListener.C_INACTIVE);
 			object.getTargetContainer().getDisplayableComponent()
-			.setBackground(ct0);
+					.setBackground(ct0);
 			for (final DropTarget<?, ?, ?> t : object.getTargetContainer()) {
 				if ((t == state.emptyTarget) || targets.contains(t)) {
 					continue;
@@ -135,11 +141,11 @@ extends DNDListener<C, D, T> {
 			}
 			if (object.isAlias()) {
 				object.getOriginal().getDisplayableComponent()
-				.setBackground(co2);
+						.setBackground(co2);
 				if (object.getOriginal().getTargetContainer() != object
 						.getTargetContainer()) {
 					object.getOriginal().getTargetContainer()
-					.getDisplayableComponent().setBackground(ct2);
+							.getDisplayableComponent().setBackground(ct2);
 				}
 				for (final DropTarget<?, ?, ?> t : object.getOriginal()) {
 					if ((t == state.emptyTarget) || targets.contains(t)) {
@@ -153,9 +159,10 @@ extends DNDListener<C, D, T> {
 					continue;
 				}
 				alias.getDisplayableComponent().setBackground(co2);
-				if (alias.getTargetContainer() != object.getTargetContainer()) {
+				if (alias.getTargetContainer() != object
+						.getTargetContainer()) {
 					alias.getTargetContainer().getDisplayableComponent()
-					.setBackground(ct2);
+							.setBackground(ct2);
 				}
 				for (final DropTarget<?, ?, ?> t : alias) {
 					if ((t == state.emptyTarget) || targets.contains(t)) {
@@ -183,7 +190,8 @@ extends DNDListener<C, D, T> {
 			}
 			if (caller.unlink(object, target)) {
 				if (target != state.target) {
-					final Container panel = target.getDisplayableComponent();
+					final Container panel =
+							target.getDisplayableComponent();
 					final Container parent = panel.getParent();
 					parent.remove(panel);
 					if (parent.getComponentCount() == 0) {
@@ -243,7 +251,8 @@ extends DNDListener<C, D, T> {
 					if (panelOption == null) {
 						displayParamMenu();
 					} else {
-						object.getDisplayableComponent().remove(panelOption);
+						object.getDisplayableComponent().remove(
+								panelOption);
 						object.getDisplayableComponent().revalidate();
 						panelOption = null;
 					}
@@ -281,8 +290,9 @@ extends DNDListener<C, D, T> {
 							state.targetC.delete(state.target);
 							final Container c =
 									state.target.getDisplayableComponent()
-									.getParent();
-							c.remove(state.target.getDisplayableComponent());
+											.getParent();
+							c.remove(state.target
+									.getDisplayableComponent());
 							c.revalidate();
 							caller.printError("To large split");
 						}
@@ -295,9 +305,11 @@ extends DNDListener<C, D, T> {
 				}
 				state.target = null;
 				if (object.isAlias()
-						&& (state.targetC == state.emptyTarget.getContainer())) {
+						&& (state.targetC == state.emptyTarget
+								.getContainer())) {
 					object.forgetAlias();
-					state.emptyTarget.getContainer().removeAllLinks(object);
+					state.emptyTarget.getContainer()
+							.removeAllLinks(object);
 					final Container parent =
 							object.getDisplayableComponent().getParent();
 					parent.remove(object.getDisplayableComponent());
@@ -305,8 +317,9 @@ extends DNDListener<C, D, T> {
 					mark(false);
 					return;
 				}
-			} else
+			} else {
 				return;
+			}
 			mark(true);
 			if (panelOption != null) {
 				object.getDisplayableComponent().remove(panelOption);

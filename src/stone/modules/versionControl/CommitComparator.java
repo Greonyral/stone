@@ -19,8 +19,9 @@ public final class CommitComparator implements Comparator<RevCommit> {
 	@Override
 	public int compare(final RevCommit o1, final RevCommit o2) {
 		final int delta = o1.getCommitTime() - o2.getCommitTime();
-		if (delta == 0)
+		if (delta == 0) {
 			return o1.compareTo(o2);
+		}
 		return delta;
 	}
 

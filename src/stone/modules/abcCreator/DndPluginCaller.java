@@ -18,7 +18,8 @@ import stone.util.Path;
 public interface DndPluginCaller<C extends Container, D extends Container, T extends Container> {
 
 	/**
-	 * Helper interface for {@link DndPluginCaller#loadMap(File, LoadedMapEntry)}
+	 * Helper interface for
+	 * {@link DndPluginCaller#loadMap(File, LoadedMapEntry)}
 	 * 
 	 * @author Nelphindal
 	 */

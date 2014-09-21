@@ -30,14 +30,16 @@ public class SongData {
 		this(song, new TreeMap<>(voices), mod);
 	}
 
-	SongData(final Path song, final TreeMap<Integer, String> voices, long mod) {
+	SongData(final Path song, final TreeMap<Integer, String> voices,
+			long mod) {
 		this.song = song;
 		sortedVoices = voices;
 		this.mod = mod;
 	}
 
 	/**
-	 * @return the time-stamp of the file representing the date (in milliseconds) of last modification
+	 * @return the time-stamp of the file representing the date (in
+	 *         milliseconds) of last modification
 	 */
 	public final long getLastModification() {
 		return mod;
@@ -75,7 +77,8 @@ public class SongData {
 			sb.append("\",\r\n\t\t\t\t\t[\"Name\"] = \"");
 			sb.append("\"\r\n");
 		} else {
-			for (final Entry<Integer, String> voice : sortedVoices.entrySet()) {
+			for (final Entry<Integer, String> voice : sortedVoices
+					.entrySet()) {
 				if (voiceIdx > 0) {
 					sb.append("\t\t\t\t},\r\n");
 				}

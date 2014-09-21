@@ -25,8 +25,8 @@ class ValueInt extends Value<Integer> {
 			}
 			label.setText(String.format("%s %d", value_ == 0 ? " "
 					: value_ > 0 ? "+" : "-", Integer.valueOf(Math
-							.abs(value_))));
-			if (interval > 0)
+					.abs(value_))));
+			if (interval > 0) {
 				if (value_ == min) {
 					min -= interval;
 					if (value_ < (max - (3 * interval))) {
@@ -37,10 +37,12 @@ class ValueInt extends Value<Integer> {
 					if (value_ > (min + (3 * interval))) {
 						min += interval;
 					}
-				} else
+				} else {
 					return;
-			else
+				}
+			} else {
 				return;
+			}
 			display();
 			slider.revalidate();
 		}
@@ -117,8 +119,8 @@ class ValueInt extends Value<Integer> {
 
 	@Override
 	public <A extends Container, B extends Container, C extends Container>
-	Value<Integer> localInstance(DragObject<A, B, C> object,
-			DropTarget<A, B, C> target, final Integer value) {
+			Value<Integer> localInstance(DragObject<A, B, C> object,
+					DropTarget<A, B, C> target, final Integer value) {
 		return new ValueInt(bruteParams, this, object, target, value);
 	}
 

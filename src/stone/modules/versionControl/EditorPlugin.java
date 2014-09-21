@@ -44,7 +44,8 @@ public final class EditorPlugin extends GUIPlugin {
 		panel.add(new JScrollPane(new JTextArea(content)));
 		panel.add(panelButton, BorderLayout.SOUTH);
 
-		panelButton.add(GUIInterface.Button.OK.getButton(), BorderLayout.EAST);
+		panelButton.add(GUIInterface.Button.OK.getButton(),
+				BorderLayout.EAST);
 		panelButton.add(GUIInterface.Button.ABORT.getButton(),
 				BorderLayout.WEST);
 		return false;

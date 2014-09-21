@@ -2,6 +2,7 @@ package stone.util;
 
 import java.nio.charset.Charset;
 
+
 /**
  * Class for abstraction between different FileSystems
  * 
@@ -17,10 +18,10 @@ public abstract class FileSystem {
 		 * Any windows version between Windows XP and Windows 8
 		 */
 		WINDOWS("\\", "\r\n"),
-		//		/**
-		//		 * Any unix indicating itself as linux kernel
-		//		 */
-		//		LINUX("/", "\n"),
+		// /**
+		// * Any unix indicating itself as linux kernel
+		// */
+		// LINUX("/", "\n"),
 		/**
 		 * Any unix system, which is not sub-classified
 		 */
@@ -101,7 +102,7 @@ public abstract class FileSystem {
 	private final static FileSystem createInstance() {
 		switch (FileSystem.type) {
 			case UNIX:
-				//			case LINUX:
+				// case LINUX:
 				return new UnixFileSystem();
 			case WINDOWS:
 				return new WindowsFileSystem();
@@ -112,12 +113,13 @@ public abstract class FileSystem {
 
 	private final static OSType determineOSType() {
 		final String osName = System.getProperty("os.name");
-		if (osName.startsWith("Windows"))
+		if (osName.startsWith("Windows")) {
 			return OSType.WINDOWS.setSubtype(osName.substring(8));
-		else if (osName.startsWith("Unix") || osName.startsWith("Linux"))
+		} else if (osName.startsWith("Unix") || osName.startsWith("Linux")) {
 			return OSType.UNIX;
-		//		} else if (osName.startsWith("Linux")) {
-		//			return OSType.LINUX;
+		}
+		// } else if (osName.startsWith("Linux")) {
+		// return OSType.LINUX;
 		throw new UnrecognizedOSException();
 	}
 
@@ -125,8 +127,9 @@ public abstract class FileSystem {
 		final String home_ = System.getProperty("user.home");
 		switch (FileSystem.type) {
 			case UNIX:
-				//			case LINUX:
-				return Path.getPath(home_.split(FileSystem.OSType.UNIX.sepFile));
+				// case LINUX:
+				return Path.getPath(home_
+						.split(FileSystem.OSType.UNIX.sepFile));
 			case WINDOWS:
 				if (FileSystem.type.subtype.equals("Windows Vista")) {
 					// workaround for bug on vista, see
@@ -135,7 +138,8 @@ public abstract class FileSystem {
 					return Path.getPath((home_.substring(0, 9) + user)
 							.split("\\" + getFileSeparator()));
 				}
-				return Path.getPath(home_.split("\\" + getFileSeparator()));
+				return Path
+						.getPath(home_.split("\\" + getFileSeparator()));
 			default:
 		}
 		return null;

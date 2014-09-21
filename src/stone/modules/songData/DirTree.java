@@ -61,48 +61,51 @@ final class DirTree {
 	}
 
 	final Path buildPath() {
-		if (parent == null)
+		if (parent == null) {
 			return base;
+		}
 		return parent.buildPath().resolve(name);
 	}
 
 	final Iterator<Path> dirsIterator() {
 		return new Iterator<Path>() {
 			private DirTree currentTree = walkTo(base);
-			private Iterator<String> iter = currentTree.directories.keySet()
-					.iterator();
+			private Iterator<String> iter = currentTree.directories
+					.keySet().iterator();
 			private final ArrayDeque<Iterator<String>> iterStack =
 					new ArrayDeque<>();
 
-					@Override
-					public boolean hasNext() {
-						while (true) {
-							if (iter.hasNext())
-								return true;
-							if (iterStack.isEmpty())
-								return false;
-							// pop
-							currentTree = currentTree.parent;
-							iter = iterStack.removeLast();
-						}
+			@Override
+			public boolean hasNext() {
+				while (true) {
+					if (iter.hasNext()) {
+						return true;
 					}
+					if (iterStack.isEmpty()) {
+						return false;
+					}
+					// pop
+					currentTree = currentTree.parent;
+					iter = iterStack.removeLast();
+				}
+			}
 
-					@Override
-					public Path next() {
-						final String next = iter.next();
-						final Path ret = currentTree.buildPath().resolve(next);
-						if (currentTree.directories.get(next) != null) {
-							iterStack.add(iter);
-							currentTree = currentTree.directories.get(next);
-							iter = currentTree.directories.keySet().iterator();
-						}
-						return ret;
-					}
+			@Override
+			public Path next() {
+				final String next = iter.next();
+				final Path ret = currentTree.buildPath().resolve(next);
+				if (currentTree.directories.get(next) != null) {
+					iterStack.add(iter);
+					currentTree = currentTree.directories.get(next);
+					iter = currentTree.directories.keySet().iterator();
+				}
+				return ret;
+			}
 
-					@Override
-					public void remove() {
-						throw new UnsupportedOperationException();
-					}
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
 
 		};
 	}
@@ -111,51 +114,56 @@ final class DirTree {
 		return new Iterator<Path>() {
 
 			private DirTree currentTree = walkTo(base);
-			private Iterator<String> dirIter = currentTree.directories.keySet()
-					.iterator();
+			private Iterator<String> dirIter = currentTree.directories
+					.keySet().iterator();
 			private Iterator<String> fileIter = currentTree.files.keySet()
 					.iterator();
 			private final ArrayDeque<Iterator<String>> dirIterStack =
 					new ArrayDeque<>();
-					private final ArrayDeque<Iterator<String>> fileIterStack =
-							new ArrayDeque<>();
+			private final ArrayDeque<Iterator<String>> fileIterStack =
+					new ArrayDeque<>();
 
-							@Override
-							public boolean hasNext() {
-								while (true) {
-									if (fileIter.hasNext())
-										return true;
-									if (dirIter.hasNext()) {
-										final String nextDir = dirIter.next();
-										if (currentTree.directories.get(nextDir) != null) {
-											dirIterStack.add(dirIter);
-											fileIterStack.add(fileIter);
-											currentTree = currentTree.directories.get(nextDir);
-											dirIter =
-													currentTree.directories.keySet().iterator();
-											fileIter = currentTree.files.keySet().iterator();
-										}
-										continue;
-									}
-									if (dirIterStack.isEmpty())
-										return false;
-									// pop
-									currentTree = currentTree.parent;
-									fileIter = fileIterStack.removeLast();
-									dirIter = dirIterStack.removeLast();
-								}
-							}
+			@Override
+			public boolean hasNext() {
+				while (true) {
+					if (fileIter.hasNext()) {
+						return true;
+					}
+					if (dirIter.hasNext()) {
+						final String nextDir = dirIter.next();
+						if (currentTree.directories.get(nextDir) != null) {
+							dirIterStack.add(dirIter);
+							fileIterStack.add(fileIter);
+							currentTree =
+									currentTree.directories.get(nextDir);
+							dirIter =
+									currentTree.directories.keySet()
+											.iterator();
+							fileIter =
+									currentTree.files.keySet().iterator();
+						}
+						continue;
+					}
+					if (dirIterStack.isEmpty()) {
+						return false;
+					}
+					// pop
+					currentTree = currentTree.parent;
+					fileIter = fileIterStack.removeLast();
+					dirIter = dirIterStack.removeLast();
+				}
+			}
 
-							@Override
-							public Path next() {
-								final String next = fileIter.next();
-								return currentTree.buildPath().resolve(next);
-							}
+			@Override
+			public Path next() {
+				final String next = fileIter.next();
+				return currentTree.buildPath().resolve(next);
+			}
 
-							@Override
-							public void remove() {
-								throw new UnsupportedOperationException();
-							}
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
 
 		};
 	}
@@ -177,8 +185,9 @@ final class DirTree {
 	}
 
 	final Path getRoot() {
-		if (parent != null)
+		if (parent != null) {
 			return parent.getRoot();
+		}
 		return base;
 	}
 
@@ -188,8 +197,9 @@ final class DirTree {
 
 	final DirTree walkTo(final Path path) {
 		DirTree t = this;
-		if (path == base)
+		if (path == base) {
 			return t;
+		}
 		final String[] walkingPath = path.relativize(base).split("/");
 		int layer = 0;
 		while (layer < walkingPath.length) {

@@ -11,11 +11,12 @@ import stone.io.GUI;
 
 
 abstract class MenuListener extends ReleaseListener implements
-ChangeListener {
+		ChangeListener {
 
 	private boolean triggered = false;
 
 	private final AbstractButton button;
+
 	protected MenuListener(final ReleaseListener listener,
 			final AbstractButton button) {
 		super(listener);

@@ -114,8 +114,9 @@ public class ModuleLoader extends ClassLoader {
 		int size = 0;
 		assert cp.length >= 1;
 		for (; i <= cp.length; i++) {
-			if (i == cp.length)
+			if (i == cp.length) {
 				return null;
+			}
 			path = cp[i];
 			if (!path.exists()) {
 				continue;
@@ -156,9 +157,10 @@ public class ModuleLoader extends ClassLoader {
 				return null;
 			}
 		}
-		if (in == null)
+		if (in == null) {
 			throw new RuntimeException(
 					"findClass got an null reference for InputStream");
+		}
 		assert in != null;
 		if (buffer.length < size) {
 			buffer = new byte[(size & 0xffff_ff00) + 0x100];

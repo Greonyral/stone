@@ -1,8 +1,8 @@
 package stone.modules.midiData;
 
 /**
- * Exception indicating that an error occurred while decoding previously
- * parsed midi-events
+ * Exception indicating that an error occurred while decoding previously parsed
+ * midi-events
  * 
  * @author Nelphindal
  */

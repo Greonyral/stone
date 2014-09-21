@@ -10,8 +10,9 @@ import stone.modules.abcCreator.DragObject;
 import stone.modules.abcCreator.DropTarget;
 import stone.modules.abcCreator.DropTargetContainer;
 
+
 class EmptyMidiInstrumentDropTargetContainer implements
-DropTargetContainer<JPanel, JPanel, JPanel> {
+		DropTargetContainer<JPanel, JPanel, JPanel> {
 
 	final EmptyMidiInstrumentDropTarget target =
 			new EmptyMidiInstrumentDropTarget(this);
@@ -31,7 +32,8 @@ DropTargetContainer<JPanel, JPanel, JPanel> {
 	}
 
 	@Override
-	public final void delete(final DropTarget<JPanel, JPanel, JPanel> dropTarget) {
+	public final void delete(
+			final DropTarget<JPanel, JPanel, JPanel> dropTarget) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -47,8 +49,9 @@ DropTargetContainer<JPanel, JPanel, JPanel> {
 
 	@Override
 	public final Iterator<DropTarget<JPanel, JPanel, JPanel>> iterator() {
-		if (target.objects.isEmpty())
+		if (target.objects.isEmpty()) {
 			return java.util.Collections.emptyIterator();
+		}
 		return new Iterator<DropTarget<JPanel, JPanel, JPanel>>() {
 
 			boolean hasNext = true;
@@ -78,7 +81,8 @@ DropTargetContainer<JPanel, JPanel, JPanel> {
 			final DragObject<JPanel, JPanel, JPanel> object) {
 		target.objects.remove(object);
 		if (target.objects.isEmpty()) {
-			final Set<DropTarget<JPanel, JPanel, JPanel>> s = new HashSet<>();
+			final Set<DropTarget<JPanel, JPanel, JPanel>> s =
+					new HashSet<>();
 			s.add(target);
 			return s;
 		}

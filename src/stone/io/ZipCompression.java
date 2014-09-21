@@ -39,7 +39,8 @@ public class ZipCompression {
 			final ZipOutputStreams outs =
 					ZipCompression.openOut(zip, ioHandler);
 			final ZipOutputStream out = outs.zipOutputStream;
-			final java.nio.file.Path zipPath = zippedFile.toPath().getParent();
+			final java.nio.file.Path zipPath =
+					zippedFile.toPath().getParent();
 			for (final File file : files) {
 				final String relName =
 						zipPath.relativize(file.toPath()).toString();

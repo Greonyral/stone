@@ -9,6 +9,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
 
+
 final class LoadButtonMouseListener extends ReleaseListener {
 
 	LoadButtonMouseListener(final ReleaseMouseListenerParams params) {
@@ -18,8 +19,9 @@ final class LoadButtonMouseListener extends ReleaseListener {
 	@Override
 	public final void mouseReleased(final MouseEvent e) {
 		e.consume();
-		if (abcMapPlugin.state.loadingMap)
+		if (abcMapPlugin.state.loadingMap) {
 			return;
+		}
 		final JFileChooser fc =
 				new JFileChooser(abcMapPlugin.caller.getFile().getParent()
 						.toFile());
@@ -28,8 +30,7 @@ final class LoadButtonMouseListener extends ReleaseListener {
 			@Override
 			public final boolean accept(final File f) {
 				return f.isDirectory()
-						|| (f.isFile() && f.getName().endsWith(
-								".map"));
+						|| (f.isFile() && f.getName().endsWith(".map"));
 			}
 
 			@Override
@@ -46,10 +47,8 @@ final class LoadButtonMouseListener extends ReleaseListener {
 				for (final DropTarget<JPanel, JPanel, JPanel> t : o
 						.getTargetContainer().removeAllLinks(o)) {
 					if (t != abcMapPlugin.state.emptyTarget) {
-						t.getDisplayableComponent()
-						.getParent()
-						.remove(t
-								.getDisplayableComponent());
+						t.getDisplayableComponent().getParent().remove(
+								t.getDisplayableComponent());
 					}
 				}
 				o.clearTargets();
@@ -57,13 +56,10 @@ final class LoadButtonMouseListener extends ReleaseListener {
 						.getAliases()) {
 					alias.forgetAlias();
 					for (final DropTarget<JPanel, JPanel, JPanel> t : alias
-							.getTargetContainer().removeAllLinks(
-									alias)) {
+							.getTargetContainer().removeAllLinks(alias)) {
 						if (t != abcMapPlugin.state.emptyTarget) {
-							t.getDisplayableComponent()
-							.getParent()
-							.remove(t
-									.getDisplayableComponent());
+							t.getDisplayableComponent().getParent()
+									.remove(t.getDisplayableComponent());
 						}
 					}
 					abcMapPlugin.panelLeft.remove(alias
@@ -79,32 +75,31 @@ final class LoadButtonMouseListener extends ReleaseListener {
 			abcMapPlugin.state.loadingMap = true;
 			final File mapToLoad = fc.getSelectedFile();
 
-			final Map<String, Track> idToTrackMap =
-					new HashMap<>();
-					synchronized (idToTrackMap) {
-						final Thread t =
-								new MapLoadingThread(abcMapPlugin, mapToLoad,
-										idToTrackMap);
-						t.start();
-						int toFind = abcMapPlugin.trackMap.size();
-						for (int i = 1; toFind-- > 0; i++) {
-							final Track track = (Track) abcMapPlugin.trackMap.get(i);
-							if (track != null) {
-								idToTrackMap.put(String.valueOf(i + 1),
-										track);
-								continue;
-							}
-							for (int j = i + 1;; j++) {
-								final Track trackJ =
-										(Track) abcMapPlugin.trackMap.remove(j);
-								if (trackJ != null) {
-									idToTrackMap.put(
-											String.valueOf(i + 1), trackJ);
-									break;
-								}
-							}
+			final Map<String, Track> idToTrackMap = new HashMap<>();
+			synchronized (idToTrackMap) {
+				final Thread t =
+						new MapLoadingThread(abcMapPlugin, mapToLoad,
+								idToTrackMap);
+				t.start();
+				int toFind = abcMapPlugin.trackMap.size();
+				for (int i = 1; toFind-- > 0; i++) {
+					final Track track =
+							(Track) abcMapPlugin.trackMap.get(i);
+					if (track != null) {
+						idToTrackMap.put(String.valueOf(i + 1), track);
+						continue;
+					}
+					for (int j = i + 1;; j++) {
+						final Track trackJ =
+								(Track) abcMapPlugin.trackMap.remove(j);
+						if (trackJ != null) {
+							idToTrackMap
+									.put(String.valueOf(i + 1), trackJ);
+							break;
 						}
 					}
+				}
+			}
 		}
 	}
 }

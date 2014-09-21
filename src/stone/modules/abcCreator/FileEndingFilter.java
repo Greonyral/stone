@@ -6,7 +6,8 @@ import java.io.File;
 /**
  * @author Nelphindal
  */
-public abstract class FileEndingFilter extends stone.util.PathOptionFileFilter {
+public abstract class FileEndingFilter extends
+		stone.util.PathOptionFileFilter {
 
 	private final int dots;
 
@@ -23,14 +24,16 @@ public abstract class FileEndingFilter extends stone.util.PathOptionFileFilter {
 	 */
 	@Override
 	public final boolean accept(final File file) {
-		if (file.isDirectory())
+		if (file.isDirectory()) {
 			return true;
+		}
 		final String name = file.getName();
 		int end = name.length();
 		for (int i = 0; i < dots; i++) {
 			end = name.lastIndexOf('.', end - 1);
-			if (end < 0)
+			if (end < 0) {
 				return false;
+			}
 		}
 
 		return ending(name.substring(end).toLowerCase());

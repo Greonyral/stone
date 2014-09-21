@@ -47,9 +47,9 @@ public class TaskPool {
 
 	/**
 	 * Adds one or more tasks to the pool to be executed. Each task will be
-	 * executed by each WorkerThread currently knwon to the pool. The
-	 * next task will be executed after the previous task has been completed
-	 * with all threads.
+	 * executed by each WorkerThread currently knwon to the pool. The next task
+	 * will be executed after the previous task has been completed with all
+	 * threads.
 	 * 
 	 * @param tasks
 	 */
@@ -70,8 +70,9 @@ public class TaskPool {
 	 */
 	public final void close() {
 		synchronized (taskPool) {
-			if (closed)
+			if (closed) {
 				return;
+			}
 			closed = true;
 			taskPool.notifyAll();
 			while (runningTasks > 0) {
@@ -104,8 +105,9 @@ public class TaskPool {
 				@Override
 				public void run() {
 					while (true) {
-						if (!runTask())
+						if (!runTask()) {
 							return;
+						}
 					}
 				}
 			};
@@ -116,8 +118,8 @@ public class TaskPool {
 
 	/**
 	 * Waits for the queue to be emptied and all tasks finished being executed.
-	 * The master thread has to be checked if it was not
-	 * interrupted while waiting.
+	 * The master thread has to be checked if it was not interrupted while
+	 * waiting.
 	 */
 	public final void waitForTasks() {
 		while ((runningTasks > 0) || !taskPool.isEmpty()) {
@@ -142,8 +144,9 @@ public class TaskPool {
 		final Runnable t;
 		synchronized (taskPool) {
 			while (taskPool.isEmpty()) {
-				if (closed)
+				if (closed) {
 					return false;
+				}
 				try {
 					taskPool.wait();
 				} catch (final InterruptedException e) {

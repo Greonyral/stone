@@ -74,8 +74,9 @@ class Crawler implements Runnable {
 							e.printStackTrace();
 							return;
 						}
-						if (threads.get() == 0)
+						if (threads.get() == 0) {
 							return;
+						}
 					}
 					threads.incrementAndGet();
 				}
