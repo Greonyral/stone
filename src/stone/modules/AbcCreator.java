@@ -201,7 +201,7 @@ public class AbcCreator implements Module,
 	private static final PathOptionFileFilter INSTR_MAP_FILTER =
 			new InstrumentMapFileFilter();
 
-	private final static int VERSION = 6;
+	private final static int VERSION = 7;
 
 	private static final FileFilter midiFilter = new MidiFileFilter();
 
@@ -520,7 +520,6 @@ public class AbcCreator implements Module,
 	@Override
 	public final void loadMap(final File mapToLoad,
 			final DndPluginCaller.LoadedMapEntry c) {
-		@SuppressWarnings("resource")
 		final InputStream in = io.openIn(mapToLoad);
 		in.registerProgressMonitor(io);
 		class ParseState {
@@ -553,8 +552,8 @@ public class AbcCreator implements Module,
 									.trim(), io);
 						} else if (line.startsWith("abctrack begin")) {
 							++state;
-							// } else if (line.startsWith("fadeout length ")) {
-							// TODO add support when needed
+						} else if (line.startsWith("fadeout length")) {
+							BruteParams.FADEOUT.value(line.substring(14).trim(), io);
 						} else {
 							return;
 						}
@@ -725,7 +724,6 @@ public class AbcCreator implements Module,
 		return BruteParams.valuesGlobal();
 	}
 
-	@SuppressWarnings("resource")
 	private final int call(final Path location, final CallType type,
 			final Path wd, final String... cmd) throws IOException,
 			InterruptedException {
@@ -889,7 +887,6 @@ public class AbcCreator implements Module,
 		}
 	}
 
-	@SuppressWarnings("resource")
 	private final Path generateMap(final Object name, final Object title) {
 		final Path map =
 				midi.getParent().resolve(midi.getFileName() + ".map");
@@ -1095,7 +1092,6 @@ public class AbcCreator implements Module,
 		}
 	}
 
-	@SuppressWarnings("resource")
 	private final void unpack(final JarFile jarFile,
 			final ZipEntry... jarEntries) {
 		for (final ZipEntry jarEntry : jarEntries) {
@@ -1168,7 +1164,6 @@ public class AbcCreator implements Module,
 		}
 	}
 
-	@SuppressWarnings("resource")
 	final Set<Path> copy(final Path source, final Path destination)
 			throws IOException {
 		final Set<Path> filesAndDirs = new HashSet<>();
@@ -1249,9 +1244,7 @@ public class AbcCreator implements Module,
 			}
 			return;
 		}
-		@SuppressWarnings("resource")
 		final InputStream in = io.openIn(source.toFile());
-		@SuppressWarnings("resource")
 		final OutputStream out = io.openOut(destination.toFile());
 		io.write(in, out);
 		io.close(out);

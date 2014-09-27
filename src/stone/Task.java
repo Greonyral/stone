@@ -2,6 +2,7 @@ package stone;
 
 import stone.util.Path;
 
+
 final class Task {
 	final String name;
 	final Path source;
@@ -30,4 +31,3 @@ final class Task {
 
 	}
 }
-

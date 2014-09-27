@@ -33,8 +33,6 @@ public class ModuleLoader extends ClassLoader {
 
 	private final Path[] cp;
 
-	private static final ClassLoader sysCll = getSystemClassLoader();
-
 	private ModuleLoader() {
 		super(null);
 		final String className =

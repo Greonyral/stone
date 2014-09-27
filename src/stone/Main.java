@@ -44,15 +44,16 @@ public class Main {
 		final Class<?> flagClass = loader.loadClass("stone.util.Flag");
 		final Object sc = scClass.getMethod("createInstance").invoke(null);
 		final Object main = mainClass.newInstance();
-		final Object flags = flagClass.getMethod("getInstance").invoke(null);
+		final Object flags =
+				flagClass.getMethod("getInstance").invoke(null);
 		// final String flagId, final String tooltip,
 		// char shortFlag, final String longFlag, boolean argExpected
 		final Method registerOption =
 				flagClass.getMethod("registerOption", String.class,
 						String.class, char.class, String.class,
 						boolean.class);
-		registerOption.invoke(flags, Main.HELP_ID, "prints this help", 'h',
-				"help", false);
+		registerOption.invoke(flags, Main.HELP_ID, "prints this help",
+				'h', "help", false);
 		registerOption.invoke(flags, Main.DEBUG_ID,
 				"enables more output for debugging", 'd', "debug", false);
 		flagClass.getMethod("parse", String[].class).invoke(flags,

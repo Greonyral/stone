@@ -26,7 +26,7 @@ public class Main implements Module {
 
 	private static final int MAX_LENGTH_INFO = 80;
 
-	private static final int VERSION = 8;
+	private static final int VERSION = 9;
 
 	/**
 	 * Should be called only once. Creates an option to adjust the user's name.

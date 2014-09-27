@@ -28,7 +28,7 @@ final class TempoChangeState {
 
 	@Override
 	public final String toString() {
-		return minutes + "@" + ticks;
+		return minutes + "@" + ticks + "[" + microsPerQuarter + "]";
 	}
 
 	final double getMinutes(int deltaTicks) {

@@ -448,7 +448,6 @@ public class MasterThread extends Thread {
 			}
 			target = tmp.resolve(module + ".jar");
 			final InputStream in = connection.getInputStream();
-			@SuppressWarnings("resource")
 			final OutputStream out = io.openOut(target.toFile());
 			final byte[] buffer = new byte[0x2000];
 			try {
@@ -531,7 +530,6 @@ private final void loadModules() {
 		io.endProgress();
 	}
 	
-	@SuppressWarnings("resource")
 	private final Path repack() throws IOException {
 		if (isInterrupted()) {
 			return null;
@@ -684,9 +682,7 @@ private final void loadModules() {
 				if (!p.getParent().exists()) {
 					p.getParent().toFile().mkdirs();
 				}
-				@SuppressWarnings("resource")
 				final InputStream in = jar.getInputStream(e);
-				@SuppressWarnings("resource")
 				final OutputStream out = io.openOut(p.toFile());
 				io.write(in, out);
 				io.close(out);

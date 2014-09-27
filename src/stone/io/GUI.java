@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -14,6 +15,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,8 +95,6 @@ public class GUI implements GUIInterface {
 	}
 
 	private static final String waitText = "Please wait ...";
-
-	private static final String vcTooltip = null;
 
 	/**
 	 * Enables a component by calling {@link Component#setEnabled(boolean)}
@@ -614,32 +615,19 @@ public class GUI implements GUIInterface {
 			Button.class.notifyAll();
 		}
 		mainFrame.getContentPane().removeAll();
-
+		final FontMetrics metrics = text.getFontMetrics(text.getFont());
+		int width = 0, height = 0;
+		int offset = -1;
+		do {
+			int end = message.indexOf('\n', ++offset);
+			height += metrics.getMaxAscent();
+			width += metrics.getMaxAscent();
+			offset = end;
+		} while (offset >= 0);
 		text.setEditable(false);
 		text.setText(message);
-
-		int lines = 1, len = 1;
-		final int height, width;
-		int offset = message.indexOf('\n');
-		if (offset < 0) {
-			len = message.length();
-		} else {
-			len = Math.max(len, offset);
-			while (true) {
-				final int offset2 = message.indexOf('\n', ++offset);
-				++lines;
-				if (offset2 < 0) {
-					len = Math.max(len, message.length() - offset);
-					break;
-				}
-				len = Math.max(len, offset2 - offset);
-				offset = offset2;
-			}
-		}
-		height = Math.max(50, Math.min(20 * lines, 400));
-		width = Math.max(160, Math.min(10 * len, 800));
+		text.setMaximumSize(new Dimension(400, 600));
 		final JScrollPane scrollPane = new JScrollPane(text);
-		scrollPane.setPreferredSize(new Dimension(width, height));
 		final JPanel panel = new JPanel();
 		panel.add(scrollPane);
 		mainFrame.add(panel);
@@ -651,9 +639,10 @@ public class GUI implements GUIInterface {
 			}
 			mainFrame.add(wait, BorderLayout.NORTH);
 			panel.add(Button.OK.getButton(), BorderLayout.SOUTH);
-
+			mainFrame.pack();
 			waitForButton();
 		} else {
+			mainFrame.pack();
 			synchronized (this) {
 				revalidate(true, false);
 			}

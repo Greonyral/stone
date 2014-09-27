@@ -86,8 +86,10 @@ final class MapLoadingThread extends Thread {
 						i += 3;
 					} else {
 						try {
-							BruteParams.valueOf(s[i]).setLocalValue(o,
-									target, s[i + 1]);
+							final BruteParams<?> p =
+									BruteParams.valueOf(s[i]);
+							if (p != null)
+								p.setLocalValue(o, target, s[i + 1]);
 							i += 2;
 						} catch (final Exception e) {
 							error = true;

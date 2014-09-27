@@ -22,6 +22,11 @@ final class Duration {
 		midiParser = midiParserImpl;
 	}
 
+	@Override
+	public final String toString() {
+		return tempoIntervals.toString();
+	}
+
 	final void addTempoChange(final TempoChange event) {
 		last = new TempoChangeState(midiParser, event, last);
 		tempoIntervals.put(tmp, last);

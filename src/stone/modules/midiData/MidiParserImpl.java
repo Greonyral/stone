@@ -44,7 +44,8 @@ final class MidiParserImpl extends MidiParser {
 	 */
 	private final void parse1(final InputStream in) throws IOException,
 			ParsingException {
-		in.read(midiHeaderBufferBytes);
+		in.read(midiHeaderBufferBytes); // discard the file header it has been
+										// read and parsed before
 		while ((activeTrack < ntracks) && !master.isInterrupted()) {
 			parseEvents(in);
 		}
@@ -80,6 +81,21 @@ final class MidiParserImpl extends MidiParser {
 			}
 		} else if (n_ != activeTrack) {
 			assert (n_ + 1) == activeTrack;
+			final Object channel =
+					tracksToChannel.get(Integer.valueOf(n_));
+			if ((channel == null) && (n_ > 0)) {
+				System.out.println("No channel assigned to track " + n_);
+			} else if (channel != null) {
+				final Object instrument =
+						channelsToInstrument.get(channel);
+				if (instrument == null) {
+					System.out
+							.println("No instrument assigned to channel "
+									+ channel
+									+ " which is assigned to track " + n_);
+				}
+			}
+			//
 			if (in.EOFreached()) {
 				activeTrack = ntracks;
 			}
@@ -100,7 +116,6 @@ final class MidiParserImpl extends MidiParser {
 		}
 	}
 
-	@SuppressWarnings("resource")
 	@Override
 	protected final void createMidiMap() throws ParsingException,
 			IOException {
@@ -196,7 +211,6 @@ final class MidiParserImpl extends MidiParser {
 		io.endProgress();
 	}
 
-	@SuppressWarnings("resource")
 	@Override
 	protected final void prepareMidi(final Path midi) throws Exception {
 		final InputStream in = io.openIn(midi.toFile());

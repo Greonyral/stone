@@ -204,12 +204,15 @@ public abstract class MidiParser {
 				case 0x20:
 					return CHANNEL;
 					// case 0x21:
+					// return PORT;
 				case 0x2f:
 					return EOT;
 				case 0x51:
 					return TEMPO;
 				case 0x58:
 					return TIME;
+					// case 0x59:
+					// return KEY_SIG;
 				default:
 					return DISCARD_N;
 			}
@@ -301,6 +304,7 @@ public abstract class MidiParser {
 	}
 
 	private final class ParseState_ProgramChange extends ParseState {
+
 		byte channel;
 
 		public ParseState_ProgramChange() {
@@ -323,11 +327,6 @@ public abstract class MidiParser {
 		int len;
 		private boolean check;
 		private final boolean firstByteIsLen;
-
-		public ParseState_ReadN(int len) {
-			this.len = len;
-			firstByteIsLen = false;
-		}
 
 		ParseState_ReadN() {
 			firstByteIsLen = true;
@@ -570,7 +569,7 @@ public abstract class MidiParser {
 	/** Format of this midi */
 	protected int format;
 
-	final ParseState CHANNEL = new ParseState_ReadN(1) {
+	final ParseState CHANNEL = new ParseState_ReadN() {
 
 		@Override
 		final void end() {
