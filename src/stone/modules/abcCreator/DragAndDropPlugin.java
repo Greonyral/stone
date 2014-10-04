@@ -210,6 +210,7 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 				frame.add(pane);
 				frame.pack();
 				frame.setTitle(parser.getMidi());
+				frame.setVisible(true);
 			}
 		};
 
@@ -241,7 +242,6 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 		panel.add(state.label, BorderLayout.NORTH);
 		panel.add(mainPanel);
 		panel.add(createButtonPanel(), BorderLayout.SOUTH);
-		frame.setVisible(true);
 		return false;
 	}
 

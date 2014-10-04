@@ -76,9 +76,11 @@ public class SongDataContainer implements Container {
 			if (!basePath.getParent().exists()
 					|| !basePath.toFile().mkdir()) {
 				io.printError(
-						"The default path or the path defined in\nthe config-file does not exist:\n\""
-								+ Main.formatMaxLength(basePath, null)
-								+ "\"\n Please look into the manual for more information.",
+						Main.formatMaxLength(
+								basePath,
+								null,
+								"The default path or the path defined in the config-file does not exist:",
+								". Please look into the manual for more information."),
 						false);
 			}
 		}
@@ -102,7 +104,6 @@ public class SongDataContainer implements Container {
 	/**
 	 * fills the container
 	 */
-	@SuppressWarnings("resource")
 	public final void fill() {
 		if (master.isInterrupted()) {
 			return;
@@ -264,7 +265,6 @@ public class SongDataContainer implements Container {
 	 * @param masterPluginData
 	 *            the file where the Songbook-plugin expects it
 	 */
-	@SuppressWarnings("resource")
 	public final void writeNewSongbookData(final File masterPluginData) {
 		final OutputStream outMaster;
 

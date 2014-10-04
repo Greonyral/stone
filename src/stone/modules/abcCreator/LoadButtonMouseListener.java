@@ -2,8 +2,6 @@ package stone.modules.abcCreator;
 
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -74,32 +72,8 @@ final class LoadButtonMouseListener extends ReleaseListener {
 			abcMapPlugin.state.label.setText("Parsing loaded map ...");
 			abcMapPlugin.state.loadingMap = true;
 			final File mapToLoad = fc.getSelectedFile();
-
-			final Map<String, Track> idToTrackMap = new HashMap<>();
-			synchronized (idToTrackMap) {
-				final Thread t =
-						new MapLoadingThread(abcMapPlugin, mapToLoad,
-								idToTrackMap);
-				t.start();
-				int toFind = abcMapPlugin.trackMap.size();
-				for (int i = 1; toFind-- > 0; i++) {
-					final Track track =
-							(Track) abcMapPlugin.trackMap.get(i);
-					if (track != null) {
-						idToTrackMap.put(String.valueOf(i + 1), track);
-						continue;
-					}
-					for (int j = i + 1;; j++) {
-						final Track trackJ =
-								(Track) abcMapPlugin.trackMap.remove(j);
-						if (trackJ != null) {
-							idToTrackMap
-									.put(String.valueOf(i + 1), trackJ);
-							break;
-						}
-					}
-				}
-			}
+			ParamMap.setTracks(abcMapPlugin.trackMap);
+			new MapLoadingThread(abcMapPlugin, mapToLoad).start();
 		}
 	}
 }

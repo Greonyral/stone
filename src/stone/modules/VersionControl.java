@@ -1,6 +1,5 @@
 package stone.modules;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,6 +57,7 @@ import stone.io.IOHandler;
 import stone.io.InputStream;
 import stone.io.OutputStream;
 import stone.modules.versionControl.CommitComparator;
+import stone.modules.versionControl.GitNoYesPlugin;
 import stone.modules.versionControl.NoYesPlugin;
 import stone.modules.versionControl.SecretKeyPlugin;
 import stone.modules.versionControl.SortingComparator;
@@ -79,7 +79,7 @@ import stone.util.Time;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 4;
+	private final static int VERSION = 5;
 
 	private final static String SECTION = Main.VC_SECTION;
 
@@ -149,6 +149,8 @@ public final class VersionControl implements Module {
 	private final Path base, repoRoot;
 
 	private final Main main;
+
+	private long start;
 
 	/**
 	 * Constructor for building versionInfo
@@ -380,6 +382,7 @@ public final class VersionControl implements Module {
 		if (master.isInterrupted()) {
 			return;
 		}
+
 		final String name =
 				main.getConfigValue(Main.GLOBAL_SECTION, Main.NAME_KEY,
 						null);
@@ -417,6 +420,10 @@ public final class VersionControl implements Module {
 		try {
 			if (!repoRoot.resolve(".git").exists()) {
 				checkoutBand();
+				final long end = System.currentTimeMillis();
+				System.out.println("needed "
+						+ stone.util.Time.delta(end - start)
+						+ " for clone");
 				if (!repoRoot.resolve(".git").exists()) {
 					gitSession_band = null;
 				} else {
@@ -521,6 +528,7 @@ public final class VersionControl implements Module {
 		if (!plugin.get()) {
 			return;
 		}
+		start = System.currentTimeMillis();
 		repoRoot.getParent().toFile().mkdirs();
 		try {
 			Git.init().setDirectory(repoRoot.toFile()).call();
@@ -542,7 +550,6 @@ public final class VersionControl implements Module {
 			config.save();
 
 			final ObjectId remoteHead = getRemoteHead(gitSession);
-
 			final DiffCommand diffCommand = gitSession.diff();
 			final List<DiffEntry> diffs;
 
@@ -594,7 +601,6 @@ public final class VersionControl implements Module {
 			}
 
 			io.endProgress();
-
 		} catch (final GitAPIException | IOException e) {
 			repoRoot.resolve(".git").delete();
 			io.handleException(ExceptionHandle.CONTINUE, e);
@@ -690,18 +696,23 @@ public final class VersionControl implements Module {
 		treeParserOld.stopWalk();
 		treeParserNew.stopWalk();
 
-		// TODO test
+		// TODO test decrypt
 		for (final String created : encodedCreated) {
-			encrypt(created, created.substring(4) + ".abc", false);
+			gitSession.checkout().addPath(created)
+					.setStartPoint(commitNew).call();
+			encrypt(created, created.substring(4).replace(".abc",
+					".enc.abc"), false);
 		}
 		for (final String deleted : encodedDeleted) {
-			repoRoot.resolve(deleted.substring(4) + ".abc").delete();
+			repoRoot.resolve(deleted.substring(4)).delete();
+			repoRoot.resolve(
+					deleted.substring(4).replace(".abc", ".enc.abc"))
+					.delete();
 		}
 		return sbHead.append(sbBody.toString()).toString();
 
 	}
 
-	@SuppressWarnings("resource")
 	private final void encrypt(final String source, final String target,
 			boolean encrypt) {
 		final AESEngine engine = new AESEngine();
@@ -725,12 +736,25 @@ public final class VersionControl implements Module {
 		}
 		final Path input = repoRoot.resolve(source.split("/"));
 		final Path output = repoRoot.resolve(target.split("/"));
+		if (input.equals(output)) {
+			final Path tmp = Path.getTmpDirOrFile("");
+			encrypt(source, tmp.toString(), encrypt);
+			input.delete();
+			tmp.toFile().renameTo(input.toFile());
+		}
+
 		output.getParent().toFile().mkdirs();
 		final byte[] bufferIn = new byte[engine.getBlockSize()];
 		final byte[] bufferOut = new byte[engine.getBlockSize()];
 		final InputStream streamIn = io.openIn(input.toFile());
 		final OutputStream streamOut = io.openOut(output.toFile());
 		engine.init(encrypt, keyParam);
+		streamIn.registerProgressMonitor(io);
+		if (encrypt) {
+			io.setProgressTitle("Encrypting " + output.getFileName());
+		} else {
+			io.setProgressTitle("Decrypting " + output.getFileName());
+		}
 		try {
 			while (true) {
 				final int read;
@@ -751,6 +775,7 @@ public final class VersionControl implements Module {
 		} finally {
 			io.close(streamIn);
 			io.close(streamOut);
+			io.endProgress();
 		}
 	}
 
@@ -1054,17 +1079,28 @@ public final class VersionControl implements Module {
 	 * 
 	 * @param type
 	 * @param file
-	 * @return <i>true</i> if user hit yes
+	 * @return an array of selection
+	 *         <ul>
+	 *         <li><i>true</i> if user hit yes at index 0
+	 *         <li/>
+	 *         <li><i>true</i> if the selected file should be enrypted at index
+	 *         1
+	 *         <li/>
+	 *         </ul>
 	 */
-	private final boolean processChangedFile(final String file,
+	private final boolean[] processChangedFile(final String file,
 			final UpdateType type) {
-		final NoYesPlugin plugin =
-				new NoYesPlugin(type.getQuestionPart0(), type
+		final GitNoYesPlugin plugin =
+				new GitNoYesPlugin(type.getQuestionPart0(), type
 						.getQuestionPart0()
 						+ "\n" + file + "\n" + type.getQuestionPart1(), io
-						.getGUI(), true);
+						.getGUI(), true, (type == UpdateType.ADD)
+						|| (type == UpdateType.UPDATE));
+		if (file.endsWith(".enc.abc")) {
+			plugin.preSelectEncryption();
+		}
 		io.handleGUIPlugin(plugin);
-		return plugin.get();
+		return new boolean[] { plugin.get(), plugin.encrypt() };
 	}
 
 	private final void processMissing(final Set<String> rm,
@@ -1079,7 +1115,7 @@ public final class VersionControl implements Module {
 		io.startProgress("Missing files", missingList.size());
 		for (final String fileMissing0 : missingList) {
 			if (processChangedFile(fileMissing0,
-					UpdateType.RESTORE_MISSING)) {
+					UpdateType.RESTORE_MISSING)[0]) {
 				final String fileMissing;
 				if (fileMissing0.startsWith("enc/")) {
 					fileMissing = fileMissing0.substring(4) + ".abc";
@@ -1103,7 +1139,7 @@ public final class VersionControl implements Module {
 								Main.GLOBAL_SECTION, Main.NAME_KEY, null)
 								+ "/");
 				if (isOwner) {
-					if (processChangedFile(fileMissing, UpdateType.DELETE)) {
+					if (processChangedFile(fileMissing, UpdateType.DELETE)[0]) {
 						// do delete it
 						rm.add(fileMissing);
 						final RmCommand removeCommand = gitSession.rm();
@@ -1127,20 +1163,19 @@ public final class VersionControl implements Module {
 		final Iterator<String> iterFile = untrackedList.iterator();
 		while (iterFile.hasNext()) {
 			final String file = iterFile.next();
-			if (file.endsWith(".enc.abc")) {
-				final File encoded =
-						repoRoot.resolve(
-								("enc/" + file.substring(0,
-										file.length() - 4)).split("/"))
-								.toFile();
-				if (!encoded.exists()) {
-					continue;
-				}
-				if (encoded.lastModified() < repoRoot.resolve(file)
-						.toFile().lastModified()) {
-					modList.add(file);
-				}
-			} else if (file.endsWith(".abc")) {
+			// if (file.endsWith(".enc.abc")) {
+			// final File encoded = repoRoot.resolve(
+			// ("enc/" + file.substring(0, file.length() - 4))
+			// .split("/")).toFile();
+			// if (!encoded.exists()) {
+			// continue;
+			// }
+			// if (encoded.lastModified() < repoRoot.resolve(file).toFile()
+			// .lastModified()) {
+			// modList.add(file);
+			// }
+			// } else
+			if (!file.startsWith("enc/") && file.endsWith(".abc")) {
 				continue;
 			}
 			iterFile.remove();
@@ -1148,16 +1183,19 @@ public final class VersionControl implements Module {
 		io.startProgress("Untracked files", untrackedList.size());
 		final Set<String> conflicts = new HashSet<>();
 		for (final String fileUntracked0 : untrackedList) {
-			if (processChangedFile(fileUntracked0, UpdateType.ADD)) {
+			final boolean[] b =
+					processChangedFile(fileUntracked0, UpdateType.ADD);
+			if (b[0]) {
 				final String fileUntracked;
-				if (fileUntracked0.endsWith("enc.abc")) {
+				if (b[1]) {
 					fileUntracked =
 							"enc/"
-									+ fileUntracked0.substring(0,
-											fileUntracked0.length() - 4);
+									+ fileUntracked0.replace(".enc.abc",
+											".abc");
 					encrypt(fileUntracked0, fileUntracked, true);
 				} else {
-					fileUntracked = fileUntracked0;
+					fileUntracked =
+							fileUntracked0.replace(".enc.abc", ".abc");
 				}
 				add.add(fileUntracked);
 				final DirCache addRet =
@@ -1173,11 +1211,13 @@ public final class VersionControl implements Module {
 		Collections.sort(modList, new SortingComparator(repoRoot));
 		io.startProgress("Modified files", modList.size());
 		for (final String fileModified0 : modList) {
-			if (processChangedFile(fileModified0,
-					UpdateType.RESTORE_CHANGED)) {
+			final boolean[] b0 =
+					processChangedFile(fileModified0,
+							UpdateType.RESTORE_CHANGED);
+			if (b0[0]) {
 				// restore it
 				final String fileModified;
-				if (fileModified0.endsWith("enc.abc")) {
+				if (b0[1]) {
 					fileModified =
 							"enc/"
 									+ fileModified0.substring(0,
@@ -1190,19 +1230,24 @@ public final class VersionControl implements Module {
 						gitSession.checkout();
 				checkoutCommand.addPath(fileModified);
 				checkoutCommand.call();
-			} else if (processChangedFile(fileModified0, UpdateType.UPDATE)) {
-				final String fileModified;
-				if (fileModified0.endsWith("enc.abc")) {
-					fileModified =
-							"enc/"
-									+ fileModified0.substring(0,
-											fileModified0.length() - 4);
-					encrypt(fileModified0, fileModified, true);
-				} else {
-					fileModified = fileModified0;
+			} else {
+				final boolean[] b1 =
+						processChangedFile(fileModified0,
+								UpdateType.UPDATE);
+				if (b1[0]) {
+					final String fileModified;
+					if (b1[1]) {
+						fileModified =
+								"enc/"
+										+ fileModified0.replace(
+												".enc.abc", ".abc");
+						encrypt(fileModified0, fileModified, true);
+					} else {
+						fileModified = fileModified0;
+					}
+					add.add(fileModified);
+					gitSession.add().addFilepattern(fileModified).call();
 				}
-				add.add(fileModified);
-				gitSession.add().addFilepattern(fileModified).call();
 			}
 			io.updateProgress();
 		}

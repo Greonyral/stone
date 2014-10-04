@@ -92,20 +92,23 @@ public class PathOption extends Option {
 		final JScrollPane scrollPane = new JScrollPane(textField);
 
 		final Path valuePath = getValue();
-		final String value;
-		if ((valuePath == null) || !valuePath.exists()) {
-			value = null;
-		} else {
-			value = super.value();
-		}
-		if (value == null) {
+
+		if ((valuePath == null)) {
 			textField.setForeground(Color.GRAY);
+			textField.setBackground(Color.WHITE);
 			textField.setText(getTooltip());
+		} else if (!valuePath.exists()) {
+			System.out.println(valuePath
+					+ " does not exist - deleting entry");
+			textField.setForeground(Color.BLACK);
+			textField.setBackground(Color.RED);
+			textField.setText(valuePath.toString());
 		} else {
 			textField.setForeground(Color.BLACK);
-			textField.setText(value);
+			textField.setBackground(Color.WHITE);
+			textField.setText(super.value());
 		}
-		textField.setBackground(Color.WHITE);
+
 		textField.setEditable(false);
 		textField.addMouseListener(new MouseListener() {
 

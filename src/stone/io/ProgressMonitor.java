@@ -11,6 +11,7 @@ public class ProgressMonitor {
 	private final GUIInterface gui;
 	private int progress;
 	private boolean init = false;
+	private int max;
 
 	/**
 	 * Creates a new instance using GUI <i>gui</i>
@@ -57,6 +58,7 @@ public class ProgressMonitor {
 		}
 		gui.setProgressSize(paramInt, paramString);
 		gui.setProgress(progress);
+		max = paramInt;
 	}
 
 	/**
@@ -65,6 +67,7 @@ public class ProgressMonitor {
 	public final void endProgress() {
 		if (init) {
 			gui.endProgress();
+			System.out.println();
 		}
 		init = false;
 	}
@@ -99,7 +102,14 @@ public class ProgressMonitor {
 		if (!init || (progress < 0)) {
 			return;
 		}
+
 		gui.setProgress(progress += paramInt);
+		if (max > 0) {
+			final int digits = (int) Math.log10(max) + 1;
+			System.out.printf(String.format(
+					"\r%%%dd / %%%dd (%%6.2f%%%%)", digits, digits),
+					progress, max, (progress * 100.0) / max);
+		}
 	}
 
 	private final void startSafe() {

@@ -45,7 +45,6 @@ public class ZipCompression {
 				final String relName =
 						zipPath.relativize(file.toPath()).toString();
 				final ZipEntry entry = new ZipEntry(relName);
-				@SuppressWarnings("resource")
 				final InputStream in = ioHandler.openIn(file);
 				final byte[] buff = new byte[16000];
 				int read;
@@ -67,7 +66,6 @@ public class ZipCompression {
 		}
 	}
 
-	@SuppressWarnings("resource")
 	private static final ZipOutputStreams openOut(
 			final ZipFile zippedUpdateFile, final IOHandler ioHandler) {
 		final OutputStream out =

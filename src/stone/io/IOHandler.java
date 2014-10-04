@@ -1,13 +1,17 @@
 package stone.io;
 
 import java.awt.Image;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -36,6 +40,13 @@ import stone.util.Path;
  * @author Nelphindal
  */
 public class IOHandler {
+
+	private static final String oracleJavaDownloadURL =
+			"http://www.java.com/en/download/manual.jsp";
+	private static final String oracleJRE =
+			"Java(TM) SE Runtime Environment";
+	private static final String openJDK = "OpenJDK Runtime Environment";
+	private static final String oracleKey = "Recommended Version";
 
 	private final HashSet<Closeable> openStreams;
 
@@ -170,7 +181,6 @@ public class IOHandler {
 	 * @param bytesToDiscard
 	 *            number of bytes of file content to discard
 	 */
-	@SuppressWarnings("resource")
 	public final void append(final File fileToAppendTo,
 			final File content, int bytesToDiscard) {
 		OutputStream out = null;
@@ -205,6 +215,56 @@ public class IOHandler {
 				close(in);
 			}
 		}
+	}
+
+	public final void checkJRE() throws IOException {
+		final String versionStringInstalled =
+				System.getProperty("java.version");
+		final String javaName = System.getProperty("java.runtime.name");
+		final URL url;
+		final String key;
+		if (javaName.equals(IOHandler.oracleJRE)) {
+			url = new URL(IOHandler.oracleJavaDownloadURL);
+			key = IOHandler.oracleKey;
+		} else if (javaName.equals(IOHandler.openJDK)) {
+			System.out
+					.println("Skipping update check for java - installed is openJDK");
+			return;
+		} else {
+			System.out
+					.println("Skipping update check for java - installed is a unknown runtime");
+			return;
+		}
+		final java.io.InputStream in = url.openStream();
+		final BufferedReader reader =
+				new BufferedReader(new InputStreamReader(
+						new BufferedInputStream(in)));
+		final int[] version = new int[3];
+		int versionIdx = 0;
+		while (true) {
+			final String line = reader.readLine();
+			if (line == null) {
+				break;
+			}
+			final int index = line.indexOf(key);
+			if (index >= 0) {
+				final String[] splits =
+						line.substring(index + key.length()).split(" ");
+				for (final String s : splits) {
+					if (s.isEmpty()) {
+						continue;
+					}
+					final char c = s.charAt(0);
+					if ((c >= '0') && (c <= '9')) {
+						version[versionIdx++] = Integer.valueOf(s);
+					}
+				}
+				break;
+			}
+		}
+		in.close();
+		reader.close();
+		checkJRE(version, versionIdx, versionStringInstalled);
 	}
 
 	/**
@@ -452,7 +512,6 @@ public class IOHandler {
 			final Enumeration<? extends ZipEntry> entries = zip.entries();
 			while (entries.hasMoreElements()) {
 				final ZipEntry zipEntry = entries.nextElement();
-				@SuppressWarnings("resource")
 				final OutputStream out =
 						openOut(zipFile.getParent().resolve(
 								zipEntry.getName()).toFile());
@@ -678,5 +737,44 @@ public class IOHandler {
 	public final void writeln(final OutputStream out, final String string) {
 		write(out, string.getBytes());
 		write(out, "\r\n");
+	}
+
+	private final void checkJRE(int[] version, int versionIdx,
+			final String versionStringInstalled) {
+		final int[] versionInstalled = new int[4];
+		int versionInstalledIdx = 0;
+		for (final String s : versionStringInstalled.split("[\\._]")) {
+			versionInstalled[versionInstalledIdx++] = Integer.parseInt(s);
+		}
+		if (versionIdx == 2) {
+			version[2] = version[1];
+			version[1] = version[0];
+			version[0] = 1;
+		}
+		if (versionInstalledIdx == 4) {
+			versionInstalled[2] = versionInstalled[3];
+		}
+		for (int i = 0; i < 3; i++) {
+			if (version[i] < versionInstalled[i]) {
+				System.err.printf("Check version of used Java\n"
+						+ "Installed   : %2d Update %2d\n"
+						+ "Recommended : %2d Update %2d\n",
+						versionInstalled[1], versionInstalled[2],
+						version[1], version[2]);
+				return;
+			}
+			if (version[i] > versionInstalled[i]) {
+				printMessage(
+						"Update your Java installation",
+						"Your java installation is out dated\n"
+								+ String.format(
+										"Installed  : Version %2d Update %2d\n"
+												+ "Recommended: Version %2d Update %2d",
+										versionInstalled[1],
+										versionInstalled[2], version[1],
+										version[2]), true);
+				return;
+			}
+		}
 	}
 }

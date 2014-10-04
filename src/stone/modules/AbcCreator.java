@@ -201,7 +201,7 @@ public class AbcCreator implements Module,
 	private static final PathOptionFileFilter INSTR_MAP_FILTER =
 			new InstrumentMapFileFilter();
 
-	private final static int VERSION = 7;
+	private final static int VERSION = 8;
 
 	private static final FileFilter midiFilter = new MidiFileFilter();
 
@@ -358,7 +358,7 @@ public class AbcCreator implements Module,
 		targets = null;
 		parser = null;
 		taskPool = sc.getTaskPool();
-		bruteDir = Path.getTmpDir("BruTE-GUI");
+		bruteDir = Path.getTmpDirOrFile("BruTE-GUI");
 		brutesMidi = brutesMap = brutesAbc = null;
 		initState = new InitState();
 		main = sc.getMain();
@@ -423,6 +423,7 @@ public class AbcCreator implements Module,
 			io.endProgress();
 			if (remap != 0) {
 				io.printError("Unable to execute BRuTE", false);
+				// will interrupt the process
 				return null;
 			}
 		} catch (final Exception e) {
@@ -440,7 +441,7 @@ public class AbcCreator implements Module,
 			// test
 			try {
 				final Path abcPlayer = ABC_PLAYER.getValue();
-				if (abcPlayer != null) {
+				if ((abcPlayer != null) && abcPlayer.exists()) {
 					io.startProgress("Starting AbcPlayer", -1);
 					call(abcPlayer, CallType.JAR, abcPlayer.getParent(),
 							abc.toString());
@@ -553,7 +554,8 @@ public class AbcCreator implements Module,
 						} else if (line.startsWith("abctrack begin")) {
 							++state;
 						} else if (line.startsWith("fadeout length")) {
-							BruteParams.FADEOUT.value(line.substring(14).trim(), io);
+							BruteParams.FADEOUT.value(line.substring(14)
+									.trim(), io);
 						} else {
 							return;
 						}
@@ -600,6 +602,10 @@ public class AbcCreator implements Module,
 						}
 						break;
 				}
+				if (c.error()) {
+					System.out.println(". " + line);
+					return;
+				}
 				System.out.println(". " + line);
 			}
 
@@ -612,6 +618,9 @@ public class AbcCreator implements Module,
 		System.out.println("loading map " + mapToLoad);
 		try {
 			while (true) {
+				if (c.error()) {
+					break;
+				}
 				final String line = in.readLine();
 				if (line == null) {
 					break;
@@ -628,10 +637,10 @@ public class AbcCreator implements Module,
 				state.parseLine(line);
 			}
 		} catch (final IOException e) {
-			c.error();
+			c.setError();
 			System.err.println(e);
 		} catch (final Exception e) {
-			c.error();
+			c.setError();
 			e.printStackTrace();
 		} finally {
 			io.endProgress();
@@ -769,7 +778,17 @@ public class AbcCreator implements Module,
 				break;
 			case EXE:
 			case EXE_WAIT:
-				// TODO check if Windows if not, check for wine or similar ...
+				if (FileSystem.type == FileSystem.OSType.UNIX) {
+					System.out
+							.println("Unix System\n... checking for wine");
+					if (Path.getPath("~", ".wine").exists()) {
+						System.out.println("\nfound ~/.wine");
+					} else {
+						System.err.println("unable to run \""
+								+ location.getFileName() + "\"");
+						return -8;
+					}
+				}
 				p =
 						Runtime.getRuntime().exec(location.toString(),
 								null, wd.toFile());
@@ -905,7 +924,7 @@ public class AbcCreator implements Module,
 		io.writeln(
 				out,
 				"%no back folding     %uncomment to switch off folding of tone-pitches inside the playable region");
-		io.writeln(out, "fadeout length 0    %unoperational still!!!!");
+		io.writeln(out, "fadeout length " + BruteParams.FADEOUT.value());
 		io.writeln(out, String.format("Transcriber : %s", name));
 		final Map<DragObject<JPanel, JPanel, JPanel>, Integer> abcPartMap =
 				new HashMap<>();

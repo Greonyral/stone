@@ -26,7 +26,44 @@ public class Main implements Module {
 
 	private static final int MAX_LENGTH_INFO = 80;
 
-	private static final int VERSION = 9;
+	private static final int VERSION = 10;
+
+	/**
+	 * The name to be used for naming the config-file and the title.
+	 */
+	public static final String TOOLNAME = "SToNe";
+
+	/**
+	 * Section in the config file for VersionControl
+	 */
+	public static final String VC_SECTION = "[vc]";
+
+	/**
+	 * Key within the VersionControl section for naming the path to local
+	 * repository
+	 */
+	public static final String REPO_KEY = "repo";
+
+	/**
+	 * Section in the config file for global setting
+	 */
+	public static final String GLOBAL_SECTION = "[global]";
+
+	/**
+	 * Key within the global section for naming the path, where the relative
+	 * paths shall start from
+	 */
+	public static final String PATH_KEY = "path";
+
+	/**
+	 * Key within the global section for the name
+	 */
+	public static final String NAME_KEY = "name";
+
+	/**
+	 * Key for indicating to run the repair routine.
+	 */
+	public static final String REPAIR = "Repair";
 
 	/**
 	 * Should be called only once. Creates an option to adjust the user's name.
@@ -50,7 +87,6 @@ public class Main implements Module {
 
 	public final static String formatMaxLength(final Path base,
 			final String filename, final String a, final String b) {
-
 		if (filename == null) {
 			return formatMaxLength(base, "", a == null ? "" : a,
 					b == null ? "" : b);
@@ -59,16 +95,24 @@ public class Main implements Module {
 			return formatMaxLength(base, filename, a == null ? "" : a,
 					b == null ? "" : b);
 		}
-		base.toString().length();
 		final StringBuilder sb = new StringBuilder();
+		int lengthSB = format(sb, a, 0);
 		int pos = 0;
-		int lengthSB = a.length();
 		final int components = base.getNameCount();
-		sb.append(a);
-		sb.append("\"");
+		if (lengthSB > 0) {
+			sb.append(" ");
+			++lengthSB;
+		}
 		while (pos < components) {
-			final String c = base.getComponentAt(pos++);
-			if (lengthSB > 0) {
+			final String c = base.getComponentAt(pos);
+			if (pos++ == 0) {
+				if ((lengthSB + 1 + c.length()) >= Main.MAX_LENGTH_INFO) {
+					sb.append("\n");
+					lengthSB = 0;
+				}
+				sb.append("\"");
+				++lengthSB;
+			} else {
 				sb.append(FileSystem.getFileSeparator());
 				++lengthSB;
 				if ((lengthSB + c.length()) >= Main.MAX_LENGTH_INFO) {
@@ -79,17 +123,19 @@ public class Main implements Module {
 			sb.append(c);
 			lengthSB += c.length();
 		}
-		if ((lengthSB > 0)
-				&& ((lengthSB + filename.length()) >= Main.MAX_LENGTH_INFO)) {
-			sb.append("\n");
-		}
-		sb.append(FileSystem.getFileSeparator());
-		sb.append(filename);
+		++lengthSB;
 		sb.append("\"");
-		if ((lengthSB + b.length()) >= Main.MAX_LENGTH_INFO) {
-			sb.append("\n");
+		if (!filename.isEmpty()) {
+			if ((lengthSB > 0)
+					&& ((lengthSB + filename.length()) >= Main.MAX_LENGTH_INFO)) {
+				sb.append("\n");
+				lengthSB = 0;
+			}
+			sb.append(FileSystem.getFileSeparator());
+			sb.append(filename);
+			lengthSB += filename.length() + 1;
 		}
-		sb.append(b);
+		format(sb, b, lengthSB);
 		return sb.toString();
 	}
 
@@ -99,11 +145,31 @@ public class Main implements Module {
 		os.createFinalIO(new IOHandler(os, icon));
 	}
 
+	private static int format(final StringBuilder sb, final String s,
+			int lineLength) {
+		final String[] parts = s.split(" ");
+		boolean front = sb.length() != 0;
+		int l = lineLength;
+		for (final String part : parts) {
+			if ((l > 0)
+					&& ((l + part.length() + 1) >= Main.MAX_LENGTH_INFO)) {
+				sb.append("\n");
+				l = 0;
+			} else if (!front) {
+				++l;
+				sb.append(" ");
+			}
+			front = false;
+			sb.append(part);
+			l += part.length();
+		}
+		return l;
+	}
+
 	/**
 	 * The users homeDir
 	 */
 	public final Path homeDir = FileSystem.getBase();
-
 	final Path homeSetting = homeDir.resolve(".SToNe");
 
 	TaskPool taskPool;
@@ -111,40 +177,6 @@ public class Main implements Module {
 	final Map<String, Map<String, String>> configOld = new HashMap<>();
 
 	final Map<String, Map<String, String>> configNew = new HashMap<>();
-
-	/**
-	 * The name to be used for naming the config-file and the title.
-	 */
-	public static final String TOOLNAME = "SToNe";
-	/**
-	 * Section in the config file for VersionControl
-	 */
-	public static final String VC_SECTION = "[vc]";
-	/**
-	 * Key within the VersionControl section for naming the path to local
-	 * repository
-	 */
-	public static final String REPO_KEY = "repo";
-	/**
-	 * Section in the config file for global setting
-	 */
-	public static final String GLOBAL_SECTION = "[global]";
-
-	/**
-	 * Key within the global section for naming the path, where the relative
-	 * paths shall start from
-	 */
-	public static final String PATH_KEY = "path";
-
-	/**
-	 * Key within the global section for the name
-	 */
-	public static final String NAME_KEY = "name";
-
-	/**
-	 * Key for indicating to run the repair routine.
-	 */
-	public static final String REPAIR = "Repair";
 
 	/**
 	 * Creates a new instance providing the parsed entries of the config
@@ -263,7 +295,6 @@ public class Main implements Module {
 			public void run() {
 				try {
 					sc.finishInit(flags); // sync barrier 1
-					@SuppressWarnings("resource")
 					final InputStream in =
 							io.openIn(homeSetting.toFile(),
 									FileSystem.UTF8);

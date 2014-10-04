@@ -6,7 +6,6 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -15,8 +14,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.awt.font.FontRenderContext;
-import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -609,21 +606,13 @@ public class GUI implements GUIInterface {
 
 	private final void printMessageFunc(final String title,
 			final String message, boolean toFront) {
-
-		synchronized (Button.class) {
-			pressed = Button.ABORT;
-			Button.class.notifyAll();
+		if (Thread.currentThread() == master) {
+			synchronized (Button.class) {
+				pressed = Button.ABORT;
+				Button.class.notifyAll();
+			}
 		}
 		mainFrame.getContentPane().removeAll();
-		final FontMetrics metrics = text.getFontMetrics(text.getFont());
-		int width = 0, height = 0;
-		int offset = -1;
-		do {
-			int end = message.indexOf('\n', ++offset);
-			height += metrics.getMaxAscent();
-			width += metrics.getMaxAscent();
-			offset = end;
-		} while (offset >= 0);
 		text.setEditable(false);
 		text.setText(message);
 		text.setMaximumSize(new Dimension(400, 600));
@@ -657,7 +646,13 @@ public class GUI implements GUIInterface {
 				}
 				revalidate(true, true);
 				pressed = null;
+				if (Thread.currentThread() != master) {
+					master.interrupt();
+				}
 				Button.class.wait();
+				if (master.isInterrupted()) {
+					destroy();
+				}
 			}
 			revalidate(true, false);
 		} catch (final InterruptedException e) {

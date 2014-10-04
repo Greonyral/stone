@@ -83,14 +83,24 @@ public final class Time {
 		final long seconds = millis / 1000;
 		final long minutes = seconds / 60;
 		final long hours = minutes / 60;
+		if (seconds == 0) {
+			return millis + " millisecond" + (millis == 1 ? "" : "s");
+		}
+		if (minutes == 0) {
+			return seconds + " second" + (seconds == 1 ? "" : "s")
+					+ " and " + (millis % 1000) + " millisecond"
+					+ ((millis % 1000) == 1 ? "" : "s");
+		}
 		if (hours == 0) {
-			return minutes + " minute" + (minutes == 0 ? "" : "s");
+			return minutes + " minute" + (minutes == 1 ? "" : "s")
+					+ " and " + (seconds % 60) + " second"
+					+ ((seconds % 60) == 1 ? "" : "s");
 		}
 		final long days = hours / 24;
 		if (days == 0) {
-			return hours + " hour" + (hours == 1 ? "" : "") + " and "
-					+ minutes + " minute"
-					+ ((minutes % 60) == 0 ? "" : "s");
+			return hours + " hour" + (hours == 1 ? "" : "s") + " and "
+					+ (minutes % 60) + " minute"
+					+ ((minutes % 60) == 1 ? "" : "s");
 		}
 		final long weeks = days / 7;
 		if (weeks == 0) {

@@ -39,7 +39,9 @@ public interface DndPluginCaller<C extends Container, D extends Container, T ext
 		 */
 		void addPart(final String string);
 
-		void error();
+		boolean error();
+
+		void setError();
 
 	}
 

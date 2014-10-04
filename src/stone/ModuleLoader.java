@@ -102,7 +102,6 @@ public class ModuleLoader extends ClassLoader {
 	}
 
 	/** */
-	@SuppressWarnings("resource")
 	@Override
 	protected Class<?> findClass(final String name) {
 		java.io.InputStream in = null;

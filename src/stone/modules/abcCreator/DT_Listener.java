@@ -57,9 +57,16 @@ final class DT_Listener<C extends Container, D extends Container, T extends Cont
 
 	private final void markAlias(boolean active,
 			final DragObject<?, ?, ?>... objects) {
+		final Set<DragObject<?, ?, ?>> blackList = new HashSet<>();
+		for (final DragObject<?, ?, ?> o : target) {
+			blackList.add(o);
+		}
 		for (final DragObject<?, ?, ?> o : objects) {
-			o.getDisplayableComponent().setBackground(
-					active ? DNDListener.C_CLONE : DNDListener.C_INACTIVE);
+			if (!blackList.contains(o)) {
+				o.getDisplayableComponent().setBackground(
+						active ? DNDListener.C_CLONE
+								: DNDListener.C_INACTIVE);
+			}
 			for (final DropTarget<?, ?, ?> t : o) {
 				if ((t != target) && (t != state.emptyTarget)) {
 					t.getDisplayableComponent().setBackground(

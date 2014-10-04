@@ -85,7 +85,7 @@ public class MasterThread extends Thread {
 		}
 	}
 
-	final Path tmp = Path.getTmpDir(Main.TOOLNAME);
+	final Path tmp = Path.getTmpDirOrFile(Main.TOOLNAME);
 	
 	final StartupContainer sc;
 	
@@ -238,6 +238,9 @@ public class MasterThread extends Thread {
 		io = sc.getIO();
 		wd = sc.workingDirectory;
 		final ModuleInfo mainModule = new ModuleInfo();
+		try {
+			io.checkJRE();
+		} catch (final Exception e) {}
 		io.startProgress("Checking core for updates", -1);
 		if (checkModule(mainModule)) {
 			io.endProgress();
@@ -303,7 +306,10 @@ public class MasterThread extends Thread {
 			if (!options.isEmpty()) {
 				options.addFirst(NAME_OPTION);
 				io.getOptions(options);
-				if (!isInterrupted())
+				io.getOptions(options);
+				if (isInterrupted())
+					return;
+				else
 					sc.getMain().flushConfig();
 			}
 			for (final String module : possibleModules) {

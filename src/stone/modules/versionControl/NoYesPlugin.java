@@ -15,11 +15,12 @@ import stone.io.GUIPlugin;
  * 
  * @author Nelphindal
  */
-public final class NoYesPlugin extends GUIPlugin {
+public class NoYesPlugin extends GUIPlugin {
 
-	private final String title, message;
-	private final GUIInterface gui;
-	private final boolean progress;
+	private final String title;
+	protected final String message;
+	protected final GUIInterface gui;
+	protected final boolean progress;
 
 	/**
 	 * @param title
@@ -44,7 +45,7 @@ public final class NoYesPlugin extends GUIPlugin {
 
 	/** */
 	@Override
-	protected final boolean display(final JPanel panel) {
+	protected boolean display(final JPanel panel) {
 		final JPanel panelButton = new JPanel();
 		final JTextArea text = new JTextArea();
 		text.setEditable(false);

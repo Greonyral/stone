@@ -41,10 +41,12 @@ final class PathOptionTask implements Runnable {
 				pathOption.value(fileChooser.getSelectedFile());
 				textField.setText(pathOption.getValue().toString());
 				textField.setForeground(Color.BLACK);
+				textField.setBackground(Color.WHITE);
 			} else {
 				pathOption.value((File) null);
 				textField.setText(pathOption.getTooltip());
 				textField.setForeground(Color.GRAY);
+				textField.setBackground(Color.WHITE);
 			}
 		} finally {
 			frame.setVisible(false);

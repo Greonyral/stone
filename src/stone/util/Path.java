@@ -133,11 +133,12 @@ public final class Path implements Comparable<Path> {
 	 *            prefix of created temporary directory
 	 * @return a path usable for a temporary directory
 	 */
-	public final static Path getTmpDir(final String prefix) {
+	public final static Path getTmpDirOrFile(final String prefix) {
 		while (true) {
 			final int rand = (int) (Math.random() * Integer.MAX_VALUE);
 			final Path tmp = Path.tmpRoot.resolve(prefix + "_temp" + rand);
 			if (!tmp.exists()) {
+				tmp.toFile().deleteOnExit();
 				return tmp;
 			}
 

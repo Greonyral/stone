@@ -155,6 +155,7 @@ public final class SongbookUpdater implements Module {
 	 * creates the file needed for Songbook-plugin
 	 */
 	private final void updateSongbookData() {
+		final long start = System.currentTimeMillis();
 		final Set<String> profiles = new HashSet<>();
 
 		if (!pluginDataPath.exists()) {
@@ -181,7 +182,6 @@ public final class SongbookUpdater implements Module {
 							+ "\nScan aborted.", true);
 			return;
 		}
-		@SuppressWarnings("resource")
 		final InputStream in = io.openIn(userIni);
 		if (userIni.length() != 0) {
 			do {
@@ -241,7 +241,6 @@ public final class SongbookUpdater implements Module {
 					continue;
 				}
 			}
-			@SuppressWarnings("resource")
 			final OutputStream out = io.openOut(target);
 			io.write(io.openIn(masterPluginData), out);
 			io.close(out);
@@ -249,6 +248,9 @@ public final class SongbookUpdater implements Module {
 		}
 		masterPluginData.delete();
 		io.endProgress();
+		final long end = System.currentTimeMillis();
+		Debug.print("needed %s for updating songbook with %d song(s)",
+				stone.util.Time.delta(end - start), container.size());
 		io.printMessage(null,
 				"Update of your songbook is complete.\nAvailable songs: "
 						+ container.size(), true);

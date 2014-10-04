@@ -127,7 +127,6 @@ public final class Scanner implements Runnable {
 		}
 	}
 
-	@SuppressWarnings("resource")
 	private final SongData getVoices(final ModEntry song) {
 		final SongData songdata = tree.get(song.getKey());
 		if ((songdata == null)

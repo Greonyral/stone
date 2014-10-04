@@ -368,7 +368,6 @@ public class SongName implements Map<Integer, String> {
 	}
 
 	private final void calculateDuration(final IOHandler io) {
-		@SuppressWarnings("resource")
 		final InputStream in = io.openIn(path.toFile());
 		double max = 0;
 		double quantity = 1;

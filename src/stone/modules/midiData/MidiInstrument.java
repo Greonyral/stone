@@ -320,7 +320,6 @@ public class MidiInstrument implements
 	 * @param mapFile
 	 * @param io
 	 */
-	@SuppressWarnings("resource")
 	public final static void
 			readMap(final Path mapFile, final IOHandler io) {
 		if (!mapFile.exists()) {

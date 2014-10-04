@@ -374,7 +374,6 @@ public class SongChangeData {
 		tmp.renameTo(base.resolve(rel.split("/")));
 	}
 
-	@SuppressWarnings("resource")
 	private final String calculateDuration(final IOHandler io) {
 		final InputStream in = io.openIn(file.toFile());
 		String line;
@@ -846,7 +845,6 @@ public class SongChangeData {
 	}
 
 
-	@SuppressWarnings("resource")
 	private final Path writeChunks(final IOHandler io,
 			final NameScheme scheme) {
 		final Path tmp = MasterThread.tmp().resolve(file.getFileName());
@@ -911,7 +909,6 @@ public class SongChangeData {
 		return tmp;
 	}
 
-	@SuppressWarnings("resource")
 	private final boolean writeChunks(final IOHandler io,
 			final Path headerChunk, final Map<Integer, Path> partsToChunk,
 			final NameScheme scheme) {

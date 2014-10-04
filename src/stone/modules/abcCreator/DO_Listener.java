@@ -95,81 +95,91 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 	private final void mark(boolean active) {
 		if (!active || (state.dragging == null)) {
 			final Set<DropTarget<?, ?, ?>> targets = new HashSet<>();
+			final Set<DropTarget<?, ?, ?>> targetsCloned = new HashSet<>();
+			final Set<DropTarget<?, ?, ?>> targetsIndirect =
+					new HashSet<>();
+
+			final Set<DragObject<?, ?, ?>> objectsCloned = new HashSet<>();
+			final Set<DragObject<?, ?, ?>> objectsIndirect =
+					new HashSet<>();
+
 			final Color ct0 =
 					active ? DNDListener.C_SELECTED0
 							: DNDListener.C_INACTIVE_TARGET;
 			final Color ct1 =
+					active ? Color.CYAN : DNDListener.C_INACTIVE_TARGET;
+			final Color ct2 =
 					active ? DNDListener.C_SELECTED1
 							: DNDListener.C_INACTIVE_TARGET;
-			final Color ct2 =
-					active ? Color.CYAN : DNDListener.C_INACTIVE_TARGET;
-			// final Color co0 = active ? C_SELECTED0 : C_INACTIVE;
+
+
+			final Color co0 =
+					active ? DNDListener.C_ACTIVE : DNDListener.C_INACTIVE;
 			final Color co1 =
+					active ? DNDListener.C_CLONE : DNDListener.C_INACTIVE;
+			final Color co2 =
 					active ? DNDListener.C_SELECTED1
 							: DNDListener.C_INACTIVE;
-			final Color co2 =
-					active ? DNDListener.C_CLONE : DNDListener.C_INACTIVE;
+
 			for (final DropTarget<?, ?, ?> t : object) {
-				if (t == state.emptyTarget) {
-					continue;
-				}
-				t.getDisplayableComponent().setBackground(ct0);
 				targets.add(t);
 				for (final DragObject<?, ?, ?> o : t) {
-					if (o != object) {
-						o.getDisplayableComponent().setBackground(co1);
+					objectsIndirect.add(o);
+					for (final DropTarget<?, ?, ?> tIndirect : o) {
+						targetsIndirect.add(tIndirect);
 					}
 				}
 			}
-			object.getDisplayableComponent()
-					.setBackground(
-							active ? DNDListener.C_ACTIVE
-									: DNDListener.C_INACTIVE);
+			object.getDisplayableComponent().setBackground(co0);
 			object.getTargetContainer().getDisplayableComponent()
 					.setBackground(ct0);
 			for (final DropTarget<?, ?, ?> t : object.getTargetContainer()) {
-				if ((t == state.emptyTarget) || targets.contains(t)) {
-					continue;
-				}
-				t.getDisplayableComponent().setBackground(ct1);
-				targets.add(t);
-				for (final DragObject<?, ?, ?> o : t) {
-					if (o != object) {
-						o.getDisplayableComponent().setBackground(co1);
-					}
-				}
+				targetsIndirect.add(t);
 			}
 			if (object.isAlias()) {
-				object.getOriginal().getDisplayableComponent()
-						.setBackground(co2);
-				if (object.getOriginal().getTargetContainer() != object
-						.getTargetContainer()) {
-					object.getOriginal().getTargetContainer()
-							.getDisplayableComponent().setBackground(ct2);
-				}
-				for (final DropTarget<?, ?, ?> t : object.getOriginal()) {
-					if ((t == state.emptyTarget) || targets.contains(t)) {
-						continue;
-					}
-					t.getDisplayableComponent().setBackground(ct2);
+				for (final DropTarget<?, ?, ?> t : object) {
+					targetsCloned.add(t);
 				}
 			}
-			for (final DragObject<?, ?, ?> alias : object.getAliases()) {
-				if (alias == object) {
-					continue;
+			for (final DragObject<?, ?, ?> alias0 : object.getAliases()) {
+				final DragObject<?, ?, ?> alias1;
+				if (alias0 == object) {
+					alias1 = object.getOriginal();
+				} else {
+					alias1 = alias0;
 				}
-				alias.getDisplayableComponent().setBackground(co2);
-				if (alias.getTargetContainer() != object
-						.getTargetContainer()) {
-					alias.getTargetContainer().getDisplayableComponent()
-							.setBackground(ct2);
+				for (final DropTarget<?, ?, ?> t : alias1) {
+					targetsCloned.add(t);
 				}
-				for (final DropTarget<?, ?, ?> t : alias) {
-					if ((t == state.emptyTarget) || targets.contains(t)) {
-						continue;
-					}
-					t.getDisplayableComponent().setBackground(ct2);
-				}
+				objectsCloned.add(alias1);
+			}
+			targets.remove(state.emptyTarget);
+			targetsCloned.remove(state.emptyTarget);
+			targetsIndirect.remove(state.emptyTarget);
+			objectsCloned.remove(object);
+			objectsIndirect.remove(object);
+
+			// know we know the distribution of the colors, apply them ...
+
+			for (final DropTarget<?, ?, ?> t : targets) {
+				t.getDisplayableComponent().setBackground(ct0);
+				targetsIndirect.remove(t);
+				targetsCloned.remove(t);
+			}
+			for (final DropTarget<?, ?, ?> t : targetsCloned) {
+				t.getDisplayableComponent().setBackground(ct1);
+				targetsIndirect.remove(t);
+			}
+			for (final DropTarget<?, ?, ?> t : targetsIndirect) {
+				t.getDisplayableComponent().setBackground(ct2);
+			}
+
+			for (final DragObject<?, ?, ?> o : objectsCloned) {
+				o.getDisplayableComponent().setBackground(co1);
+				objectsIndirect.remove(o);
+			}
+			for (final DragObject<?, ?, ?> o : objectsIndirect) {
+				o.getDisplayableComponent().setBackground(co2);
 			}
 		}
 	}
