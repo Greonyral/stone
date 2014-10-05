@@ -306,7 +306,6 @@ public class MasterThread extends Thread {
 			if (!options.isEmpty()) {
 				options.addFirst(NAME_OPTION);
 				io.getOptions(options);
-				io.getOptions(options);
 				if (isInterrupted())
 					return;
 				else
