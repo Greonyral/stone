@@ -616,17 +616,19 @@ public class GUI implements GUIInterface {
 		text.setEditable(false);
 		text.setText(message);
 		text.setMaximumSize(new Dimension(400, 600));
-		final JScrollPane scrollPane = new JScrollPane(text);
 		final JPanel panel = new JPanel();
-		panel.add(scrollPane);
-		mainFrame.add(panel);
+		final JScrollPane scrollPane = new JScrollPane(panel);
+		panel.setLayout(new BorderLayout());
+		panel.add(text);
+		scrollPane.setPreferredSize(new Dimension(600, 800));
+		mainFrame.add(scrollPane);
 		if (toFront) {
 			if (title != null) {
 				wait.setText(title);
 			} else {
 				wait.setText("");
 			}
-			mainFrame.add(wait, BorderLayout.NORTH);
+			panel.add(wait, BorderLayout.NORTH);
 			panel.add(Button.OK.getButton(), BorderLayout.SOUTH);
 			mainFrame.pack();
 			waitForButton();

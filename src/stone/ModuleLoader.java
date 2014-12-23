@@ -1,9 +1,13 @@
 package stone;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.jar.JarFile;
 
 import stone.modules.Main;
@@ -28,6 +32,7 @@ public class ModuleLoader extends ClassLoader {
 	private final boolean jar;
 
 	private final Path workingDirectory;
+	private final Map<String, Class<?>> map = new HashMap<>();
 
 	private byte[] buffer = new byte[0xc000];
 
@@ -67,6 +72,22 @@ public class ModuleLoader extends ClassLoader {
 				this.cp[i] = path.resolve(cpPath);
 			}
 		}
+	}
+	
+	/** */
+	@Override
+	public final InputStream getResourceAsStream(final String s) {
+		for (final Path p : cp) {
+			final Path  file = p.resolve(s.split("/"));
+			if (file.exists() && file.toFile().isFile()) {
+				try {
+					return new FileInputStream(file.toFile());
+				} catch (final FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return null;
 	}
 
 	/** */
@@ -188,6 +209,9 @@ public class ModuleLoader extends ClassLoader {
 			cp[i] = cp[0];
 			cp[0] = path;
 		}
-		return defineClass(name, buffer, 0, size);
+		final Class<?> c = defineClass(name, buffer, 0, size);
+		map.put(name, c);
+		return c;
+		
 	}
 }
