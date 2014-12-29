@@ -102,7 +102,12 @@ public class ProgressMonitor {
 		if (!init || (progress < 0)) {
 			return;
 		}
-
+		if (paramInt < 0) {
+			max -= paramInt;
+			gui.setProgressSize(max);
+			update(-paramInt);
+			return;
+		}
 		gui.setProgress(progress += paramInt);
 		if (max > 0) {
 			final int digits = (int) Math.log10(max) + 1;

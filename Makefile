@@ -70,31 +70,31 @@ brute/BruTE.jar: brute/$(BRUTE_VERSION)
 
 #jar-archives
 modules/AbcCreator.jar: modules $(ABC_CLASSES) brute/BruTE.jar
-	$(shell jar cfM $@ -C brute BruTE.jar $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(ABC_CLASSES_BASE))))))
+	jar cfM $@ -C brute BruTE.jar $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(ABC_CLASSES_BASE)))))
 
 modules/SongbookUpdater.jar: modules $(SU_CLASSES)
-	$(shell jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(SU_CLASSES_BASE))))))
+	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(SU_CLASSES_BASE)))))
 
 modules/FileEditor.jar: modules $(FE_CLASSES)
-	$(shell jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(FE_CLASSES_BASE))))))
+	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(FE_CLASSES_BASE)))))
 
 modules/VersionControl.jar: modules $(VC_CLASSES) lib
-	$(shell jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(VC_CLASSES_BASE)))) -C lib com -C lib org))
+	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(VC_CLASSES_BASE)))) -C lib com -C lib org)
 
 modules/Main.jar: src/stone/MasterThread_a.java.tmp $(MAIN_CLASSES)
 	$(JAVAC) src/stone/MasterThread.java
-	$(shell jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) Icon.png)
+	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) Icon.png
 
 modules/Main_band.jar: src/stone/MasterThread_b.java.tmp $(MAIN_CLASSES)
 	$(JAVAC) src/stone/MasterThread.java
-	$(shell jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) Icon.png)
+	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) Icon.png
 
 #targets
-hiddenVC: modules/AbcCreator.jar modules/Main.jar modules/SongbookUpdater.jar modules/FileEditor.jar
-	$(shell cp $< SToNe_hiddenVC.jar)
+hiddenVC: modules/Main.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/FileEditor.jar
+	cp $< SToNe_hiddenVC.jar
 
-normal: modules/AbcCreator.jar modules/Main_band.jar modules/SongbookUpdater.jar modules/VersionControl.jar modules/FileEditor.jar
-	$(shell cp $< SToNe.jar)
+normal: modules/Main_band.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/VersionControl.jar modules/FileEditor.jar
+	cp $< SToNe.jar
 
 moduleInfo: $(BIN_DIR)/stone/updater/CreateBuilds.class
 	mkdir -p moduleInfo

@@ -8,10 +8,11 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
 
 /**
  * Represents paths relative to a certain base or absolute, specified by
@@ -22,8 +23,7 @@ public final class Path implements Comparable<Path> {
 	private static int nextHash;
 
 	private static final Map<String, Path> rootMap = buildRootMap();
-	private static final ArrayDeque<Integer> reusableHashes =
-			new ArrayDeque<>();
+	private static final ArrayDeque<Integer> reusableHashes = new ArrayDeque<>();
 
 	/**
 	 * Parses the given string <i>name</i> and returns a path representing the
@@ -44,19 +44,21 @@ public final class Path implements Comparable<Path> {
 		final String base = name[idx];
 		if (Path.rootMap == null) {
 			p = new Path(base);
+			while (++idx < name.length)
+				p = p.getRootMapPathFunc(name[idx]);
+			return p;
 		} else {
 			p = Path.rootMap.get(base);
 		}
 		if (p == null) {
-			throw new RuntimeException("Invalid path: invalid root: "
-					+ base);
+			throw new RuntimeException("Invalid path: invalid root: " + base);
 		}
 		if (name[idx].length() <= p.str.length()) {
 			++idx;
 		} else {
 			name[idx] = name[idx].substring(p.str.length());
 		}
-		return p.resolve(name, idx);
+		return p.getPathFunc(name, idx);
 	}
 
 	/**
@@ -68,6 +70,7 @@ public final class Path implements Comparable<Path> {
 	 */
 	public final static Path getPath(final URL url) {
 		final StringBuilder sb = new StringBuilder(url.getFile());
+		final List<String> names = new ArrayList<>();
 		Path path = null;
 		int pos = 0;
 		if (url.getPath().startsWith("file:/")) {
@@ -78,51 +81,49 @@ public final class Path implements Comparable<Path> {
 		}
 		while (pos < sb.length()) {
 			switch (sb.charAt(pos)) {
-				case '!':
-					if (path == null) {
-						return Path.rootMap.get(sb.toString().substring(0,
-								pos));
-					}
-					return path.resolve(sb.toString().substring(0, pos));
-				case '%':
-					final byte b0 = sb.getByte(pos + 1);
-					assert b0 >= 0xc0;
-					final int byteCount =
-							b0 < 0x80 ? 1 : (b0 < 0xe ? 3 : 4);
-					final ByteBuffer buffer =
-							ByteBuffer.allocate(byteCount);
-					buffer.put(b0);
-					for (int i = pos + 2; buffer.remaining() > 0; ++i) {
-						buffer.put(sb.getByte(i));
-					}
-					buffer.rewind();
-					final String replacement =
-							FileSystem.UTF8.decode(buffer).toString();
-					sb.replace(pos, 1 + (2 * byteCount), replacement);
-					continue;
-				case '/':
-					final String s = sb.toString().substring(0, pos);
-					if (path == null) {
-						if (s.isEmpty()) {
-							path = Path.rootMap.get("/");
-						} else {
-							path = Path.rootMap.get(s);
-						}
+			case '!':
+				names.add(sb.toString().substring(0, pos));
+				if (path == null)
+					return Path.getPath(names.toArray(new String[names.size()]));
+				return path.resolve(names.toArray(new String[names.size()]));
+			case '%':
+				final byte b0 = sb.getByte(pos + 1);
+				assert b0 >= 0xc0;
+				final int byteCount = b0 < 0x80 ? 1 : (b0 < 0xe ? 3 : 4);
+				final ByteBuffer buffer = ByteBuffer.allocate(byteCount);
+				buffer.put(b0);
+				for (int i = pos + 2; buffer.remaining() > 0; ++i) {
+					buffer.put(sb.getByte(i));
+				}
+				buffer.rewind();
+				final String replacement = FileSystem.UTF8.decode(buffer)
+						.toString();
+				sb.replace(pos, 1 + (2 * byteCount), replacement);
+				continue;
+			case '/':
+				final String s = sb.toString().substring(0, pos);
+				if (path == null) {
+					if (s.isEmpty()) {
+						path = Path.rootMap.get("/");
 					} else {
-						path = path.getPathFunc(s);
+						path = Path.rootMap.get(s);
 					}
-					sb.setHead(pos + 1);
-					pos = 0;
-					continue;
-				default:
-					++pos;
+				} else {
+					names.add(s);
+				}
+				sb.setHead(pos + 1);
+				pos = 0;
+				continue;
+			default:
+				++pos;
+				continue;
 			}
-
 		}
 		if (path == null) {
 			return Path.rootMap.get(sb.toString());
 		}
-		return path.resolve(sb.toString());
+		names.add(sb.toString());
+		return path.resolve(names.toArray(new String[names.size()]));
 	}
 
 	/**
@@ -224,8 +225,7 @@ public final class Path implements Comparable<Path> {
 
 	private final int hash;
 
-	private final Map<String, WeakReference<Path>> successors =
-			new TreeMap<>();
+	private final Map<String, WeakReference<Path>> successors = new TreeMap<>();
 	private File file = null;
 	private final String filename;
 
@@ -253,8 +253,7 @@ public final class Path implements Comparable<Path> {
 			pathStr = parent.pathStr + name;
 		} else {
 			str = parent.str + "/" + name;
-			pathStr =
-					parent.pathStr + FileSystem.getFileSeparator() + name;
+			pathStr = parent.pathStr + FileSystem.getFileSeparator() + name;
 		}
 		parent.successors.put(name, new WeakReference<>(this));
 		if (parent.dirs == null) {
@@ -295,6 +294,35 @@ public final class Path implements Comparable<Path> {
 		}
 
 		hash = ++Path.nextHash;
+	}
+
+	private Path(final Path p, final String[] names, int offset) {
+		Path p0 = p;
+		for (int i = offset; i < names.length - 1; ++i) {
+			p0 = new Path(p0, names[i]);
+		}
+		if (p0.dirs == null) {
+			dirs = new String[0];
+		} else {
+			dirs = new String[p0.dirs.length + 1];
+			System.arraycopy(p0.dirs, 0, dirs, 0, p0.dirs.length);
+			dirs[dirs.length - 1] = p0.filename;
+		}
+		filename = names[names.length - 1];
+		parent = p0;
+		if (parent.parent == null) {
+			str = parent.str + filename;
+			pathStr = parent.pathStr + filename;
+		} else {
+			str = parent.str + "/" + filename;
+			pathStr = parent.pathStr + FileSystem.getFileSeparator() + filename;
+		}
+		if (!Path.reusableHashes.isEmpty()) {
+			hash = Path.reusableHashes.remove().intValue();
+		} else {
+			hash = ++Path.nextHash;
+		}
+		p0.successors.put(filename, new WeakReference<>(this));
 	}
 
 	/** */
@@ -514,14 +542,12 @@ public final class Path implements Comparable<Path> {
 				if (toFile().isFile() && pathNew.toFile().isFile()) {
 					try {
 						System.err.print("Fall back: overwrite ");
-						final java.io.OutputStream out =
-								new java.io.FileOutputStream(pathNew
-										.toFile());
-						final java.io.InputStream in =
-								new java.io.FileInputStream(toFile());
+						final java.io.OutputStream out = new java.io.FileOutputStream(
+								pathNew.toFile());
+						final java.io.InputStream in = new java.io.FileInputStream(
+								toFile());
 						final byte[] buffer = new byte[0x2000];
-						for (int read = 0; read >= 0; read =
-								in.read(buffer)) {
+						for (int read = 0; read >= 0; read = in.read(buffer)) {
 							out.write(buffer, 0, read);
 						}
 						in.close();
@@ -543,15 +569,12 @@ public final class Path implements Comparable<Path> {
 			if (files.length == 0) {
 				return toFile().renameTo(pathNew.toFile());
 			}
-			final boolean ret =
-					pathNew.exists() || pathNew.toFile().mkdir();
+			final boolean ret = pathNew.exists() || pathNew.toFile().mkdir();
 			for (int i = 0; i < files.length; i++) {
-				if (!getPathFunc(files[i]).renameTo(
-						pathNew.getPathFunc(files[i]))) {
+				if (!resolve(files[i]).renameTo(pathNew.resolve(files[i]))) {
 					// undo
 					while (i >= 0) {
-						pathNew.getPathFunc(files[i]).renameTo(
-								getPathFunc(files[i]));
+						pathNew.resolve(files[i]).renameTo(resolve(files[i]));
 						--i;
 					}
 					pathNew.delete();
@@ -578,29 +601,7 @@ public final class Path implements Comparable<Path> {
 		if (Path.rootMap.containsKey(name[0]) || name[0].isEmpty()) {
 			return Path.getPath(name);
 		}
-		Path p = this;
-		for (final String s : name) {
-			p = p.getPathFunc(s);
-		}
-		return p;
-	}
-
-	/**
-	 * Concatenates two paths. other will be appended to <i>this</i> path. For
-	 * example "/foo".resolve("/bar") will return "/foo/bar".
-	 * 
-	 * @param other
-	 *            path to append
-	 * @return the concatenated path
-	 */
-	public final Path resolve(final String other) {
-		if (other.equals("..")) {
-			return parent;
-		}
-		if (other.startsWith(FileSystem.getFileSeparator())) {
-			return resolve(other.substring(1));
-		}
-		return getPathFunc(other);
+		return getPathFunc(name, 0);
 	}
 
 	/**
@@ -635,39 +636,46 @@ public final class Path implements Comparable<Path> {
 		return str;
 	}
 
-	private final Path getPathFunc(final String name) {
-		final WeakReference<Path> p;
-		if (name.startsWith(".")) {
-			if (name.equals(".")) {
-				return this;
-			} else if (name.equals("..")) {
-				if (parent == null) {
-					return this;
-				}
-				return parent;
-			}
-		}
-		if (Path.rootMap == null) {
-			return new Path(this, name);
-		}
-		synchronized (Path.finalizerMonitor) {
-			p = successors.get(name);
-			if ((p == null) || p.isEnqueued()) {
-				return new Path(this, name);
-			}
-			if (p.get() == null) {
-				return new Path(this, name);
-			}
-			return p.get();
-		}
-	}
-
-	private final Path resolve(final String[] name, int offset) {
+	private final Path getPathFunc(final String[] names, int offset) {
 		Path p = this;
-		for (int i = offset; i < name.length; i++) {
-			p = p.getPathFunc(name[i]);
+		for (int i = offset; i < names.length; ++i) {
+			final String name = names[i];
+			final WeakReference<Path> pWeak;
+			if (name.startsWith(".")) {
+				if (name.equals(".")) {
+					continue;
+				} else if (name.equals("..")) {
+					if (p.parent == null) {
+						continue;
+					}
+					p = p.parent;
+				}
+			} else {
+				Path pTmp = rootMap.get(name);
+				if (pTmp != null) {
+					p = pTmp;
+					continue;
+				}
+			}
+			final Path pTmp;
+			synchronized (Path.finalizerMonitor) {
+				pWeak = p.successors.get(name);
+				if (pWeak == null) {
+					return new Path(p, names, i);
+				}
+				pTmp = pWeak.isEnqueued() ? null : pWeak.get();
+				if (pTmp == null) {
+					return new Path(p, names, i);
+				}
+			}
+			p = pTmp;
 		}
 		return p;
+	}
+
+	private final Path getRootMapPathFunc(final String name) {
+		assert rootMap == null;
+		return new Path(this, name);
 	}
 
 	/** */

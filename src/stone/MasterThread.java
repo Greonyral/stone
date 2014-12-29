@@ -1,7 +1,9 @@
 package stone;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,15 +42,15 @@ public class MasterThread extends Thread {
 	public final static String MODULE_VC_DSP = "Synchronize abc-files";
 	public final static String MODULE_VC_NAME = "VersionControl";
 	public final static String MODULE_VC_TOOLTIP = "Enables download of changed abc-files. Upload can be enabled additionally.";
-	
+
 	public final static String MODULE_ABC_DSP = "Transcribe midi-files to abc-files";
 	public final static String MODULE_ABC_NAME = "AbcCreator";
 	public final static String MODULE_ABC_TOOLTIP = "Starts the GUI for BruTE - the midi to abc transriper by Bruzo";
-	
+
 	public final static String MODULE_SB_DSP = "Create Songbook data";
 	public final static String MODULE_SB_NAME = "SongbookUpdater";
 	public final static String MODULE_SB_TOOLTIP = "Creates the file needed for the Songbook-plugin by Chiran";
-	
+
 	final class ModuleInfo {
 
 		Module instance;
@@ -68,9 +70,22 @@ public class MasterThread extends Thread {
 		}
 
 		ModuleInfo() {
-			// cut here
-			this.name = "Main_band";
-			// cut here
+			String name = null;
+			final InputStream in = getClass().getClassLoader()
+					.getResourceAsStream("mainClass.txt");
+			if (in != null)
+			try {
+				name = new BufferedReader(new InputStreamReader(in)).readLine();
+			} catch (final IOException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					in.close();
+				} catch (final IOException e) {
+					e.printStackTrace();
+				}
+			}
+			this.name = name;
 			instance = sc.getMain();
 		}
 
@@ -86,18 +101,13 @@ public class MasterThread extends Thread {
 	}
 
 	final Path tmp = Path.getTmpDirOrFile(Main.TOOLNAME);
-	
+
 	final StartupContainer sc;
-	
-	private static final String repo =
-	  // old URL
-	  // "https://raw.githubusercontent.com/Greonyral/stone/master/";
-	  "https://github.com/Greonyral/stone/raw/master/";
-	  //"file:/D:/Freigabe/Programmierung/arbeitsplatz/Songbook/"; 
+
+	private static final String downloadPage = getDownloadpage();
 
 	private final ThreadState state = new ThreadState();
 
-	
 	private final Map<String, ModuleInfo> modulesLocal = new HashMap<>();
 	private final List<String> possibleModules = new ArrayList<>();
 
@@ -137,9 +147,27 @@ public class MasterThread extends Thread {
 				e.printStackTrace();
 			}
 
-
 		};
 		setUncaughtExceptionHandler(exceptionHandler);
+	}
+
+	private final static String getDownloadpage() {
+		final InputStream in = MasterThread.class.getClassLoader()
+				.getResourceAsStream("repoURL.txt");
+		if (in == null)
+			return null;
+		try {
+			return new BufferedReader(new InputStreamReader(in)).readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				in.close();
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -153,13 +181,13 @@ public class MasterThread extends Thread {
 	public static boolean interrupted() {
 		final boolean interrupted = Thread.interrupted();
 		if (MasterThread.class.isInstance(Thread.currentThread())) {
-			final MasterThread master =
-					MasterThread.class.cast(Thread.currentThread());
+			final MasterThread master = MasterThread.class.cast(Thread
+					.currentThread());
 			master.state.handleEvent(Event.CLEAR_INT);
 		}
 		return interrupted;
 	}
-	
+
 	/**
 	 * Suspends current thread for given time.
 	 * 
@@ -183,16 +211,18 @@ public class MasterThread extends Thread {
 	}
 
 	/**
-	 * Returns a path for hosting temporarily files and directories. It will be deleted <i>this</i> thread has been terminated. If the
-	 * invoking thread is not an instance of MasterThread <i>null</i> is returned.
+	 * Returns a path for hosting temporarily files and directories. It will be
+	 * deleted <i>this</i> thread has been terminated. If the invoking thread is
+	 * not an instance of MasterThread <i>null</i> is returned.
 	 * 
-	 * @return a path located in (one of the) system's temporarily directory or <i>null</i> if the invoking thread is no instance of
+	 * @return a path located in (one of the) system's temporarily directory or
+	 *         <i>null</i> if the invoking thread is no instance of
 	 *         MasterThread.
 	 */
 	public final static Path tmp() {
 		if (MasterThread.class.isInstance(Thread.currentThread())) {
-			final MasterThread master =
-					MasterThread.class.cast(Thread.currentThread());
+			final MasterThread master = MasterThread.class.cast(Thread
+					.currentThread());
 			return master.tmp;
 		}
 		return null;
@@ -206,7 +236,9 @@ public class MasterThread extends Thread {
 	}
 
 	/**
-	 * Interrupts <i>this</i> thread and blocks to wait for all tasks in the TaskPool to finish.
+	 * Interrupts <i>this</i> thread and blocks to wait for all tasks in the
+	 * TaskPool to finish.
+	 * 
 	 * @throws InterruptedException
 	 */
 	public void interruptAndWait() throws InterruptedException {
@@ -226,12 +258,9 @@ public class MasterThread extends Thread {
 		return state.isInterrupted();
 	}
 
-
 	/**
-	 * - Finishes startup
-	 * - Sets the base if not happened before.
-	 * - Asks the user which modules to use, launches selected ones 
-	 * - Destroys this process
+	 * - Finishes startup - Sets the base if not happened before. - Asks the
+	 * user which modules to use, launches selected ones - Destroys this process
 	 */
 	@Override
 	public void run() {
@@ -240,7 +269,8 @@ public class MasterThread extends Thread {
 		final ModuleInfo mainModule = new ModuleInfo();
 		try {
 			io.checkJRE();
-		} catch (final Exception e) {}
+		} catch (final Exception e) {
+		}
 		io.startProgress("Checking core for updates", -1);
 		if (checkModule(mainModule)) {
 			io.endProgress();
@@ -256,35 +286,35 @@ public class MasterThread extends Thread {
 		io.endProgress();
 		sc.waitForInit();
 
-		if (sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
-				Main.PATH_KEY, null) == null) {
+		if (sc.getMain().getConfigValue(Main.GLOBAL_SECTION, Main.PATH_KEY,
+				null) == null) {
 			final Path fsBase = FileSystem.getBase();
 			final Path base;
 			if (FileSystem.type == FileSystem.OSType.WINDOWS
+					&& Double.parseDouble(System.getProperty("os.version")) < 6)
+				// TODO document modern windows systems here
+				// 7.0 ...
+
 				// 6.0: Vista, Server 2008
 				// 6.1: Server 2008 R2, 7
 				// 6.2: 8, Server 2012
 				// 6.3: 8.1, Server 2012 R2
 				// %UserProfile% = C:\Users\<username>
-				
+
 				// 5.0 Windows 2000
 				// 5.1 Windows XP
 				// 5.2 Windows XP - 64 bit, Server 2003, Server 2003 R2
 				// %UserProfile% = C:\Documents and Settings\<username>
-					&& Double
-							.parseDouble(System.getProperty("os.version")) < 6)
 				base = fsBase;
 			else
 				base = fsBase.resolve("Documents");
-			sc.getMain().setConfigValue(
-					Main.GLOBAL_SECTION,
-					Main.PATH_KEY,
-					base.resolve("The Lord of The Rings Online")
-							.toString());
+			sc.getMain().setConfigValue(Main.GLOBAL_SECTION, Main.PATH_KEY,
+					base.resolve("The Lord of The Rings Online").toString());
 
 		}
 		try {
-			final StringOption NAME_OPTION = Main.createNameOption(sc.getOptionContainer());
+			final StringOption NAME_OPTION = Main.createNameOption(sc
+					.getOptionContainer());
 			final Set<String> moduleSelection = init();
 			if (moduleSelection == null)
 				return;
@@ -310,10 +340,10 @@ public class MasterThread extends Thread {
 					return;
 				else
 					sc.getMain().flushConfig();
-			}
-			for (final String module : possibleModules) {
-				if (moduleSelection.contains(module)) {
-					runModule(module);
+				for (final String module : possibleModules) {
+					if (moduleSelection.contains(module)) {
+						runModule(module);
+					}
 				}
 			}
 		} catch (final Exception e) {
@@ -356,8 +386,7 @@ public class MasterThread extends Thread {
 
 	private final boolean checkModule(final ModuleInfo info) {
 		try {
-			final URL url =
-					new URL(repo + "moduleInfo/" + info.name);
+			final URL url = new URL(downloadPage + "moduleInfo/" + info.name);
 			final URLConnection connection = url.openConnection();
 			connection.connect();
 			final InputStream in = connection.getInputStream();
@@ -392,7 +421,9 @@ public class MasterThread extends Thread {
 	private final void die(final Path path) {
 		if (path != null) {
 			taskPool.close();
+
 			final boolean isFile = wd.toFile().isFile();
+			final Thread old = this;
 
 			io.printMessage(
 					"Update complete",
@@ -404,22 +435,28 @@ public class MasterThread extends Thread {
 				path.renameTo(this.wd);
 			}
 			tmp.delete();
-			
-			new Thread() {
 
+			final Thread newMaster = new Thread() {
+				
 				@Override
 				final public void run() {
 					try {
-						final Class<?> mainClass = ModuleLoader.createLoader().loadClass(stone.Main.class.getCanonicalName());
+						old.join();
+						final Class<?> mainClass = ModuleLoader.createLoader()
+								.loadClass(stone.Main.class.getCanonicalName());
 						mainClass.getMethod("main", String[].class).invoke(
 								null, sc.flags());
-					} catch (final IllegalAccessException | IllegalArgumentException
+					} catch (final IllegalAccessException
+							| IllegalArgumentException
 							| InvocationTargetException | NoSuchMethodException
-							| SecurityException | ClassNotFoundException e) {
+							| SecurityException | ClassNotFoundException
+							| InterruptedException e) {
 						e.printStackTrace();
 					}
 				}
-			}.start();
+			};
+			newMaster.setName(getName());
+			newMaster.start();
 		} else {
 			taskPool.close();
 			io.close();
@@ -431,8 +468,7 @@ public class MasterThread extends Thread {
 	private final void downloadModule(final String module) {
 		io.startProgress("Donwloading module " + module, -1);
 		try {
-			final URL url =
-					new URL(repo  + "modules/" + module + ".jar");
+			final URL url = new URL(downloadPage + "modules/" + module + ".jar");
 			final URLConnection connection = url.openConnection();
 			final Path target;
 			try {
@@ -447,13 +483,13 @@ public class MasterThread extends Thread {
 				System.err.println(e.getClass());
 				throw e;
 			}
-			io.setProgressSize(connection.getContentLength());
 			if (!tmp.exists()) {
 				tmp.toFile().mkdir();
 			}
 			target = tmp.resolve(module + ".jar");
 			final InputStream in = connection.getInputStream();
 			final OutputStream out = io.openOut(target.toFile());
+			io.setProgressSize(connection.getContentLength());
 			final byte[] buffer = new byte[0x2000];
 			try {
 				while (true) {
@@ -490,12 +526,26 @@ public class MasterThread extends Thread {
 	}
 
 	private final Set<String> init() {
-		possibleModules.add(MODULE_ABC_NAME);
-		possibleModules.add("FileEditor");
-		// cut here
-		possibleModules.add(MODULE_VC_NAME);
-		// cut here
-		possibleModules.add(MODULE_SB_NAME);
+		final BufferedReader r = new BufferedReader(
+				new InputStreamReader(this.getClass().getClassLoader()
+						.getResourceAsStream("modules.txt")));
+		while (true) {
+			try {
+				final String line = r.readLine();
+				if (line == null)
+					break;
+				possibleModules.add(line);
+			} catch (final IOException e) {
+				e.printStackTrace();
+				break;
+			}
+
+		}
+		try {
+			r.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
 		try {
 			loadModules();
 		} catch (final Exception e) {
@@ -521,8 +571,9 @@ public class MasterThread extends Thread {
 		}
 	}
 
-private final void loadModules() {
-		io.startProgress("Searching for and loading modules", possibleModules.size());
+	private final void loadModules() {
+		io.startProgress("Searching for and loading modules",
+				possibleModules.size());
 		for (final String module : possibleModules) {
 			if (isInterrupted()) {
 				return;
@@ -534,7 +585,7 @@ private final void loadModules() {
 		}
 		io.endProgress();
 	}
-	
+
 	private final Path repack() throws IOException {
 		if (isInterrupted()) {
 			return null;
@@ -621,7 +672,7 @@ private final void loadModules() {
 		}
 		return wd;
 	}
-	
+
 	private final void repair() {
 		taskPool.addTask(new Runnable() {
 			@Override

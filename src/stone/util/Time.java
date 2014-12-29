@@ -106,7 +106,7 @@ public final class Time {
 		}
 		if (days > 365) {
 			final long years = days / 365;
-			return days + " year" + (years == 1 ? "" : "s") + " and "
+			return years + " year" + (years == 1 ? "" : "s") + " and "
 					+ (days % 365) + " day" + ((days % 365) == 1 ? "" : "s");
 		} else {
 			final long weeks = days / 7;

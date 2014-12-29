@@ -26,7 +26,7 @@ public class Main implements Module {
 
 	private static final int MAX_LENGTH_INFO = 80;
 
-	private static final int VERSION = 11;
+	private static final int VERSION = 12;
 
 	/**
 	 * The name to be used for naming the config-file and the title.
@@ -402,9 +402,13 @@ public class Main implements Module {
 				return section;
 			}
 		}
-		if (line.charAt(idx) == '[') {
+		if (line.charAt(idx) == '#') {
+			// comment -> ignore
+			return section;
+		}
+		else if (line.charAt(idx) == '[') {
 			final int end = line.indexOf("]", idx) + 1;
-			final String currentSection = line.substring(idx, end);
+			final String currentSection = line.substring(idx, end).toLowerCase();
 			configOld.put(currentSection, new HashMap<String, String>());
 			idx = end;
 			while ((idx < line.length()) && (line.charAt(idx) == ' ')) {
@@ -419,7 +423,7 @@ public class Main implements Module {
 		while (line.charAt(idx) != '=') {
 			++idx;
 		}
-		final String key = line.substring(start, idx).trim();
+		final String key = line.substring(start, idx).trim().toLowerCase();
 		final String value = line.substring(++idx, line.length()).trim();
 		configOld.get(section).put(key, value);
 		line.setLength(0);

@@ -615,12 +615,12 @@ public class GUI implements GUIInterface {
 		mainFrame.getContentPane().removeAll();
 		text.setEditable(false);
 		text.setText(message);
-		text.setMaximumSize(new Dimension(400, 600));
+		final int cols = text.getColumns() + 1;
 		final JPanel panel = new JPanel();
 		final JScrollPane scrollPane = new JScrollPane(panel);
 		panel.setLayout(new BorderLayout());
 		panel.add(text);
-		scrollPane.setPreferredSize(new Dimension(600, 800));
+		scrollPane.setPreferredSize(new Dimension(600, cols < 20 ? cols * 8 : 800));
 		mainFrame.add(scrollPane);
 		if (toFront) {
 			if (title != null) {

@@ -65,6 +65,13 @@ final class MainConfigWriter implements Runnable {
 			}
 		}
 
+		sb.append("# config file for SToNe by Nelphindal");
+		sb.append(FileSystem.getLineSeparator());
+		sb.append("# Lines leading with # will be inonred");
+		sb.append(FileSystem.getLineSeparator());
+		sb.append("# Use at own risk according to the documentation in the manual");
+		sb.append(FileSystem.getLineSeparator());
+		
 		for (final Map.Entry<String, Map<String, String>> sections : main.configOld
 				.entrySet()) {
 			sb.append(sections.getKey());

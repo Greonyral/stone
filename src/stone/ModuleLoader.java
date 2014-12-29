@@ -9,11 +9,12 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import stone.modules.Main;
 import stone.util.FileSystem;
 import stone.util.Path;
-
 
 /**
  * A central object holding every object needed for initialization
@@ -40,9 +41,9 @@ public class ModuleLoader extends ClassLoader {
 
 	private ModuleLoader() {
 		super(null);
-		final String className =
-				this.getClass().getCanonicalName().replace('.', '/')
-						+ ".class";
+		final String className = this.getClass().getCanonicalName()
+				.replace('.', '/')
+				+ ".class";
 		final URL url = Main.class.getClassLoader().getResource(className);
 		if (url.getProtocol().equals("file")) {
 			final Path classPath = Path.getPath(url);
@@ -55,35 +56,47 @@ public class ModuleLoader extends ClassLoader {
 			jar = false;
 			workingDirectory = null;
 		}
-		final String[] cp =
-				System.getProperty("java.class.path").split(
-						FileSystem.type == FileSystem.OSType.WINDOWS ? ";"
-								: ":");
+		final String[] cp = System.getProperty("java.class.path").split(
+				FileSystem.type == FileSystem.OSType.WINDOWS ? ";" : ":");
 		this.cp = new Path[Math.max(1, cp.length)];
 		if (cp.length == 0) {
 			this.cp[0] = workingDirectory;
 		} else {
-			final Path path =
-					Path.getPath(System.getProperty("user.dir").split(
-							"\\" + FileSystem.getFileSeparator()));
+			final Path path = Path.getPath(System.getProperty("user.dir")
+					.split("\\" + FileSystem.getFileSeparator()));
 			for (int i = 0; i < cp.length; i++) {
-				final String[] cpPath =
-						cp[i].split("\\" + FileSystem.getFileSeparator());
+				final String[] cpPath = cp[i].split("\\"
+						+ FileSystem.getFileSeparator());
 				this.cp[i] = path.resolve(cpPath);
 			}
 		}
 	}
-	
+
 	/** */
 	@Override
 	public final InputStream getResourceAsStream(final String s) {
 		for (final Path p : cp) {
-			final Path  file = p.resolve(s.split("/"));
-			if (file.exists() && file.toFile().isFile()) {
-				try {
-					return new FileInputStream(file.toFile());
-				} catch (final FileNotFoundException e) {
-					e.printStackTrace();
+			if (p.toFile().exists()) {
+				if (p.toFile().isFile()) {
+					try {
+						final ZipFile zip = new ZipFile(p.toFile());
+						final ZipEntry sEntry = zip.getEntry(s);
+						if (sEntry == null) {
+							zip.close();
+							return null;
+						}
+						return zip.getInputStream(sEntry);
+					} catch (final Exception e) {
+					}
+				} else {
+					final Path file = p.resolve(s.split("/"));
+					if (file.exists() && file.toFile().isFile()) {
+						try {
+							return new FileInputStream(file.toFile());
+						} catch (final FileNotFoundException e) {
+							e.printStackTrace();
+						}
+					}
 				}
 			}
 		}
@@ -95,10 +108,8 @@ public class ModuleLoader extends ClassLoader {
 	public final URL getResource(final String s) {
 		URL url;
 		try {
-			url =
-					new URL((jar ? "jar:" : "") + "file:/"
-							+ workingDirectory.toString()
-							+ (jar ? "!/" + s : ""));
+			url = new URL((jar ? "jar:" : "") + "file:/"
+					+ workingDirectory.toString() + (jar ? "!/" + s : ""));
 			return url;
 		} catch (final MalformedURLException e) {
 			e.printStackTrace();
@@ -142,9 +153,8 @@ public class ModuleLoader extends ClassLoader {
 			if (path.getFileName().endsWith(".jar")) {
 				try {
 					jarFile = new JarFile(path.toFile());
-					final java.util.zip.ZipEntry e =
-							jarFile.getEntry(name.replaceAll("\\.", "/")
-									+ ".class");
+					final java.util.zip.ZipEntry e = jarFile.getEntry(name
+							.replaceAll("\\.", "/") + ".class");
 					if (e == null) {
 						jarFile.close();
 						jarFile = null;
@@ -212,6 +222,6 @@ public class ModuleLoader extends ClassLoader {
 		final Class<?> c = defineClass(name, buffer, 0, size);
 		map.put(name, c);
 		return c;
-		
+
 	}
 }
