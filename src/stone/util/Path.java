@@ -10,8 +10,10 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -69,11 +71,14 @@ public final class Path implements Comparable<Path> {
 	 * @return the parsed path
 	 */
 	public final static Path getPath(final URL url) {
-		final StringBuilder sb = new StringBuilder(url.getFile());
+		final StringBuilder sb = new StringBuilder(url.toString());
 		final List<String> names = new ArrayList<>();
 		Path path = null;
 		int pos = 0;
-		if (url.getPath().startsWith("file:/")) {
+		if (sb.startsWith("jar:")) {
+			sb.setHead(4);
+		}
+		if (sb.startsWith("file:/")) {
 			sb.setHead(5);
 		}
 		if (FileSystem.type == FileSystem.OSType.WINDOWS) {
@@ -84,7 +89,8 @@ public final class Path implements Comparable<Path> {
 			case '!':
 				names.add(sb.toString().substring(0, pos));
 				if (path == null)
-					return Path.getPath(names.toArray(new String[names.size()]));
+					return Path
+							.getPath(names.toArray(new String[names.size()]));
 				return path.resolve(names.toArray(new String[names.size()]));
 			case '%':
 				final byte b0 = sb.getByte(pos + 1);
@@ -225,7 +231,7 @@ public final class Path implements Comparable<Path> {
 
 	private final int hash;
 
-	private final Map<String, WeakReference<Path>> successors = new TreeMap<>();
+	private final Map<String, PathReference> successors = new TreeMap<>();
 	private File file = null;
 	private final String filename;
 
@@ -255,7 +261,8 @@ public final class Path implements Comparable<Path> {
 			str = parent.str + "/" + name;
 			pathStr = parent.pathStr + FileSystem.getFileSeparator() + name;
 		}
-		parent.successors.put(name, new WeakReference<>(this));
+		final PathReference pWeak = new PathReference(this);
+		parent.successors.put(name, pWeak);
 		if (parent.dirs == null) {
 			dirs = new String[0];
 		} else {
@@ -265,15 +272,11 @@ public final class Path implements Comparable<Path> {
 		}
 		if (Path.rootMap == null) {
 			hash = ++Path.nextHash;
-		} else
-		// synchronized (finalizerMonitor) { object owned already by calling
-		// getPathFunc(String)
-		if (!Path.reusableHashes.isEmpty()) {
+		} else if (!Path.reusableHashes.isEmpty()) {
 			hash = Path.reusableHashes.remove().intValue();
 		} else {
 			hash = ++Path.nextHash;
 		}
-		// }
 	}
 
 	/**
@@ -322,7 +325,7 @@ public final class Path implements Comparable<Path> {
 		} else {
 			hash = ++Path.nextHash;
 		}
-		p0.successors.put(filename, new WeakReference<>(this));
+		p0.successors.put(filename, new PathReference(this));
 	}
 
 	/** */
@@ -585,7 +588,19 @@ public final class Path implements Comparable<Path> {
 		}
 		return renameFilePath(this, pathNew);
 	}
-
+	
+	/**
+	 * Concatenates two paths. name will be parsed and appended to <i>this</i>
+	 * path. For example "/foo".resolve("/bar") will return "/foo/bar".
+	 * 
+	 * @param name
+	 *            path to append
+	 * @return the concatenated path
+	 */
+	public final Path resolve(final String name) {
+		return resolve(new String[]{name});
+	}
+	
 	/**
 	 * Concatenates two paths. name will be parsed and appended to <i>this</i>
 	 * path. For example "/foo".resolve("/bar") will return "/foo/bar".
@@ -640,7 +655,7 @@ public final class Path implements Comparable<Path> {
 		Path p = this;
 		for (int i = offset; i < names.length; ++i) {
 			final String name = names[i];
-			final WeakReference<Path> pWeak;
+			final PathReference pWeak;
 			if (name.startsWith(".")) {
 				if (name.equals(".")) {
 					continue;
@@ -663,7 +678,7 @@ public final class Path implements Comparable<Path> {
 				if (pWeak == null) {
 					return new Path(p, names, i);
 				}
-				pTmp = pWeak.isEnqueued() ? null : pWeak.get();
+				pTmp = pWeak.get();
 				if (pTmp == null) {
 					return new Path(p, names, i);
 				}
@@ -682,10 +697,16 @@ public final class Path implements Comparable<Path> {
 	@Override
 	protected final void finalize() throws Throwable {
 		synchronized (Path.finalizerMonitor) {
-			if (parent != null) {
-				parent.successors.remove(filename);
+			final Set<PathReference> ss = new HashSet<>(successors.values());
+			for (final WeakReference<Path> s : ss) {
+				if (!s.isEnqueued())
+					s.get().finalize();
 			}
-			Path.reusableHashes.push(Integer.valueOf(hash));
+			if (parent != null) {
+				if (parent.successors.remove(filename) != null)
+					Path.reusableHashes.push(Integer.valueOf(hash));
+			} else
+				Path.reusableHashes.push(Integer.valueOf(hash));
 		}
 	}
 }

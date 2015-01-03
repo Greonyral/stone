@@ -25,6 +25,20 @@ public abstract class GUIPlugin {
 	 * @return the title of this GUIPlugin
 	 */
 	protected abstract String getTitle();
+	
+	protected void lockResize() {
+		gui.setResizable(false);
+	}
+	
+	/**
+	 * Requests the gui to repack and resize frame to Dimesion d
+	 */
+	protected void repack(final Dimension d) {
+		if (gui != null) {
+			gui.revalidate(true, false);
+			gui.setFrameSize(d);
+		}
+	}
 
 	/**
 	 * Requests the gui to repack
@@ -43,6 +57,7 @@ public abstract class GUIPlugin {
 	}
 
 	final void endDisplay() {
+		gui.setResizable(true);
 		gui = null;
 	}
 

@@ -34,6 +34,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 
 import stone.MasterThread;
+import stone.ModuleInfo;
 import stone.modules.Main;
 import stone.util.BooleanOption;
 import stone.util.MaskedStringOption;
@@ -483,12 +484,16 @@ public class GUI implements GUIInterface {
 	@Override
 	public final void runPlugin(final GUIPlugin plugin) {
 		final JPanel panel = new JPanel();
-		if (plugin.display(panel, this)) {
-			plugin.endDisplay();
-			return;
-		}
 		mainFrame.getContentPane().removeAll();
 		mainFrame.add(panel);
+		if (plugin.display(panel, this)) {
+			plugin.endDisplay();
+			mainFrame.getContentPane().removeAll();
+			mainFrame.add(wait);
+			wait.setText(waitText);
+			revalidate(true, false);
+			return;
+		}
 		mainFrame.add(wait, BorderLayout.NORTH);
 		wait.setText(plugin.getTitle());
 		waitForButton();
@@ -529,24 +534,11 @@ public class GUI implements GUIInterface {
 		mainFrame.add(Button.OK.getButton(), BorderLayout.SOUTH);
 		mainFrame.add(panel);
 		for (final String m : modules) {
-			final String name, tooltip;
 			final JCheckBox box;
-			if (m.equals(MasterThread.MODULE_VC_NAME)) {
-				tooltip = MasterThread.MODULE_VC_TOOLTIP;
-				name = MasterThread.MODULE_VC_DSP;
-			} else if (m.equals(MasterThread.MODULE_ABC_NAME)) {
-				tooltip = MasterThread.MODULE_ABC_TOOLTIP;
-				name = MasterThread.MODULE_ABC_DSP;
-			} else if (m.equals(MasterThread.MODULE_SB_NAME)) {
-				tooltip = MasterThread.MODULE_SB_TOOLTIP;
-				name = MasterThread.MODULE_SB_DSP;
-			} else {
-				name = m;
-				tooltip = null;
-			}
-			box = new JCheckBox(name);
+			final ModuleInfo info = master.getModuleInfo(m);
+			box = new JCheckBox(info.name());
 			box.addChangeListener(new BoxListener(m));
-			box.setToolTipText(tooltip);
+			box.setToolTipText(info.tooltip());
 			panel.add(box);
 		}
 		final JCheckBox box = new JCheckBox(Main.REPAIR);
@@ -689,6 +681,10 @@ public class GUI implements GUIInterface {
 
 	final void setFrameSize(final Dimension d) {
 		mainFrame.setSize(d);
+	}
+
+	final void setResizable(boolean b) {
+		mainFrame.setResizable(b);
 	}
 
 }

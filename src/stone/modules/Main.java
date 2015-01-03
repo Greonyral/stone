@@ -404,6 +404,7 @@ public class Main implements Module {
 		}
 		if (line.charAt(idx) == '#') {
 			// comment -> ignore
+			line.setLength(0);
 			return section;
 		}
 		else if (line.charAt(idx) == '[') {

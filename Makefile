@@ -6,7 +6,7 @@ BIN_DIR=classes
 BRUTE_VERSION=19c
 
 MAIN_SRC_FILES=Container Event Main MasterThread ModuleLoader \
- OptionSetup StartupContainer Task ThreadState \
+ Config OptionSetup StartupContainer Task ThreadState ModuleInfo \
  modules/Main modules/MainConfigWriter modules/Module
 MAIN_SRC_DIR=util io
 MAIN_SRC= \
@@ -81,13 +81,24 @@ modules/FileEditor.jar: modules $(FE_CLASSES)
 modules/VersionControl.jar: modules $(VC_CLASSES) lib
 	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(VC_CLASSES_BASE)))) -C lib com -C lib org)
 
-modules/Main.jar: src/stone/MasterThread_a.java.tmp $(MAIN_CLASSES)
+modules/Main.jar: $(MAIN_CLASSES)
 	$(JAVAC) src/stone/MasterThread.java
-	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) Icon.png
+	echo "url https://github.com/Greonyral/stone/raw/master/" > config.txt
+	echo "mainClass Main" >> config.txt
+	echo "modules" >> config.txt
+	echo "AbcCreator Simple GUI of BruTE" >> config.txt
+	echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
+	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) Icon.png config.txt
 
-modules/Main_band.jar: src/stone/MasterThread_b.java.tmp $(MAIN_CLASSES)
+modules/Main_band.jar: $(MAIN_CLASSES)
 	$(JAVAC) src/stone/MasterThread.java
-	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) Icon.png
+	echo "url https://github.com/Greonyral/stone/raw/master/" > config.txt
+	echo "mainClass Main_band" >> config.txt
+	echo "modules" >> config.txt
+	echo "AbcCreator Simple GUI of BruTE" >> config.txt
+	echo "VersionControl Simple git-GUI to synchronize songs" >> config.txt
+	echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
+	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) Icon.png config.txt
 
 #targets
 hiddenVC: modules/Main.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/FileEditor.jar
@@ -110,19 +121,6 @@ $(BIN_DIR)/stone/%.class: src/stone/%.java
 $(BIN_DIR)/stone/updater/CreateBuilds.class: src/stone/updater/CreateBuilds.java $(MAIN_CLASSES_0) $(MODULE_CLASSES)
 	$(JAVAC) $<
 
-#main sources
-src/stone/MasterThread_a.java.tmp: src/stone/MasterThread0.java.part src/stone/MasterThread1a.java.part src/stone/MasterThread2.java.part src/stone/MasterThread4.java.part
-	$(shell rm -f $@)
-	$(foreach class,$^,$(shell cat $(class) >> $@))
-	$(shell ln -f $@ src/stone/MasterThread.java)
-
-src/stone/MasterThread_b.java.tmp: src/stone/MasterThread0.java.part src/stone/MasterThread1b.java.part src/stone/MasterThread2.java.part src/stone/MasterThread3b.java.part src/stone/MasterThread4.java.part
-	$(shell rm -f $@)
-	$(foreach class,$^,$(shell cat $(class) >> $@))
-	$(shell ln -f $@ src/stone/MasterThread.java)
-
-src/stone/MasterThread.java: src/stone/MasterThread_b.java.tmp
-	$(shell ln -f $^ src/stone/MasterThread.java)
 
 #Module classes
 $(BIN_DIR)/stone/modules/Module.class: src/stone/modules/Module.java src/stone/MasterThread.java

@@ -1,9 +1,7 @@
 package stone;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -39,72 +37,13 @@ import stone.util.TaskPool;
  */
 public class MasterThread extends Thread {
 
-	public final static String MODULE_VC_DSP = "Synchronize abc-files";
-	public final static String MODULE_VC_NAME = "VersionControl";
-	public final static String MODULE_VC_TOOLTIP = "Enables download of changed abc-files. Upload can be enabled additionally.";
-
-	public final static String MODULE_ABC_DSP = "Transcribe midi-files to abc-files";
-	public final static String MODULE_ABC_NAME = "AbcCreator";
-	public final static String MODULE_ABC_TOOLTIP = "Starts the GUI for BruTE - the midi to abc transriper by Bruzo";
-
-	public final static String MODULE_SB_DSP = "Create Songbook data";
-	public final static String MODULE_SB_NAME = "SongbookUpdater";
-	public final static String MODULE_SB_TOOLTIP = "Creates the file needed for the Songbook-plugin by Chiran";
-
-	final class ModuleInfo {
-
-		Module instance;
-		final String name;
-
-		public ModuleInfo(final Class<Module> clazz, final String name) {
-			try {
-				instance = clazz.getConstructor(sc.getClass()).newInstance(sc);
-			} catch (InstantiationException | IllegalAccessException
-					| IllegalArgumentException | InvocationTargetException
-					| NoSuchMethodException | SecurityException e) {
-				e.printStackTrace();
-				instance = null;
-			}
-			this.name = name;
-
-		}
-
-		ModuleInfo() {
-			String name = null;
-			final InputStream in = getClass().getClassLoader()
-					.getResourceAsStream("mainClass.txt");
-			if (in != null)
-			try {
-				name = new BufferedReader(new InputStreamReader(in)).readLine();
-			} catch (final IOException e) {
-				e.printStackTrace();
-			} finally {
-				try {
-					in.close();
-				} catch (final IOException e) {
-					e.printStackTrace();
-				}
-			}
-			this.name = name;
-			instance = sc.getMain();
-		}
-
-		public Module clear() {
-			final Module m = instance;
-			instance = null;
-			return m;
-		}
-
-		final int getVersion() {
-			return instance == null ? -1 : instance.getVersion();
-		}
-	}
-
 	final Path tmp = Path.getTmpDirOrFile(Main.TOOLNAME);
 
 	final StartupContainer sc;
+	
+	final static Config c = new Config();
 
-	private static final String downloadPage = getDownloadpage();
+	private static final String downloadPage = c.getValue("url");
 
 	private final ThreadState state = new ThreadState();
 
@@ -149,25 +88,6 @@ public class MasterThread extends Thread {
 
 		};
 		setUncaughtExceptionHandler(exceptionHandler);
-	}
-
-	private final static String getDownloadpage() {
-		final InputStream in = MasterThread.class.getClassLoader()
-				.getResourceAsStream("repoURL.txt");
-		if (in == null)
-			return null;
-		try {
-			return new BufferedReader(new InputStreamReader(in)).readLine();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				in.close();
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -266,11 +186,9 @@ public class MasterThread extends Thread {
 	public void run() {
 		io = sc.getIO();
 		wd = sc.workingDirectory;
-		final ModuleInfo mainModule = new ModuleInfo();
-		try {
-			io.checkJRE();
-		} catch (final Exception e) {
-		}
+
+		final ModuleInfo mainModule = new ModuleInfo(c);
+		
 		io.startProgress("Checking core for updates", -1);
 		if (checkModule(mainModule)) {
 			io.endProgress();
@@ -282,6 +200,12 @@ public class MasterThread extends Thread {
 				io.handleException(ExceptionHandle.CONTINUE, e);
 				e.printStackTrace();
 			}
+		}
+		io.endProgress();
+		io.startProgress("Checking installed java", -1);
+		try {
+			io.checkJRE();
+		} catch (final Exception e) {
 		}
 		io.endProgress();
 		sc.waitForInit();
@@ -397,6 +321,7 @@ public class MasterThread extends Thread {
 				return false;
 			}
 			final int versionNew = ByteBuffer.wrap(bytes).getInt();
+			System.out.printf("%s %2d %2d\n", info.name, info.getVersion(), versionNew);
 			return versionNew != info.getVersion();
 		} catch (final MalformedURLException e) {
 			e.printStackTrace();
@@ -437,7 +362,7 @@ public class MasterThread extends Thread {
 			tmp.delete();
 
 			final Thread newMaster = new Thread() {
-				
+
 				@Override
 				final public void run() {
 					try {
@@ -526,26 +451,7 @@ public class MasterThread extends Thread {
 	}
 
 	private final Set<String> init() {
-		final BufferedReader r = new BufferedReader(
-				new InputStreamReader(this.getClass().getClassLoader()
-						.getResourceAsStream("modules.txt")));
-		while (true) {
-			try {
-				final String line = r.readLine();
-				if (line == null)
-					break;
-				possibleModules.add(line);
-			} catch (final IOException e) {
-				e.printStackTrace();
-				break;
-			}
-
-		}
-		try {
-			r.close();
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
+		possibleModules.addAll(c.getSection("modules"));
 		try {
 			loadModules();
 		} catch (final Exception e) {
@@ -580,7 +486,7 @@ public class MasterThread extends Thread {
 			}
 			final Class<Module> clazz = StartupContainer.loadModule(module);
 			if (clazz != null)
-				modulesLocal.put(module, new ModuleInfo(clazz, module));
+				modulesLocal.put(module, new ModuleInfo(c, sc, clazz, module));
 			io.updateProgress();
 		}
 		io.endProgress();
@@ -693,10 +599,9 @@ public class MasterThread extends Thread {
 
 	private final void runModule(final String module) {
 		if (isInterrupted()) {
-			modulesLocal.get(module).clear().run();
 			return;
 		}
-		final Module m = modulesLocal.get(module).clear().init(sc);
+		final Module m = modulesLocal.get(module).instance.init(sc);
 		m.run();
 	}
 
@@ -750,5 +655,9 @@ public class MasterThread extends Thread {
 			e.printStackTrace();
 			io.handleException(ExceptionHandle.TERMINATE, e);
 		}
+	}
+
+	public stone.ModuleInfo getModuleInfo(final String m) {
+		return modulesLocal.get(m);
 	}
 }

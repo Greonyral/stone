@@ -19,8 +19,6 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -74,44 +72,21 @@ public class IOHandler {
 	 *            relative to the workingDirectory
 	 */
 	public IOHandler(final StartupContainer sc, final String iconFile) {
-		final Path workingDirectory = sc.getWorkingDir();
 		master = sc.getMaster();
 		Image icon_ = null;
-		final Image iconFinal;
-		if (!sc.wdIsJarArchive()) {
-			final File f = workingDirectory.resolve(iconFile).toFile();
-			if (f.exists()) {
-				try {
-					icon_ = ImageIO.read(f);
-				} catch (final IOException ioe) {
-					handleException(ExceptionHandle.SUPPRESS, ioe);
-				}
-			}
-		} else {
+		final java.io.InputStream in = getClass().getClassLoader().getResourceAsStream(iconFile);
+		try {
+			icon_ = ImageIO.read(in);
+		} catch (final IOException e) {
+			e.printStackTrace();
+		} finally {
 			try {
-				final File f = workingDirectory.toFile();
-				final JarFile jar = new JarFile(f);
-				try {
-					final JarEntry iconEntry = jar.getJarEntry(iconFile);
-					if (iconEntry != null) {
-						icon_ =
-								ImageIO.read(jar.getInputStream(iconEntry));
-					} else {
-						System.out.println("Icon not found");
-					}
-				} catch (final IOException ioe) {
-					ioe.printStackTrace();
-					handleException(ExceptionHandle.SUPPRESS, ioe);
-				} finally {
-					jar.close();
-				}
-			} catch (final Exception e) {
-				handleException(ExceptionHandle.SUPPRESS, e);
+				in.close();
+			} catch (final IOException e) {
+				e.printStackTrace();
 			}
 		}
-
-		iconFinal = icon_;
-		icon = iconFinal;
+		icon = icon_;
 
 		class GUIProxy extends Proxy {
 
@@ -129,7 +104,7 @@ public class IOHandler {
 			}
 
 		}
-		guiReal = new GUI((GUI) sc.getIO().gui, master, iconFinal);
+		guiReal = new GUI((GUI) sc.getIO().gui, master, icon);
 		class GUIInvocationHandler implements InvocationHandler {
 
 			@Override

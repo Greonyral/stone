@@ -59,6 +59,7 @@ public class ProgressMonitor {
 		gui.setProgressSize(paramInt, paramString);
 		gui.setProgress(progress);
 		max = paramInt;
+		System.out.printf("%s\n", paramString);
 	}
 
 	/**
@@ -90,6 +91,7 @@ public class ProgressMonitor {
 	 */
 	public final void setProgressTitle(final String paramString) {
 		gui.setProgressTitle(paramString);
+		System.out.printf("\n%s\n", paramString);
 	}
 
 	/**

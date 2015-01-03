@@ -213,6 +213,14 @@ public class StringBuilder {
 		head = StringBuilder.PATTERN_SIZE;
 		tail = head + s.length();
 	}
+	
+	public final boolean startsWith(final String string) {
+		return toString().startsWith(string);
+	}
+
+	public final boolean startsWith(final String string, int toffset) {
+		return toString().startsWith(string, toffset);
+	}
 
 	/**
 	 * Sets the contained string to start <i>offset</i> positions later.

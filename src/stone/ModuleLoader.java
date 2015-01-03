@@ -45,6 +45,7 @@ public class ModuleLoader extends ClassLoader {
 				.replace('.', '/')
 				+ ".class";
 		final URL url = Main.class.getClassLoader().getResource(className);
+
 		if (url.getProtocol().equals("file")) {
 			final Path classPath = Path.getPath(url);
 			jar = false;
@@ -73,8 +74,10 @@ public class ModuleLoader extends ClassLoader {
 	}
 
 	/** */
+	@SuppressWarnings("resource")
 	@Override
 	public final InputStream getResourceAsStream(final String s) {
+		final String[] names = s.split("/");
 		for (final Path p : cp) {
 			if (p.toFile().exists()) {
 				if (p.toFile().isFile()) {
@@ -89,7 +92,7 @@ public class ModuleLoader extends ClassLoader {
 					} catch (final Exception e) {
 					}
 				} else {
-					final Path file = p.resolve(s.split("/"));
+					final Path file = p.resolve(names);
 					if (file.exists() && file.toFile().isFile()) {
 						try {
 							return new FileInputStream(file.toFile());
@@ -142,6 +145,9 @@ public class ModuleLoader extends ClassLoader {
 		int i = 0;
 		int size = 0;
 		assert cp.length >= 1;
+		final String[] names = name.split("\\.");
+		names[names.length - 1] += ".class";
+		
 		for (; i <= cp.length; i++) {
 			if (i == cp.length) {
 				return null;
@@ -168,10 +174,8 @@ public class ModuleLoader extends ClassLoader {
 					return null;
 				}
 			}
-			for (final String p : name.split("\\.")) {
-				path = path.resolve(p);
-			}
-			path = path.getParent().resolve(path.getFileName() + ".class");
+		
+			path = path.resolve(names);
 			if (!path.exists()) {
 				continue;
 			}

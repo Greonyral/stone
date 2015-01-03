@@ -2,10 +2,8 @@ package stone.modules;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -17,20 +15,13 @@ import org.eclipse.jgit.api.DiffCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
-import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.api.errors.NoFilepatternException;
-import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
-import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
-import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.ObjectId;
@@ -53,11 +44,9 @@ import stone.io.IOHandler;
 import stone.io.InputStream;
 import stone.io.OutputStream;
 import stone.modules.versionControl.CommitComparator;
-import stone.modules.versionControl.GitNoYesPlugin;
 import stone.modules.versionControl.NoYesPlugin;
 import stone.modules.versionControl.SecretKeyPlugin;
-import stone.modules.versionControl.SortingComparator;
-import stone.modules.versionControl.UpdateType;
+import stone.modules.versionControl.StagePlugin;
 import stone.util.BooleanOption;
 import stone.util.Flag;
 import stone.util.MaskedStringOption;
@@ -427,45 +416,35 @@ public final class VersionControl implements Module {
 	private final void checkForLocalChanges(final Git gitSession)
 			throws IOException, GitAPIException {
 		final Status status = gitSession.status().call();
-		// io.log("modified: " + status.getModified().toString());
-		// io.log("untracked: " + status.getUntracked().toString());
-		// io.log("missing: " + status.getMissing().toString());
-		// io.log("added: " + status.getAdded().toString());
-		// io.log("changed: " + status.getChanged().toString());
-		// io.log("removed: " + status.getRemoved().toString());
-		if (!status.isClean()) {
+		stone.util.Debug.print("modified: %s\n" + "untracked: %s\n"
+				+ "missing: %s\n" + "added: %s\n" + "changed: %s\n"
+				+ "removed %s\n", status.getModified().toString(), status
+				.getUntracked().toString(), status.getMissing().toString(),
+				status.getAdded().toString(), status.getChanged().toString(),
+				status.getRemoved().toString());
+		final StagePlugin stage = new StagePlugin(status, COMMIT.getValue(),
+				repoRoot, master);
+		io.handleGUIPlugin(stage);
+		if (stage.doCommit(gitSession)) {
+			final CommitCommand commit = gitSession.commit();
 
-			final Set<String> add = new HashSet<>();
-			final Set<String> rm = new HashSet<>();
+			commit.setAuthor(main.getConfigValue(Main.GLOBAL_SECTION,
+					Main.NAME_KEY, null), EMAIL.value());
+			commit.setMessage("update " + commit.getAuthor().getName() + ", "
+					+ new Date(System.currentTimeMillis()));
 
-			if (COMMIT.getValue()) {
-				processNewAndChanges(add, status, gitSession);
-			}
+			final RevCommit commitRet = commit.call();
 
-			processMissing(rm, status, gitSession);
-
-			final boolean doCommit = COMMIT.getValue()
-					&& !(add.isEmpty() && rm.isEmpty()
-							&& status.getAdded().isEmpty() && status
-							.getRemoved().isEmpty());
-
-			if (doCommit) {
-				final CommitCommand commit = gitSession.commit();
-
-				commit.setAuthor(main.getConfigValue(Main.GLOBAL_SECTION,
-						Main.NAME_KEY, null), EMAIL.value());
-				commit.setMessage("update " + commit.getAuthor().getName()
-						+ ", " + new Date(System.currentTimeMillis()));
-
-				final RevCommit commitRet = commit.call();
-
-				io.printMessage(
-						null,
-						"commit: "
-								+ commitRet.getFullMessage()
-								+ "\nStarting to upload changes after checking remote repository for changes",
-						false);
-			}
+			io.printMessage(
+					null,
+					"commit: "
+							+ commitRet.getFullMessage()
+							+ "\nStarting to upload changes after checking remote repository for changes",
+					false);
+		} else if (COMMIT.getValue()) {
+			// TODO is a push needed ?
+			COMMIT.changeValue();
+			push(gitSession);
 		}
 		if (COMMIT.getValue()) {
 			update(gitSession);
@@ -938,182 +917,6 @@ public final class VersionControl implements Module {
 		}
 	}
 
-	/**
-	 * do tests if file is candidate to be uploaded/deleted from the central
-	 * repository and if yes ask user, whether this file should be added/deleted
-	 * uploaded
-	 * 
-	 * @param type
-	 * @param file
-	 * @return an array of selection
-	 *         <ul>
-	 *         <li><i>true</i> if user hit yes at index 0
-	 *         <li/>
-	 *         <li><i>true</i> if the selected file should be enrypted at index
-	 *         1
-	 *         <li/>
-	 *         </ul>
-	 */
-	private final boolean[] processChangedFile(final String file,
-			final UpdateType type) {
-		final GitNoYesPlugin plugin = new GitNoYesPlugin(
-				type.getQuestionPart0(), type.getQuestionPart0() + "\n" + file
-						+ "\n" + type.getQuestionPart1(), io.getGUI(), true,
-				(type == UpdateType.ADD) || (type == UpdateType.UPDATE));
-		if (file.endsWith(".enc.abc")) {
-			plugin.preSelectEncryption();
-		}
-		io.handleGUIPlugin(plugin);
-		return new boolean[] { plugin.get(), plugin.encrypt() };
-	}
-
-	private final void processMissing(final Set<String> rm,
-			final Status status, final Git gitSession)
-			throws RefAlreadyExistsException, RefNotFoundException,
-			InvalidRefNameException, CheckoutConflictException, GitAPIException {
-		final List<String> missingList = new ArrayList<>(status.getMissing());
-		Collections.sort(missingList, new SortingComparator(repoRoot));
-
-		io.startProgress("Missing files", missingList.size());
-		for (final String fileMissing0 : missingList) {
-			if (processChangedFile(fileMissing0, UpdateType.RESTORE_MISSING)[0]) {
-				final String fileMissing;
-				if (fileMissing0.startsWith("enc/")) {
-					fileMissing = fileMissing0.substring(4) + ".abc";
-				} else {
-					fileMissing = fileMissing0;
-				}
-				// restore it
-				final CheckoutCommand checkoutCommand = gitSession.checkout();
-				checkoutCommand.addPath(fileMissing0);
-				checkoutCommand.call();
-				if (fileMissing != fileMissing0) {
-					encrypt(fileMissing0, fileMissing, false);
-				}
-			} else if (COMMIT.getValue()) {
-				final String fileMissing = fileMissing0.startsWith("enc/") ? fileMissing0
-						.substring(4) : fileMissing0;
-				final boolean isOwner = fileMissing.startsWith(main
-						.getConfigValue(Main.GLOBAL_SECTION, Main.NAME_KEY,
-								null)
-						+ "/");
-				if (isOwner) {
-					if (processChangedFile(fileMissing, UpdateType.DELETE)[0]) {
-						// do delete it
-						rm.add(fileMissing);
-						final RmCommand removeCommand = gitSession.rm();
-						removeCommand.addFilepattern(fileMissing);
-						removeCommand.call();
-					}
-				}
-			}
-			io.updateProgress();
-		}
-		io.endProgress();
-	}
-
-	private final void processNewAndChanges(final Set<String> add,
-			final Status status, final Git gitSession)
-			throws NoFilepatternException, GitAPIException {
-		final List<String> untrackedList = new ArrayList<>(
-				status.getUntracked());
-		final List<String> modList = new ArrayList<>(status.getModified());
-		Collections.sort(untrackedList, new SortingComparator(repoRoot));
-		final Iterator<String> iterFile = untrackedList.iterator();
-		while (iterFile.hasNext()) {
-			final String file = iterFile.next();
-			// if (file.endsWith(".enc.abc")) {
-			// final File encoded = repoRoot.resolve(
-			// ("enc/" + file.substring(0, file.length() - 4))
-			// .split("/")).toFile();
-			// if (!encoded.exists()) {
-			// continue;
-			// }
-			// if (encoded.lastModified() < repoRoot.resolve(file).toFile()
-			// .lastModified()) {
-			// modList.add(file);
-			// }
-			// } else
-			if (!file.startsWith("enc/") && file.endsWith(".abc")) {
-				continue;
-			}
-			iterFile.remove();
-		}
-		io.startProgress("Untracked files", untrackedList.size());
-		final Set<String> conflicts = new HashSet<>();
-		for (final String fileUntracked0 : untrackedList) {
-			final boolean[] b = processChangedFile(fileUntracked0,
-					UpdateType.ADD);
-			if (b[0]) {
-				final String fileUntracked;
-				if (b[1]) {
-					fileUntracked = "enc/"
-							+ fileUntracked0.replace(".enc.abc", ".abc");
-					encrypt(fileUntracked0, fileUntracked, true);
-				} else {
-					fileUntracked = fileUntracked0.replace(".enc.abc", ".abc");
-				}
-				add.add(fileUntracked);
-				final DirCache addRet = gitSession.add()
-						.addFilepattern(fileUntracked).call();
-				if (addRet.hasUnmergedPaths()) {
-					conflicts.add(fileUntracked);
-				}
-			}
-			io.updateProgress();
-		}
-
-		Collections.sort(modList, new SortingComparator(repoRoot));
-		io.startProgress("Modified files", modList.size());
-		for (final String fileModified0 : modList) {
-			final boolean[] b0 = processChangedFile(fileModified0,
-					UpdateType.RESTORE_CHANGED);
-			if (b0[0]) {
-				// restore it
-				final String fileModified;
-				if (b0[1]) {
-					fileModified = "enc/"
-							+ fileModified0.substring(0,
-									fileModified0.length() - 4);
-					encrypt(fileModified, fileModified0, false);
-				} else {
-					fileModified = fileModified0;
-				}
-				final CheckoutCommand checkoutCommand = gitSession.checkout();
-				checkoutCommand.addPath(fileModified);
-				checkoutCommand.call();
-			} else {
-				final boolean[] b1 = processChangedFile(fileModified0,
-						UpdateType.UPDATE);
-				if (b1[0]) {
-					final String fileModified;
-					if (b1[1]) {
-						fileModified = "enc/"
-								+ fileModified0.replace(".enc.abc", ".abc");
-						encrypt(fileModified0, fileModified, true);
-					} else {
-						fileModified = fileModified0;
-					}
-					add.add(fileModified);
-					gitSession.add().addFilepattern(fileModified).call();
-				}
-			}
-			io.updateProgress();
-		}
-
-		io.endProgress();
-		if (!conflicts.isEmpty()) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("There are conflicts with following file(s):\n");
-			for (final String c : conflicts) {
-				sb.append(c);
-				sb.append("\n");
-			}
-			io.printError(sb.toString(), false);
-			return;
-		}
-	}
-
 	/*
 	 * do the upload of commits
 	 */
@@ -1145,16 +948,19 @@ public final class VersionControl implements Module {
 				return;
 			} else
 				remoteHead = getRemoteHead(gitSession);
-			
+
 			// remove lock
-			repoRoot.resolve(".git",  "index.lock").delete();
+			repoRoot.resolve(".git", "index.lock").delete();
 			// remove branches
-			gitSession.branchDelete().setBranchNames(BRANCH.value(), tmpBranchName).call();
+			gitSession.branchDelete()
+					.setBranchNames(BRANCH.value(), tmpBranchName).call();
 			// set to remote head
 			io.startProgress("Checking out " + remoteHead.getName(), -1);
-			gitSession.checkout().setName(remoteHead.getName().substring(0, 8)).call();
+			gitSession.checkout().setName(remoteHead.getName().substring(0, 8))
+					.call();
 			io.startProgress("Resetting local to remote head", -1);
-			gitSession.reset().setRef(remoteHead.getName()).setMode(ResetType.HARD).call();
+			gitSession.reset().setRef(remoteHead.getName())
+					.setMode(ResetType.HARD).call();
 			gitSession.branchCreate().setName(BRANCH.value()).call();
 			gitSession.checkout().setName(BRANCH.value()).call();
 			io.endProgress();
@@ -1195,7 +1001,9 @@ public final class VersionControl implements Module {
 
 		boolean success = true;
 
-		final RevCommit commitRoot = CommitComparator.init(walk, gitSession, io).getParent(commitLocal, commitRemote);
+		final RevCommit commitRoot = CommitComparator
+				.init(walk, gitSession, io)
+				.getParent(commitLocal, commitRemote);
 
 		diffString = diff(walk, commitRoot, commitRemote, gitSession);
 

@@ -88,7 +88,6 @@ public final class CommitComparator implements Comparator<RevCommit> {
 						time = 0;
 					} else {
 						if (time > 0) {
-							int delta = (int) (time - timeBefore);
 							io.updateProgress((int) (time - timeBefore));
 						}
 						time = timeBefore;
