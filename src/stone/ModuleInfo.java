@@ -10,17 +10,18 @@ public final class ModuleInfo {
 	final String name;
 	final String tooltip;
 
-	public ModuleInfo(final Config c, final StartupContainer sc, final Class<Module> clazz,
-			final String name) {
+	public ModuleInfo(final Config c, final StartupContainer sc,
+			final Class<Module> clazz, final String name) {
 		Module instance = null;
-		try {
-			instance = clazz.getConstructor(sc.getClass()).newInstance(sc);
-		} catch (InstantiationException | IllegalAccessException
-				| IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
-			e.printStackTrace();
-			instance = null;
-		}
+		if (clazz != null)
+			try {
+				instance = clazz.getConstructor(sc.getClass()).newInstance(sc);
+			} catch (InstantiationException | IllegalAccessException
+					| IllegalArgumentException | InvocationTargetException
+					| NoSuchMethodException | SecurityException e) {
+				e.printStackTrace();
+				instance = null;
+			}
 		this.instance = instance;
 		this.name = name;
 		tooltip = c.getValue(name);
@@ -39,7 +40,7 @@ public final class ModuleInfo {
 	public final String name() {
 		return name;
 	}
-	
+
 	public final String tooltip() {
 		return tooltip;
 	}

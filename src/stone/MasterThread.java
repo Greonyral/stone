@@ -233,7 +233,7 @@ public class MasterThread extends Thread {
 			else
 				base = fsBase.resolve("Documents");
 			sc.getMain().setConfigValue(Main.GLOBAL_SECTION, Main.PATH_KEY,
-					base.resolve("The Lord of The Rings Online").toString());
+					base.resolve("The Lord of the Rings Online").toString());
 
 		}
 		try {
@@ -485,8 +485,7 @@ public class MasterThread extends Thread {
 				return;
 			}
 			final Class<Module> clazz = StartupContainer.loadModule(module);
-			if (clazz != null)
-				modulesLocal.put(module, new ModuleInfo(c, sc, clazz, module));
+			modulesLocal.put(module, new ModuleInfo(c, sc, clazz, module));
 			io.updateProgress();
 		}
 		io.endProgress();

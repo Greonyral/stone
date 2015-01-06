@@ -81,6 +81,7 @@ public class ProgressMonitor {
 		gui.setProgressSize(size);
 		progress = size < 0 ? -1 : progress < 0 ? 0 : progress;
 		gui.setProgress(progress);
+		max = size;
 	}
 
 	/**

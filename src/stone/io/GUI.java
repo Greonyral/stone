@@ -15,11 +15,13 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.imageio.ImageIO;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -42,7 +44,6 @@ import stone.util.Option;
 import stone.util.Path;
 import stone.util.PathOption;
 import stone.util.StringOption;
-
 
 /**
  * Simple GUI handling all interaction with the user
@@ -130,7 +131,7 @@ public class GUI implements GUIInterface {
 	 * @param master
 	 * @param icon
 	 */
-	public GUI(final GUI gui, final MasterThread master, final Image icon) {
+	public GUI(final GUI gui, final MasterThread master) {
 		this.master = master;
 
 		text = new JTextArea();
@@ -140,13 +141,7 @@ public class GUI implements GUIInterface {
 		wait = gui.wait;
 
 		mainFrame = gui.mainFrame;
-		final boolean aot = gui.mainFrame.isAlwaysOnTop();
-		mainFrame.setVisible(false);
-		if (icon != null) {
-			mainFrame.setIconImage(icon);
-		}
-		mainFrame.setVisible(true);
-		mainFrame.setAlwaysOnTop(aot);
+
 		mainFrame.addWindowListener(new WindowListener() {
 
 			@Override
@@ -202,6 +197,9 @@ public class GUI implements GUIInterface {
 		// hide the exceptions for the Progress
 		Thread.setDefaultUncaughtExceptionHandler(master
 				.getUncaughtExceptionHandler());
+		if (!mainFrame.isVisible()) {
+			destroy();
+		}
 	}
 
 	/**
@@ -216,6 +214,9 @@ public class GUI implements GUIInterface {
 		bar = null;
 		text = null;
 
+		final java.io.InputStream in = getClass().getResourceAsStream(
+				"Icon.png");
+
 		wait = new JLabel(GUI.waitText);
 
 		mainFrame = new JFrame();
@@ -226,6 +227,19 @@ public class GUI implements GUIInterface {
 		mainFrame.setMinimumSize(new Dimension(360, 100));
 		mainFrame.setMaximumSize(new Dimension(600, 680));
 		mainFrame.add(wait);
+
+		if (in != null)
+			try {
+				mainFrame.setIconImage(ImageIO.read(in));
+			} catch (final IOException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					in.close();
+				} catch (final Exception e) {
+					e.printStackTrace();
+				}
+			}
 
 		mainFrame.pack();
 		mainFrame.setVisible(true);
@@ -375,8 +389,8 @@ public class GUI implements GUIInterface {
 	 * @param initialDirectory
 	 * @return the selected path or <i>null</i> if user aborted the dialog
 	 */
-	public final Path getPath(final String titleMsg,
-			final FileFilter filter, final File initialDirectory) {
+	public final Path getPath(final String titleMsg, final FileFilter filter,
+			final File initialDirectory) {
 		final JFileChooser chooser;
 		final JLabel title = new JLabel(titleMsg);
 		mainFrame.isAlwaysOnTop();
@@ -384,8 +398,7 @@ public class GUI implements GUIInterface {
 		chooser.setDialogTitle(title.getText());
 		chooser.setDialogType(JFileChooser.OPEN_DIALOG);
 		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		chooser.removeChoosableFileFilter(chooser
-				.getChoosableFileFilters()[0]);
+		chooser.removeChoosableFileFilter(chooser.getChoosableFileFilters()[0]);
 		chooser.setFileFilter(filter);
 		chooser.addActionListener(new ActionListener() {
 
@@ -475,8 +488,8 @@ public class GUI implements GUIInterface {
 
 	/** */
 	@Override
-	public final void printMessage(final String title,
-			final String message, boolean toFront) {
+	public final void printMessage(final String title, final String message,
+			boolean toFront) {
 		printMessageFunc(title, message, toFront);
 	}
 
@@ -501,8 +514,7 @@ public class GUI implements GUIInterface {
 
 	/** */
 	@Override
-	public final Set<String>
-			selectModules(final Collection<String> modules) {
+	public final Set<String> selectModules(final Collection<String> modules) {
 		mainFrame.getContentPane().removeAll();
 		text.setText("Please select the actions you want to use. Selected actions\n"
 				+ "may update themselves if outdated. In this case reselect them\n"
@@ -536,9 +548,10 @@ public class GUI implements GUIInterface {
 		for (final String m : modules) {
 			final JCheckBox box;
 			final ModuleInfo info = master.getModuleInfo(m);
+		
 			box = new JCheckBox(info.name());
-			box.addChangeListener(new BoxListener(m));
 			box.setToolTipText(info.tooltip());
+			box.addChangeListener(new BoxListener(m));
 			panel.add(box);
 		}
 		final JCheckBox box = new JCheckBox(Main.REPAIR);
@@ -612,7 +625,8 @@ public class GUI implements GUIInterface {
 		final JScrollPane scrollPane = new JScrollPane(panel);
 		panel.setLayout(new BorderLayout());
 		panel.add(text);
-		scrollPane.setPreferredSize(new Dimension(600, cols < 20 ? cols * 8 : 800));
+		scrollPane.setPreferredSize(new Dimension(600, cols < 20 ? cols * 8
+				: 800));
 		mainFrame.add(scrollPane);
 		if (toFront) {
 			if (title != null) {
@@ -685,6 +699,10 @@ public class GUI implements GUIInterface {
 
 	final void setResizable(boolean b) {
 		mainFrame.setResizable(b);
+	}
+
+	final Image getIcon() {
+		return mainFrame.getIconImage();
 	}
 
 }

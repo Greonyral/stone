@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import javax.imageio.ImageIO;
 import javax.swing.filechooser.FileFilter;
 
 import stone.MasterThread;
@@ -30,7 +29,6 @@ import stone.StartupContainer;
 import stone.util.FileSystem;
 import stone.util.Option;
 import stone.util.Path;
-
 
 /**
  * Central class handling I/O-Operations
@@ -55,8 +53,6 @@ public class IOHandler {
 	private final GUIInterface gui;
 	private boolean closed = false;
 
-	private final Image icon;
-
 	final GUI guiReal;
 
 	final MasterThread master;
@@ -71,23 +67,9 @@ public class IOHandler {
 	 *            the name of the icon within the jar-archive or the path
 	 *            relative to the workingDirectory
 	 */
-	public IOHandler(final StartupContainer sc, final String iconFile) {
+	public IOHandler(final StartupContainer sc) {
 		master = sc.getMaster();
-		Image icon_ = null;
-		final java.io.InputStream in = getClass().getClassLoader().getResourceAsStream(iconFile);
-		try {
-			icon_ = ImageIO.read(in);
-		} catch (final IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				in.close();
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
-		}
-		icon = icon_;
-
+	
 		class GUIProxy extends Proxy {
 
 			/** */
@@ -104,7 +86,7 @@ public class IOHandler {
 			}
 
 		}
-		guiReal = new GUI((GUI) sc.getIO().gui, master, icon);
+		guiReal = new GUI((GUI) sc.getIO().gui, master);
 		class GUIInvocationHandler implements InvocationHandler {
 
 			@Override
@@ -143,7 +125,6 @@ public class IOHandler {
 		openStreams = null;
 		logStack = null;
 		master = null;
-		icon = null;
 	}
 
 	/**
@@ -330,13 +311,6 @@ public class IOHandler {
 	 */
 	public GUIInterface getGUI() {
 		return gui;
-	}
-
-	/**
-	 * @return the icon-image used in the GUI
-	 */
-	public final Image getIcon() {
-		return icon;
 	}
 
 	/**
@@ -751,5 +725,9 @@ public class IOHandler {
 				return;
 			}
 		}
+	}
+
+	public final Image getIcon() {
+		return guiReal.getIcon();
 	}
 }

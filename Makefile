@@ -65,7 +65,7 @@ brute/$(BRUTE_VERSION): brute/$(BRUTE_VERSION).zip
 	unzip -d brute $<
 
 brute/BruTE.jar: brute/$(BRUTE_VERSION)
-	jar cfM0 $@ $(patsubst %,-C brute/19c %,default.config drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe)
+	jar cfM0 $@ $(patsubst %,-C brute/19c %,drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe)
 	
 
 #jar-archives
@@ -81,16 +81,16 @@ modules/FileEditor.jar: modules $(FE_CLASSES)
 modules/VersionControl.jar: modules $(VC_CLASSES) lib
 	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(VC_CLASSES_BASE)))) -C lib com -C lib org)
 
-modules/Main.jar: $(MAIN_CLASSES)
+modules/Main.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	$(JAVAC) src/stone/MasterThread.java
 	echo "url https://github.com/Greonyral/stone/raw/master/" > config.txt
 	echo "mainClass Main" >> config.txt
 	echo "modules" >> config.txt
 	echo "AbcCreator Simple GUI of BruTE" >> config.txt
 	echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
-	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) Icon.png config.txt
+	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) -C $(BIN_DIR) stone/io/Icon.png config.txt
 
-modules/Main_band.jar: $(MAIN_CLASSES)
+modules/Main_band.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	$(JAVAC) src/stone/MasterThread.java
 	echo "url https://github.com/Greonyral/stone/raw/master/" > config.txt
 	echo "mainClass Main_band" >> config.txt
@@ -98,19 +98,21 @@ modules/Main_band.jar: $(MAIN_CLASSES)
 	echo "AbcCreator Simple GUI of BruTE" >> config.txt
 	echo "VersionControl Simple git-GUI to synchronize songs" >> config.txt
 	echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
-	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) Icon.png config.txt
+	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) -C $(BIN_DIR) stone/io/Icon.png config.txt
 
 #targets
-hiddenVC: modules/Main.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/FileEditor.jar
+hiddenVC: modules/Main.jar modules/AbcCreator.jar modules/SongbookUpdater.jar
 	cp $< SToNe_hiddenVC.jar
 
-normal: modules/Main_band.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/VersionControl.jar modules/FileEditor.jar
+normal: modules/Main_band.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/VersionControl.jar 
 	cp $< SToNe.jar
 
 moduleInfo: $(BIN_DIR)/stone/updater/CreateBuilds.class
 	mkdir -p moduleInfo
 	java -cp $(BIN_DIR):lib stone.updater.CreateBuilds
 
+$(BIN_DIR)/stone/io/Icon.png: Icon.png
+	cp $< $@
 
 ########################
 #    classes           #

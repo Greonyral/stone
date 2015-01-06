@@ -26,7 +26,7 @@ public class Main implements Module {
 
 	private static final int MAX_LENGTH_INFO = 80;
 
-	private static final int VERSION = 12;
+	private static final int VERSION = 13;
 
 	/**
 	 * The name to be used for naming the config-file and the title.
@@ -140,9 +140,7 @@ public class Main implements Module {
 	}
 
 	private static final void createIO(final StartupContainer os) {
-		final String icon;
-		icon = "Icon.png";
-		os.createFinalIO(new IOHandler(os, icon));
+		os.createFinalIO(new IOHandler(os));
 	}
 
 	private static int format(final StringBuilder sb, final String s,
