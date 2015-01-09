@@ -2,7 +2,7 @@ package stone.io;
 
 import java.awt.Component;
 import java.util.Collection;
-import java.util.Set;
+import java.util.List;
 
 import javax.swing.JButton;
 
@@ -122,7 +122,7 @@ public interface GUIInterface {
 	 * @param modules
 	 * @return a set containing the selected modules.
 	 */
-	Set<String> selectModules(Collection<String> modules);
+	List<String> selectModules(List<String> modules);
 
 	/**
 	 * Sets the progress.

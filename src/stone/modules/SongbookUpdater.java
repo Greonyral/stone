@@ -25,7 +25,7 @@ import stone.util.Path;
  */
 public final class SongbookUpdater implements Module {
 
-	private final static int VERSION = 5;
+	private final static int VERSION = 6;
 	private final static String USER = "UserPreferences.ini";
 
 	private final IOHandler io;

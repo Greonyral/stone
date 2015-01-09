@@ -9,6 +9,7 @@ import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -206,6 +207,7 @@ public class MasterThread extends Thread {
 		try {
 			io.checkJRE();
 		} catch (final Exception e) {
+			e.printStackTrace();
 		}
 		io.endProgress();
 		sc.waitForInit();
@@ -239,7 +241,7 @@ public class MasterThread extends Thread {
 		try {
 			final StringOption NAME_OPTION = Main.createNameOption(sc
 					.getOptionContainer());
-			final Set<String> moduleSelection = init();
+			final List<String> moduleSelection = init();
 			if (moduleSelection == null)
 				return;
 			if (moduleSelection.contains(Main.REPAIR)) {
@@ -282,7 +284,7 @@ public class MasterThread extends Thread {
 	 * 
 	 * @param moduleSelection
 	 */
-	private final void checkAvailibility(final Set<String> moduleSelection) {
+	private final void checkAvailibility(final Collection<String> moduleSelection) {
 		try {
 			if (isInterrupted()) {
 				return;
@@ -322,7 +324,7 @@ public class MasterThread extends Thread {
 			}
 			final int versionNew = ByteBuffer.wrap(bytes).getInt();
 			System.out.printf("%s %2d %2d\n", info.name, info.getVersion(), versionNew);
-			return versionNew != info.getVersion();
+			return versionNew > info.getVersion();
 		} catch (final MalformedURLException e) {
 			e.printStackTrace();
 			return false;
@@ -450,7 +452,7 @@ public class MasterThread extends Thread {
 		event = null;
 	}
 
-	private final Set<String> init() {
+	private final List<String> init() {
 		possibleModules.addAll(c.getSection("modules"));
 		try {
 			loadModules();

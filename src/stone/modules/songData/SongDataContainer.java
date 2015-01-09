@@ -12,13 +12,11 @@ import stone.MasterThread;
 import stone.StartupContainer;
 import stone.io.ExceptionHandle;
 import stone.io.IOHandler;
-import stone.io.InputStream;
 import stone.io.OutputStream;
 import stone.modules.Main;
 import stone.util.Debug;
 import stone.util.Path;
 import stone.util.TaskPool;
-
 
 /**
  * Central class for holding all data related to the songs
@@ -48,14 +46,14 @@ public class SongDataContainer implements Container {
 
 	private final Set<Path> songsFound = new HashSet<>();
 
-	private final ArrayDeque<ModEntry> queue = new ArrayDeque<>();
+	
 	private final IOHandler io;
 
 	private final TaskPool taskPool;
 
 	private final MasterThread master;
 
-	private final boolean scanNeeded = true;
+	private final boolean crawlNeeded = true;
 
 	private boolean dirty = true;
 
@@ -66,15 +64,12 @@ public class SongDataContainer implements Container {
 		io = sc.getIO();
 		taskPool = sc.getTaskPool();
 		master = sc.getMaster();
-		final String home =
-				sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
-						Main.PATH_KEY, null);
+		final String home = sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
+				Main.PATH_KEY, null);
 		assert home != null;
-		final Path basePath =
-				Path.getPath(home.split("/")).resolve("Music");
+		final Path basePath = Path.getPath(home.split("/")).resolve("Music");
 		if (!basePath.exists()) {
-			if (!basePath.getParent().exists()
-					|| !basePath.toFile().mkdir()) {
+			if (!basePath.getParent().exists() || !basePath.toFile().mkdir()) {
 				io.printError(
 						Main.formatMaxLength(
 								basePath,
@@ -88,20 +83,6 @@ public class SongDataContainer implements Container {
 	}
 
 	/**
-	 * Adds a new song into the queue to be scanned
-	 * 
-	 * @param modEntry
-	 *            the song to be added
-	 */
-	public final void add(final ModEntry modEntry) {
-		synchronized (queue) {
-			queue.add(modEntry);
-			queue.notifyAll();
-			songsFound.add(modEntry.getKey());
-		}
-	}
-
-	/**
 	 * fills the container
 	 */
 	public final void fill() {
@@ -110,87 +91,39 @@ public class SongDataContainer implements Container {
 		}
 		if (dirty) {
 			Debug.print("Searching for songs at " + tree.getRoot() + ".");
-			final Path parent =
-					tree.getRoot().getParent().resolve("PluginData");
-			final Path zippedSongDataPath;
-			final Path songDataPath;
-			final Path songDataUpdatePath;
-			songDataPath = parent.resolve("SongbookUpdateData");
-			zippedSongDataPath = parent.resolve("SongbookUpdateData.zip");
-			songDataUpdatePath =
-					parent.resolve("SongbookUpdateData.updating");
-			final OutputStream out;
+	
 			final Scanner scanner;
-			if (scanNeeded) {
+			final SongDataDeserializer sdd = SongDataDeserializer.init(
+					tree.getRoot(), io);
+			if (crawlNeeded) {
 				final Crawler crawler;
-				io.openZipIn(zippedSongDataPath);
-				final InputStream in = io.openIn(songDataPath.toFile());
-				try {
-					if (songDataPath.toFile().length() == 0) {
-						io.append(songDataPath.toFile(),
-								songDataUpdatePath.toFile(), 0);
-						in.reset();
-					} else {
-						io.append(songDataPath.toFile(),
-								songDataUpdatePath.toFile(), 1);
-					}
+				crawler = new Crawler(sdd, new ArrayDeque<Path>());
+				scanner = new Scanner(master, sdd, tree, songsFound);
+				taskPool.addTaskForAll(crawler, scanner);
 
-					out = io.openOut(songDataUpdatePath.toFile());
-					io.write(out, SongDataDeserializer_3.getHeader());
-					crawler =
-							new Crawler(io, tree.getRoot(),
-									new ArrayDeque<Path>(), queue);
-					scanner =
-							new Scanner(io, queue, master, out, tree,
-									songsFound);
-					taskPool.addTaskForAll(crawler, scanner);
-					in.registerProgressMonitor(io);
-					io.setProgressTitle("Reading data base of previous run");
-					try {
-						SongDataDeserializer.deserialize(in, this, tree
-								.getRoot());
-						io.startProgress("Parsing songs", -1);
-						synchronized (io) {
-							crawler.historySolved();
-							if (crawler.terminated()) {
-								io.setProgressSize(crawler.getProgress());
-							}
+				try {
+					sdd.deserialize(this);
+					synchronized (io) {
+						crawler.historySolved();
+						if (crawler.terminated()) {
+							io.setProgressSize(crawler.getProgress());
 						}
-						io.close(in);
-						in.deleteFile();
-					} catch (final IOException e) {
-						io.close(in);
-						songDataPath.delete();
-						zippedSongDataPath.delete();
-						io.handleException(ExceptionHandle.SUPPRESS, e);
 					}
-				} finally {
-					io.close(in);
+				} catch (final IOException e) {
+					sdd.abort();
+					io.handleException(ExceptionHandle.SUPPRESS, e);
 				}
 			} else {
-				io.startProgress("parsing songs", songsFound.size());
-				out = io.openOut(songDataUpdatePath.toFile());
-				io.write(out, SongDataDeserializer_3.getHeader());
-				scanner =
-						new Scanner(io, queue, master, out, tree,
-								songsFound);
+				scanner = new Scanner(master, sdd, tree, songsFound);
 				taskPool.addTaskForAll(scanner);
 			}
 			taskPool.waitForTasks();
 			dirty = false;
 			io.endProgress();
-			for (final AbtractEoWInAbc e : AbtractEoWInAbc.messages
-					.values()) {
+			
+			for (final AbtractEoWInAbc e : AbtractEoWInAbc.messages.values()) {
 				io.printError(e.printMessage(), true);
 			}
-			io.close(out);
-			// replace fileUpdate with fileUpdateNew and delete master
-			songDataPath.delete();
-			songDataUpdatePath.renameTo(songDataPath);
-
-			// compress
-			io.compress(zippedSongDataPath.toFile(), songDataPath.toFile());
-			songDataPath.delete();
 
 			Debug.print("%4d songs found -", size());
 		}
@@ -280,11 +213,9 @@ public class SongDataContainer implements Container {
 				io.write(outMaster, "\t\t[1] = \"/\"");
 				for (int dirIdx = 2; dirIterator.hasNext(); dirIdx++) {
 					io.writeln(outMaster, ",");
-					io.write(outMaster, "\t\t["
-							+ dirIdx
-							+ "] = \"/"
-							+ dirIterator.next()
-									.relativize(tree.getRoot()) + "/\"");
+					io.write(outMaster, "\t\t[" + dirIdx + "] = \"/"
+							+ dirIterator.next().relativize(tree.getRoot())
+							+ "/\"");
 				}
 				io.writeln(outMaster, "");
 			}
@@ -307,14 +238,13 @@ public class SongDataContainer implements Container {
 				io.writeln(outMaster, "\t\t[" + songIdx + "] =");
 				io.writeln(outMaster, "\t\t{");
 				final String name;
-				name =
-						path.getFileName().substring(0,
-								path.getFileName().lastIndexOf("."));
+				name = path.getFileName().substring(0,
+						path.getFileName().lastIndexOf("."));
 
 				io.write(outMaster, "\t\t\t[\"Filepath\"] = \"/");
 				if (path.getParent() != tree.getRoot()) {
-					io.write(outMaster, path.getParent().relativize(
-							tree.getRoot()));
+					io.write(outMaster,
+							path.getParent().relativize(tree.getRoot()));
 					io.write(outMaster, "/");
 				}
 				io.writeln(outMaster, "\",");

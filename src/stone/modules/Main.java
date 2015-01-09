@@ -26,7 +26,7 @@ public class Main implements Module {
 
 	private static final int MAX_LENGTH_INFO = 80;
 
-	private static final int VERSION = 13;
+	private static final int VERSION = 14;
 
 	/**
 	 * The name to be used for naming the config-file and the title.
@@ -286,7 +286,7 @@ public class Main implements Module {
 		if (io == null) {
 			return;
 		}
-		taskPool.runMaster();
+		final Runnable workerRun = taskPool.runMaster();
 		taskPool.addTask(new Runnable() {
 
 			@Override
@@ -331,7 +331,10 @@ public class Main implements Module {
 					throw e;
 				}
 			}
+			
 		});
+		Thread.currentThread().setName("Worker-0");
+		workerRun.run();
 	}
 
 	/**

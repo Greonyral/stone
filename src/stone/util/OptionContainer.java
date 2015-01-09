@@ -58,7 +58,6 @@ public class OptionContainer {
 		if (valueOfFlag != null) {
 			option.setByFlagValue(valueOfFlag);
 		}
-
 	}
 
 	/**

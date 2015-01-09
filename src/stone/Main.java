@@ -1,8 +1,8 @@
 package stone;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
 
 /**
  * @author Nelphindal
@@ -31,12 +31,13 @@ public class Main {
 	 * @throws SecurityException
 	 * @throws InstantiationException
 	 * @throws ClassNotFoundException
+	 * @throws IOException 
 	 */
 	public final static void main(final String[] args)
 			throws IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException,
 			SecurityException, InstantiationException,
-			ClassNotFoundException {
+			ClassNotFoundException, IOException {
 		final ModuleLoader loader = ModuleLoader.createLoader();
 		final Class<?> scClass =
 				loader.loadClass("stone.StartupContainer");
@@ -62,5 +63,6 @@ public class Main {
 		scClass.getMethod("setMain", mainClass).invoke(sc, main);
 		mainClass.getMethod("run", scClass, flagClass).invoke(main, sc,
 				flags);
+		// will return after terminating
 	}
 }

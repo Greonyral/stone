@@ -1,8 +1,6 @@
 package stone.modules.songData;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -11,7 +9,6 @@ import stone.MasterThread;
 import stone.io.ExceptionHandle;
 import stone.io.IOHandler;
 import stone.io.InputStream;
-import stone.io.OutputStream;
 import stone.util.Debug;
 import stone.util.FileSystem;
 import stone.util.Path;
@@ -52,17 +49,15 @@ public final class Scanner implements Runnable {
 		return result.toString();
 	}
 
-	private final ArrayDeque<ModEntry> queue;
-
 	private final IOHandler io;
 
 	private final DirTree tree;
 
 	private final Set<Path> songsFound;
 
-	private final OutputStream out;
-
 	private final MasterThread master;
+
+	private final SongDataDeserializer sdd;
 
 	/**
 	 * @param io
@@ -72,15 +67,13 @@ public final class Scanner implements Runnable {
 	 * @param tree
 	 * @param songsFound
 	 */
-	public Scanner(final IOHandler io, final ArrayDeque<ModEntry> queue,
-			final MasterThread master, final OutputStream out,
-			final DirTree tree, final Set<Path> songsFound) {
-		this.queue = queue;
-		this.io = io;
+	public Scanner(MasterThread master,
+			final SongDataDeserializer sdd, final DirTree tree, final Set<Path> songsFound) {
+		this.io = sdd.getIO();
 		this.tree = tree;
 		this.songsFound = songsFound;
-		this.out = out;
 		this.master = master;
+		this.sdd = sdd;
 	}
 
 	/** */
@@ -88,16 +81,16 @@ public final class Scanner implements Runnable {
 	public final void run() {
 		while (true) {
 			final ModEntry song;
-			synchronized (queue) {
-				if (queue.isEmpty()) {
+			synchronized (sdd) {
+				if (sdd.queueIsEmpty()) {
 					return;
 				}
-				song = queue.remove();
+				song = sdd.pollFromQueue();
 			}
 			if (song == ModEntry.TERMINATE) {
-				synchronized (queue) {
-					queue.add(song);
-					queue.notifyAll();
+				synchronized (sdd) {
+					sdd.addToQueue(song);
+					sdd.notifyAll();
 					return;
 				}
 			}
@@ -111,13 +104,8 @@ public final class Scanner implements Runnable {
 					songsFound.remove(song.getKey());
 				}
 			} else {
-				final ByteBuffer bytes;
-				bytes =
-						SongDataDeserializer_3.serialize(data, tree
-								.getRoot());
-				synchronized (this) {
-					io.write(out, bytes.array(), 0, bytes.position());
-				}
+				sdd.serialize(data);
+				
 				tree.put(data);
 				if (master.isInterrupted()) {
 					return;

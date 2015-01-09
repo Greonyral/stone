@@ -5,7 +5,6 @@ import java.util.ArrayDeque;
 import stone.MasterThread;
 import stone.StartupContainer;
 
-
 /**
  * Simple thread management.
  * 
@@ -17,7 +16,8 @@ public class TaskPool {
 
 	private final ArrayDeque<Runnable> taskPool = new ArrayDeque<>();
 
-	private final static int NUM_CPUS = 4;
+	private final static int NUM_CPUS = Runtime.getRuntime()
+			.availableProcessors();
 
 	private boolean closed = false;
 
@@ -31,6 +31,7 @@ public class TaskPool {
 	 */
 	public TaskPool(final StartupContainer os) {
 		master = new MasterThread(os, this);
+		Debug.print("%d available CPUs\n", NUM_CPUS);
 	}
 
 	/**
@@ -96,24 +97,26 @@ public class TaskPool {
 	/**
 	 * Forks and starts the master thread.
 	 */
-	public final void runMaster() {
+	public final Runnable runMaster() {
 		master.setName("master");
 		master.start();
-		for (int n = 0; n < TaskPool.NUM_CPUS; n++) {
-			final Thread t = new Thread() {
+		final Runnable workerRun = new Runnable() {
 
-				@Override
-				public void run() {
-					while (true) {
-						if (!runTask()) {
-							return;
-						}
+			@Override
+			public void run() {
+				while (true) {
+					if (!runTask()) {
+						return;
 					}
 				}
-			};
-			t.setName("Worker-" + n);
+			}
+		};
+		final int nMax = Math.max(NUM_CPUS, 2);
+		for (int n = 0; ++n < nMax;) {
+			final Thread t = new Thread(workerRun, "Worker-" + n);
 			t.start();
 		}
+		return workerRun;
 	}
 
 	/**

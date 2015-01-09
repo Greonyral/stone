@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -206,7 +207,8 @@ public class IOHandler {
 			if (index >= 0) {
 				final String[] splits =
 						line.substring(index + key.length()).split(" ");
-				for (final String s : splits) {
+				for (String s : splits) {
+					s = s.replaceAll("<.*>", "");
 					if (s.isEmpty()) {
 						continue;
 					}
@@ -535,8 +537,8 @@ public class IOHandler {
 	 *         if interrupted
 	 * @throws InterruptedException
 	 */
-	public final Set<String>
-			selectModules(final Collection<String> modules)
+	public final List<String>
+			selectModules(final List<String> modules)
 					throws InterruptedException {
 		return gui.selectModules(modules);
 	}
@@ -725,6 +727,11 @@ public class IOHandler {
 				return;
 			}
 		}
+		System.out.printf("Check version of used Java\n"
+				+ "Installed   : %2d Update %2d\n"
+				+ "Recommended : %2d Update %2d\n",
+				versionInstalled[1], versionInstalled[2],
+				version[1], version[2]);
 	}
 
 	public final Image getIcon() {

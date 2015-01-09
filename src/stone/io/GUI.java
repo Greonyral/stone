@@ -18,8 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.JCheckBox;
@@ -514,7 +513,7 @@ public class GUI implements GUIInterface {
 
 	/** */
 	@Override
-	public final Set<String> selectModules(final Collection<String> modules) {
+	public final List<String> selectModules(final List<String> modules) {
 		mainFrame.getContentPane().removeAll();
 		text.setText("Please select the actions you want to use. Selected actions\n"
 				+ "may update themselves if outdated. In this case reselect them\n"
@@ -522,7 +521,7 @@ public class GUI implements GUIInterface {
 		text.setBackground(mainFrame.getBackground());
 		text.setEditable(false);
 
-		final Set<String> selection = new HashSet<>();
+		final List<String> selection = new ArrayList<>();
 		final JPanel panel = new JPanel();
 		panel.setLayout(new GridLayout(0, 2));
 
@@ -536,8 +535,8 @@ public class GUI implements GUIInterface {
 
 			@Override
 			public void stateChanged(final ChangeEvent e) {
-				if (!selection.add(m)) {
-					selection.remove(m);
+				if (!selection.remove(m)) {
+					selection.add(m);
 				}
 			}
 		}

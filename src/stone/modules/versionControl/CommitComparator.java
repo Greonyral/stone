@@ -11,6 +11,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 
 import stone.io.IOHandler;
+import stone.util.Debug;
 import stone.util.Time;
 
 /**
@@ -79,6 +80,11 @@ public final class CommitComparator implements Comparator<RevCommit> {
 						remoteList.add(c);
 					}
 					long timeBefore = remoteTime;
+					if (remoteList.isEmpty()) {
+						io.endProgress();
+						Debug.print("rewritten history\n");
+						return null;
+					}
 					remote = remoteList.pollLast();
 					remoteTime = remote.getCommitTime();
 					if (start - remoteTime > diff) {

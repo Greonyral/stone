@@ -6,28 +6,25 @@ import stone.io.IOHandler;
 import stone.util.Debug;
 import stone.util.Path;
 
-
 class Crawler implements Runnable {
 
-	private final ArrayDeque<ModEntry> queue;
+
 	private final ArrayDeque<Path> wl;
 	private final IOHandler io;
+	private final SongDataDeserializer sdd;
+	
 	private boolean terminated = false;
-	private final java.util.concurrent.atomic.AtomicInteger threads =
-			new java.util.concurrent.atomic.AtomicInteger();
-	private final java.util.concurrent.atomic.AtomicInteger hits =
-			new java.util.concurrent.atomic.AtomicInteger();
+	private final java.util.concurrent.atomic.AtomicInteger threads = new java.util.concurrent.atomic.AtomicInteger();
+	private final java.util.concurrent.atomic.AtomicInteger hits = new java.util.concurrent.atomic.AtomicInteger();
 	private boolean history;
-	private final java.util.concurrent.atomic.AtomicInteger progress =
-			new java.util.concurrent.atomic.AtomicInteger();
+	private final java.util.concurrent.atomic.AtomicInteger progress = new java.util.concurrent.atomic.AtomicInteger();
 
-	public Crawler(final IOHandler io, final Path root,
-			final ArrayDeque<Path> workListForCrawler,
-			final ArrayDeque<ModEntry> queue) {
-		workListForCrawler.add(root);
+	public Crawler(final SongDataDeserializer sdd,
+			final ArrayDeque<Path> workListForCrawler) {
+		workListForCrawler.add(sdd.getRoot());
 		wl = workListForCrawler;
-		this.io = io;
-		this.queue = queue;
+		this.sdd = sdd;
+		this.io = sdd.getIO();
 	}
 
 	public final int getProgress() {
@@ -99,9 +96,9 @@ class Crawler implements Runnable {
 					&& path.getFileName().endsWith(".abc")) {
 				hits.incrementAndGet();
 				Debug.print("found %s\n", path);
-				synchronized (queue) {
-					queue.add(new ModEntry(path));
-					queue.notifyAll();
+				synchronized (sdd) {
+					sdd.addToQueue(new ModEntry(path));
+					sdd.notifyAll();
 				}
 			}
 		}
