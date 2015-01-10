@@ -41,7 +41,7 @@ public class MasterThread extends Thread {
 	final Path tmp = Path.getTmpDirOrFile(Main.TOOLNAME);
 
 	final StartupContainer sc;
-	
+
 	final static Config c = new Config();
 
 	private static final String downloadPage = c.getValue("url");
@@ -189,7 +189,7 @@ public class MasterThread extends Thread {
 		wd = sc.workingDirectory;
 
 		final ModuleInfo mainModule = new ModuleInfo(c);
-		
+
 		io.startProgress("Checking core for updates", -1);
 		if (checkModule(mainModule)) {
 			io.endProgress();
@@ -266,10 +266,10 @@ public class MasterThread extends Thread {
 					return;
 				else
 					sc.getMain().flushConfig();
-				for (final String module : possibleModules) {
-					if (moduleSelection.contains(module)) {
-						runModule(module);
-					}
+			}
+			for (final String module : possibleModules) {
+				if (moduleSelection.contains(module)) {
+					runModule(module);
 				}
 			}
 		} catch (final Exception e) {
@@ -284,7 +284,8 @@ public class MasterThread extends Thread {
 	 * 
 	 * @param moduleSelection
 	 */
-	private final void checkAvailibility(final Collection<String> moduleSelection) {
+	private final void checkAvailibility(
+			final Collection<String> moduleSelection) {
 		try {
 			if (isInterrupted()) {
 				return;
@@ -323,7 +324,8 @@ public class MasterThread extends Thread {
 				return false;
 			}
 			final int versionNew = ByteBuffer.wrap(bytes).getInt();
-			System.out.printf("%s %2d %2d\n", info.name, info.getVersion(), versionNew);
+			System.out.printf("%s %2d %2d\n", info.name, info.getVersion(),
+					versionNew);
 			return versionNew > info.getVersion();
 		} catch (final MalformedURLException e) {
 			e.printStackTrace();

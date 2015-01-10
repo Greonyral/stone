@@ -73,16 +73,3 @@ public class ZipCompression {
 		return new ZipOutputStreams(out, new ZipOutputStream(out));
 	}
 }
-
-class ZipOutputStreams {
-
-	final OutputStream out;
-	final ZipOutputStream zipOutputStream;
-
-	public ZipOutputStreams(final OutputStream out,
-			final ZipOutputStream zipOutputStream) {
-		this.out = out;
-		this.zipOutputStream = zipOutputStream;
-	}
-
-}

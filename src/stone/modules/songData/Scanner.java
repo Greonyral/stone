@@ -3,7 +3,6 @@ package stone.modules.songData;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import stone.MasterThread;
 import stone.io.ExceptionHandle;
@@ -12,7 +11,6 @@ import stone.io.InputStream;
 import stone.util.Debug;
 import stone.util.FileSystem;
 import stone.util.Path;
-
 
 /**
  * Task to extract all needed information for SongbookPlugin for LoTRO
@@ -53,8 +51,6 @@ public final class Scanner implements Runnable {
 
 	private final DirTree tree;
 
-	private final Set<Path> songsFound;
-
 	private final MasterThread master;
 
 	private final SongDataDeserializer sdd;
@@ -67,11 +63,10 @@ public final class Scanner implements Runnable {
 	 * @param tree
 	 * @param songsFound
 	 */
-	public Scanner(MasterThread master,
-			final SongDataDeserializer sdd, final DirTree tree, final Set<Path> songsFound) {
+	public Scanner(MasterThread master, final SongDataDeserializer sdd,
+			final DirTree tree) {
 		this.io = sdd.getIO();
 		this.tree = tree;
-		this.songsFound = songsFound;
 		this.master = master;
 		this.sdd = sdd;
 	}
@@ -79,40 +74,19 @@ public final class Scanner implements Runnable {
 	/** */
 	@Override
 	public final void run() {
-		while (true) {
-			final ModEntry song;
-			synchronized (sdd) {
-				if (sdd.queueIsEmpty()) {
-					return;
-				}
-				song = sdd.pollFromQueue();
-			}
-			if (song == ModEntry.TERMINATE) {
-				synchronized (sdd) {
-					sdd.addToQueue(song);
-					sdd.notifyAll();
-					return;
-				}
-			}
+		while (!master.isInterrupted() && parseSongs());
+	}
 
-			final SongData data = getVoices(song);
-			if (data == null) {
-				if (master.isInterrupted()) {
-					return;
-				}
-				synchronized (songsFound) {
-					songsFound.remove(song.getKey());
-				}
-			} else {
-				sdd.serialize(data);
-				
-				tree.put(data);
-				if (master.isInterrupted()) {
-					return;
-				}
-			}
-			io.updateProgress();
+	private final boolean parseSongs() {
+		final ModEntry song;
+		synchronized (sdd) {
+			song = sdd.pollFromQueue();
 		}
+		if (song == null)
+			return false;
+		final SongData voices = getVoices(song);
+		sdd.serialize(voices);
+		return true;
 	}
 
 	private final SongData getVoices(final ModEntry song) {
@@ -122,9 +96,8 @@ public final class Scanner implements Runnable {
 			final Path songFile = song.getKey();
 
 			final Map<String, String> voices = new HashMap<>();
-			final InputStream songContent =
-					io.openIn(songFile.toFile(),
-							FileSystem.DEFAULT_CHARSET);
+			final InputStream songContent = io.openIn(songFile.toFile(),
+					FileSystem.DEFAULT_CHARSET);
 
 			try {
 				// you can expect T: after X: line, if enforcing abc-syntax
@@ -142,19 +115,18 @@ public final class Scanner implements Runnable {
 					// search for important lines
 					if (line.startsWith("X:")) {
 						final int lineNumberOfX = lineNumber;
-						final String voiceId =
-								line.substring(line.indexOf(":") + 1)
-										.trim();
+						final String voiceId = line.substring(
+								line.indexOf(":") + 1).trim();
 						try {
 							line = songContent.readLine();
 							++lineNumber;
 						} catch (final IOException e) {
-							io.handleException(ExceptionHandle.TERMINATE,
-									e);
+							io.handleException(ExceptionHandle.TERMINATE, e);
 						}
 						if ((line == null) || !line.startsWith("T:")) {
-							Debug.print("%s\n", new MissingTLineInAbc(song
-									.getKey(), lineNumber));
+							Debug.print("%s\n",
+									new MissingTLineInAbc(song.getKey(),
+											lineNumber));
 							error = true;
 							if (line == null) {
 								break;
@@ -162,36 +134,35 @@ public final class Scanner implements Runnable {
 						}
 						final StringBuilder desc = new StringBuilder();
 						do {
-							desc.append(line.substring(
-									line.indexOf(":") + 1).trim());
+							desc.append(line.substring(line.indexOf(":") + 1)
+									.trim());
 							try {
 								line = songContent.readLine();
 								++lineNumber;
 							} catch (final IOException e) {
-								io.handleException(
-										ExceptionHandle.TERMINATE, e);
+								io.handleException(ExceptionHandle.TERMINATE, e);
 							}
 							if (line == null) {
 								break;
 							}
 							if (line.startsWith("T:")) {
 								desc.append(" ");
-								Debug.print("%s\n",
-										new MultipleTLinesInAbc(
-												lineNumber, song.getKey()));
+								Debug.print("%s\n", new MultipleTLinesInAbc(
+										lineNumber, song.getKey()));
 							} else {
 								break;
 							}
 						} while (true);
 						if (desc.length() >= 65) {
-							Debug.print("%s\n", new LongTitleInAbc(song
-									.getKey(), lineNumberOfX));
+							Debug.print("%s\n",
+									new LongTitleInAbc(song.getKey(),
+											lineNumberOfX));
 						}
 						voices.put(voiceId, Scanner.clean(desc.toString()));
 						continue;
 					} else if (line.startsWith("T:")) {
-						Debug.print("%s\n", new NoXLineInAbc(
-								song.getKey(), lineNumber));
+						Debug.print("%s\n", new NoXLineInAbc(song.getKey(),
+								lineNumber));
 						error = true;
 					}
 					try {

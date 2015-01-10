@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import javax.swing.filechooser.FileFilter;
@@ -479,6 +480,8 @@ public class IOHandler {
 			zip.close();
 
 			return entriesRet;
+		} catch (final ZipException e) {
+			return new HashSet<>();
 		} catch (final IOException e) {
 			handleException(ExceptionHandle.TERMINATE, e);
 		}

@@ -588,7 +588,7 @@ public final class Path implements Comparable<Path> {
 		}
 		return renameFilePath(this, pathNew);
 	}
-	
+
 	/**
 	 * Concatenates two paths. name will be parsed and appended to <i>this</i>
 	 * path. For example "/foo".resolve("/bar") will return "/foo/bar".
@@ -598,9 +598,9 @@ public final class Path implements Comparable<Path> {
 	 * @return the concatenated path
 	 */
 	public final Path resolve(final String name) {
-		return resolve(new String[]{name});
+		return resolve(new String[] { name });
 	}
-	
+
 	/**
 	 * Concatenates two paths. name will be parsed and appended to <i>this</i>
 	 * path. For example "/foo".resolve("/bar") will return "/foo/bar".
@@ -664,6 +664,7 @@ public final class Path implements Comparable<Path> {
 						continue;
 					}
 					p = p.parent;
+					continue;
 				}
 			} else {
 				Path pTmp = rootMap.get(name);

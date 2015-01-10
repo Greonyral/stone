@@ -2,15 +2,12 @@ package stone.modules.songData;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 import stone.Container;
 import stone.MasterThread;
 import stone.StartupContainer;
-import stone.io.ExceptionHandle;
 import stone.io.IOHandler;
 import stone.io.OutputStream;
 import stone.modules.Main;
@@ -44,9 +41,6 @@ public class SongDataContainer implements Container {
 
 	private final DirTree tree;
 
-	private final Set<Path> songsFound = new HashSet<>();
-
-	
 	private final IOHandler io;
 
 	private final TaskPool taskPool;
@@ -90,42 +84,47 @@ public class SongDataContainer implements Container {
 			return;
 		}
 		if (dirty) {
-			Debug.print("Searching for songs at " + tree.getRoot() + ".");
-	
-			final Scanner scanner;
-			final SongDataDeserializer sdd = SongDataDeserializer.init(
-					tree.getRoot(), io);
+			Debug.print("Searching for songs at \"" + tree.getRoot() + "\".\n");
+
+			final SongDataDeserializer sdd = SongDataDeserializer.init(this);
+			final Scanner scanner = new Scanner(master, sdd, tree);
 			if (crawlNeeded) {
 				final Crawler crawler;
-				crawler = new Crawler(sdd, new ArrayDeque<Path>());
-				scanner = new Scanner(master, sdd, tree, songsFound);
-				taskPool.addTaskForAll(crawler, scanner);
-
-				try {
-					sdd.deserialize(this);
-					synchronized (io) {
-						crawler.historySolved();
-						if (crawler.terminated()) {
-							io.setProgressSize(crawler.getProgress());
-						}
+				crawler = new Crawler(sdd);
+				final Runnable taskDeserial = sdd.getDeserialTask();
+				if (taskDeserial == null) { 
+					taskPool.addTaskForAll(crawler, 30);
+					taskPool.addTaskForAll(scanner);
+					try {
+						sdd.deserialize();
+					} catch (final IOException e) {
+						master.interrupt();
+						e.printStackTrace();
+						sdd.abort();
 					}
-				} catch (final IOException e) {
-					sdd.abort();
-					io.handleException(ExceptionHandle.SUPPRESS, e);
+				} else {
+					taskPool.addTaskForAll(taskDeserial, 75);
+					taskPool.addTaskForAll(crawler, 25);
+					taskPool.addTaskForAll(scanner);
 				}
-			} else {
-				scanner = new Scanner(master, sdd, tree, songsFound);
 				taskPool.addTaskForAll(scanner);
-			}
+				crawler.run();
+			} else
+				taskPool.addTaskForAll(scanner);
+			scanner.run();
 			taskPool.waitForTasks();
+			if (master.isInterrupted()) {
+				sdd.abort();
+				return;
+			} else
+				sdd.finish();
 			dirty = false;
-			io.endProgress();
-			
+
 			for (final AbtractEoWInAbc e : AbtractEoWInAbc.messages.values()) {
 				io.printError(e.printMessage(), true);
 			}
 
-			Debug.print("%4d songs found -", size());
+			Debug.print("%4d songs found -", sdd.songsFound());
 		}
 	}
 

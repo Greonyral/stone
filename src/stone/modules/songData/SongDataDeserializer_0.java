@@ -1,18 +1,16 @@
 package stone.modules.songData;
 
 import java.io.IOException;
-import stone.io.IOHandler;
-import stone.util.Path;
 
 // uses multiple files to profit from multi threading
 final class SongDataDeserializer_0 extends SongDataDeserializer {
 
-	protected SongDataDeserializer_0(final Path root, final IOHandler io) {
-		super(root, io);
+	protected SongDataDeserializer_0(final SongDataContainer sdc) {
+		super(sdc);
 	}
 
 	@Override
-	public final void deserialize(final SongDataContainer sdc)
+	protected void deserialize_()
 			throws IOException {
 		// TODO Auto-generated method stub
 	}
@@ -23,13 +21,22 @@ final class SongDataDeserializer_0 extends SongDataDeserializer {
 	}
 
 	@Override
-	public final void abort() {
+	protected final void abort_() {
 		// TODO Auto-generated method stub
 	}
 
 	@Override
-	public final void finish() {
+	protected final void finish_() {
 		// TODO Auto-generated method stub
 	}
 
+	@Override
+	protected final void crawlDone_() {
+		// TODO Auto-generated method stub
+	}
+
+	public Runnable getDeserialTask() {
+		//	TODO Auto-generated method stub
+		return null;
+	}
 }

@@ -5,13 +5,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
-import stone.io.IOHandler;
 import stone.io.InputStream;
 import stone.io.OutputStream;
 import stone.util.Path;
 
-final class SongDataDeserializer_3 extends SongDataDeserializer {
+class SongDataDeserializer_3 extends SongDataDeserializer {
 
 	private final static byte VERSION = 0x3;
 	private final static byte SEPERATOR_3 = 0;
@@ -21,11 +21,22 @@ final class SongDataDeserializer_3 extends SongDataDeserializer {
 
 	private final OutputStream out;
 	private final InputStream in;
+	private final Path inFile;
 
-	SongDataDeserializer_3(final Path root, final IOHandler io) {
-		super(root, io);
-		tmp = idx.getParent().resolve(idx.getFileName() + ".tmp");
-		in = io.openIn(idx.toFile());
+	SongDataDeserializer_3(final SongDataContainer sdc) {
+		super(sdc);
+		final String entry = idx.getFileName().replace(".idx", "").replace(".zip", "");
+		inFile = idx.resolve("..", entry);
+		tmp = idx.getParent().resolve(entry + ".tmp");
+		final Set<String> zip = io.openZipIn(idx);
+		if (zip == null || !zip.contains(entry))
+			if (tmp.exists()) {
+				tmp.renameTo(inFile);
+				in = io.openIn(inFile.toFile());
+			} else 
+				in = null;
+		else
+			in = io.openIn(inFile.toFile());
 		out = io.openOut(tmp.toFile());
 		io.write(out, VERSION);
 	}
@@ -46,11 +57,14 @@ final class SongDataDeserializer_3 extends SongDataDeserializer {
 		throw new IOException("EOF");
 	}
 
-	public final void deserialize(final SongDataContainer sdc)
-			throws IOException {
-		io.startProgress(null, -1);
+	@Override
+	protected void deserialize_() throws IOException {
+		if (in == null)
+			return;
+		io.startProgress("Reading data base of previous run", -1); // init
 		in.registerProgressMonitor(io);
-		io.setProgressTitle("Reading data base of previous run");
+		io.setProgressTitle("Reading data base of previous run"); // set message
+		in.read(); // version byte
 
 		final byte[] modField = new byte[Long.SIZE / 8];
 		final byte[] intField = new byte[Integer.SIZE / 8];
@@ -111,11 +125,7 @@ final class SongDataDeserializer_3 extends SongDataDeserializer {
 			}
 		}
 		io.close(in);
-	}
-
-	@Override
-	public final void abort() {
-		idx.delete();
+		inFile.delete();
 	}
 
 	@Override
@@ -220,10 +230,23 @@ final class SongDataDeserializer_3 extends SongDataDeserializer {
 	}
 
 	@Override
-	public final void finish() {
+	protected final void finish_() {
 		io.close(out);
 		idx.delete();
-		io.compress(idx.toFile(), tmp.toFile());
+		tmp.renameTo(inFile);
+		io.compress(idx.toFile(), inFile.toFile());
+		tmp.delete();
+	}
+
+	@Override
+	protected final void crawlDone_() {
+	}
+
+	@Override
+	protected final void abort_() {
+		io.close(out);
+		io.close(in);
+		idx.delete();
 		tmp.delete();
 	}
 }

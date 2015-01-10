@@ -288,7 +288,11 @@ public class GUI implements GUIInterface {
 			}
 			destroyed = true;
 		}
-		master.interrupt();
+		try {
+			master.interruptAndWait();
+		} catch (final InterruptedException e) {
+			e.printStackTrace();
+		}
 		mainFrame.setVisible(false);
 		mainFrame.dispose();
 	}
@@ -599,7 +603,6 @@ public class GUI implements GUIInterface {
 			bar.setIndeterminate(false);
 			bar.setMaximum(size);
 		}
-
 	}
 
 	/** */

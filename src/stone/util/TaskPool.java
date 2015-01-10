@@ -45,25 +45,42 @@ public class TaskPool {
 			taskPool.notify();
 		}
 	}
+	
+	@Deprecated
+	public final void addTaskForAll(final Runnable... task ) {
+		for (final Runnable t : task)
+			addTaskForAll(t);
+	}
+
 
 	/**
-	 * Adds one or more tasks to the pool to be executed. Each task will be
-	 * executed by each WorkerThread currently knwon to the pool. The next task
+	 * Adds one task to the pool to be executed. Each task will be
+	 * executed by all available WorkerThreads for the pool. The next task
 	 * will be executed after the previous task has been completed with all
 	 * threads.
 	 * 
 	 * @param tasks
 	 */
-	public final void addTaskForAll(final Runnable... tasks) {
+	public final void addTaskForAll(final Runnable task) {
+		addTaskForAll(task, 100);
+	}
+
+	/**
+	 * Adds one task to the pool to be executed. Each task will be
+	 * executed by set percent of available WorkerThreads for the pool. The next task
+	 * will be executed after the previous task has been completed with all
+	 * threads.
+	 * 
+	 * @param tasks
+	 */
+	public final void addTaskForAll(final Runnable task, int percent) {
+		final int n = NUM_CPUS * Math.max(0, Math.min(100, percent)) / 100;
 		synchronized (taskPool) {
-			for (final Runnable task : tasks) {
-				for (int i = 0; i < TaskPool.NUM_CPUS; i++) {
-					taskPool.add(task);
-				}
+			for (int i = 0; i < n; i++) {
+				taskPool.add(task);
 			}
 			taskPool.notifyAll();
 		}
-
 	}
 
 	/**
