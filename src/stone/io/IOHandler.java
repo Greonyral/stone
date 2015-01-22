@@ -16,9 +16,11 @@ import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -39,10 +41,8 @@ import stone.util.Path;
  */
 public class IOHandler {
 
-	private static final String oracleJavaDownloadURL =
-			"http://www.java.com/en/download/manual.jsp";
-	private static final String oracleJRE =
-			"Java(TM) SE Runtime Environment";
+	private static final String oracleJavaDownloadURL = "http://www.java.com/en/download/manual.jsp";
+	private static final String oracleJRE = "Java(TM) SE Runtime Environment";
 	private static final String openJDK = "OpenJDK Runtime Environment";
 	private static final String oracleKey = "Recommended Version";
 
@@ -71,7 +71,7 @@ public class IOHandler {
 	 */
 	public IOHandler(final StartupContainer sc) {
 		master = sc.getMaster();
-	
+
 		class GUIProxy extends Proxy {
 
 			/** */
@@ -139,8 +139,8 @@ public class IOHandler {
 	 * @param bytesToDiscard
 	 *            number of bytes of file content to discard
 	 */
-	public final void append(final File fileToAppendTo,
-			final File content, int bytesToDiscard) {
+	public final void append(final File fileToAppendTo, final File content,
+			int bytesToDiscard) {
 		OutputStream out = null;
 		InputStream in = null;
 		if (!content.exists()) {
@@ -148,9 +148,7 @@ public class IOHandler {
 		}
 		try {
 			try {
-				out =
-						new OutputStream(fileToAppendTo, FileSystem.UTF8,
-								true);
+				out = new OutputStream(fileToAppendTo, FileSystem.UTF8, true);
 				openStreams.add(out);
 				in = new InputStream(content, FileSystem.UTF8);
 				openStreams.add(in);
@@ -176,8 +174,8 @@ public class IOHandler {
 	}
 
 	public final void checkJRE() throws IOException {
-		final String versionStringInstalled =
-				System.getProperty("java.version");
+		final String versionStringInstalled = System
+				.getProperty("java.version");
 		final String javaName = System.getProperty("java.runtime.name");
 		final URL url;
 		final String key;
@@ -194,9 +192,8 @@ public class IOHandler {
 			return;
 		}
 		final java.io.InputStream in = url.openStream();
-		final BufferedReader reader =
-				new BufferedReader(new InputStreamReader(
-						new BufferedInputStream(in)));
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(
+				new BufferedInputStream(in)));
 		final int[] version = new int[3];
 		int versionIdx = 0;
 		while (true) {
@@ -206,8 +203,8 @@ public class IOHandler {
 			}
 			final int index = line.indexOf(key);
 			if (index >= 0) {
-				final String[] splits =
-						line.substring(index + key.length()).split(" ");
+				final String[] splits = line.substring(index + key.length())
+						.split(" ");
 				for (String s : splits) {
 					s = s.replaceAll("<.*>", "");
 					if (s.isEmpty()) {
@@ -346,8 +343,8 @@ public class IOHandler {
 		if (!handle.suppress()) {
 			if (!closed) {
 				exception.printStackTrace();
-				gui.printErrorMessage(exception.toString().replaceAll(
-						": ", "\n"));
+				gui.printErrorMessage(exception.toString().replaceAll(": ",
+						"\n"));
 			}
 			if (handle.terminate()) {
 				close();
@@ -396,14 +393,9 @@ public class IOHandler {
 	 * @return the opened stream or <i>null</i> if an error occured
 	 */
 	public final InputStream openIn(final File file, final Charset cs) {
-		try {
-			final InputStream stream = new InputStream(file, cs);
-			openStreams.add(stream);
-			return stream;
-		} catch (final IOException e) {
-			handleException(ExceptionHandle.TERMINATE, e);
-		}
-		return null;
+		final InputStream stream = new InputStream(file, cs);
+		openStreams.add(stream);
+		return stream;
 	}
 
 	/**
@@ -415,8 +407,7 @@ public class IOHandler {
 	 */
 	public final OutputStream openOut(final File file) {
 		try {
-			final OutputStream stream =
-					new OutputStream(file, FileSystem.UTF8);
+			final OutputStream stream = new OutputStream(file, FileSystem.UTF8);
 			openStreams.add(stream);
 			return stream;
 		} catch (final IOException e) {
@@ -444,6 +435,42 @@ public class IOHandler {
 		return null;
 	}
 
+	public final Map<String, AbstractInputStream> openInZip(
+			final stone.util.Path zipFile) {
+		if (!zipFile.exists()) {
+			return null;
+		}
+		final ZipFile zip;
+		final Map<String, AbstractInputStream> map = new HashMap<>();
+		{
+			ZipFile zipTmp = null;
+			try {
+				zipTmp = new ZipFile(zipFile.toFile());
+			} catch (Exception e) {
+			}
+			zip = zipTmp;
+			if (zip == null)
+				return null;
+		}
+
+		final Enumeration<? extends ZipEntry> entries = zip.entries();
+		while (entries.hasMoreElements()) {
+			final ZipEntry e = entries.nextElement();
+			
+			try {
+				final AbstractInputStream in = new ZippedInputStream(zip, e);
+				openStreams.add(in);
+				map.put(e.getName(), in);
+			} catch (final IOException ioe) {
+			}
+		}
+		try {
+			zip.close();
+		} catch (final IOException e) {
+		}
+		return map;
+	}
+
 	/**
 	 * opens the given file, uncompress the entries and returns the uncompressed
 	 * entries
@@ -464,11 +491,9 @@ public class IOHandler {
 			final Enumeration<? extends ZipEntry> entries = zip.entries();
 			while (entries.hasMoreElements()) {
 				final ZipEntry zipEntry = entries.nextElement();
-				final OutputStream out =
-						openOut(zipFile.getParent().resolve(
-								zipEntry.getName()).toFile());
-				final java.io.InputStream in =
-						zip.getInputStream(zipEntry);
+				final OutputStream out = openOut(zipFile.getParent()
+						.resolve(zipEntry.getName()).toFile());
+				final java.io.InputStream in = zip.getInputStream(zipEntry);
 				int read;
 				while ((read = in.read(content)) > 0) {
 					out.write(content, 0, read);
@@ -515,8 +540,8 @@ public class IOHandler {
 	 *            will print the message on stderr or require confirmation if
 	 *            set to <i>true</i>
 	 */
-	public final void printMessage(final String title,
-			final String message, boolean bringGUItoFront) {
+	public final void printMessage(final String title, final String message,
+			boolean bringGUItoFront) {
 		gui.printMessage(title, message, bringGUItoFront);
 	}
 
@@ -528,8 +553,8 @@ public class IOHandler {
 	 */
 	public final Path selectFile(final String title, final File startDir,
 			final FileFilter filter) {
-		final FileSelectionGUIPlugin selector =
-				new FileSelectionGUIPlugin(title, startDir, filter);
+		final FileSelectionGUIPlugin selector = new FileSelectionGUIPlugin(
+				title, startDir, filter);
 		handleGUIPlugin(selector);
 		return selector.getSelection();
 	}
@@ -540,9 +565,8 @@ public class IOHandler {
 	 *         if interrupted
 	 * @throws InterruptedException
 	 */
-	public final List<String>
-			selectModules(final List<String> modules)
-					throws InterruptedException {
+	public final List<String> selectModules(final List<String> modules)
+			throws InterruptedException {
 		return gui.selectModules(modules);
 	}
 
@@ -661,8 +685,8 @@ public class IOHandler {
 	 * @param offset
 	 * @param length
 	 */
-	public final void write(final OutputStream out, byte[] bytes,
-			int offset, int length) {
+	public final void write(final OutputStream out, byte[] bytes, int offset,
+			int length) {
 		try {
 			out.write(bytes, offset, length);
 		} catch (final IOException e) {
@@ -713,8 +737,8 @@ public class IOHandler {
 				System.err.printf("Check version of used Java\n"
 						+ "Installed   : %2d Update %2d\n"
 						+ "Recommended : %2d Update %2d\n",
-						versionInstalled[1], versionInstalled[2],
-						version[1], version[2]);
+						versionInstalled[1], versionInstalled[2], version[1],
+						version[2]);
 				return;
 			}
 			if (version[i] > versionInstalled[i]) {
@@ -732,9 +756,8 @@ public class IOHandler {
 		}
 		System.out.printf("Check version of used Java\n"
 				+ "Installed   : %2d Update %2d\n"
-				+ "Recommended : %2d Update %2d\n",
-				versionInstalled[1], versionInstalled[2],
-				version[1], version[2]);
+				+ "Recommended : %2d Update %2d\n", versionInstalled[1],
+				versionInstalled[2], version[1], version[2]);
 	}
 
 	public final Image getIcon() {

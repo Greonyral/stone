@@ -12,7 +12,7 @@ import stone.modules.midiData.MidiInstrument;
 import stone.modules.midiData.MidiInstrumentDropTarget;
 
 
-final class MapLoadingThread extends Thread {
+final class MapLoadingThread implements Runnable {
 
 	/**
 	 * 
@@ -23,7 +23,6 @@ final class MapLoadingThread extends Thread {
 	MapLoadingThread(final AbcMapPlugin abcMapPlugin, final File mapToLoad) {
 		this.abcMapPlugin = abcMapPlugin;
 		this.mapToLoad = mapToLoad;
-		setName("MapLoader");
 	}
 
 	@Override

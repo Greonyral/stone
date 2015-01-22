@@ -100,4 +100,6 @@ public interface DndPluginCaller<C extends Container, D extends Container, T ext
 	 */
 	DndPluginCallerParams<?>[] valuesGlobal();
 
+	public void exec(final Runnable task);
+
 }

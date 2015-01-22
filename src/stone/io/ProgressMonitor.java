@@ -55,7 +55,6 @@ public class ProgressMonitor {
 			final String paramString, int paramInt) {
 		if (!init) {
 			startSafe();
-			System.out.printf("%s\n", paramString);
 		}
 		System.out.printf("\r%s\n", paramString);
 		gui.setProgressSize(paramInt, paramString);

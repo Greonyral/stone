@@ -69,7 +69,7 @@ import stone.util.StringOption;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 7;
+	private final static int VERSION = 8;
 
 	private final static String SECTION = Main.VC_SECTION;
 
@@ -441,8 +441,6 @@ public final class VersionControl implements Module {
 							+ commitRet.getFullMessage()
 							+ "\nStarting to upload changes after checking remote repository for changes",
 					false);
-			return;
-
 		} else if (COMMIT.getValue()) {
 			COMMIT.changeValue();
 		}
@@ -454,7 +452,7 @@ public final class VersionControl implements Module {
 		}
 	}
 
-	private RevCommit commit(final Git gitSession) throws NoHeadException,
+	private final RevCommit commit(final Git gitSession) throws NoHeadException,
 			NoMessageException, UnmergedPathsException,
 			ConcurrentRefUpdateException, WrongRepositoryStateException,
 			GitAPIException {
@@ -1026,7 +1024,7 @@ public final class VersionControl implements Module {
 				.init(walk, gitSession, io)
 				.getParent(commitLocal, commitRemote);
 		if (commitRoot == null) {
-			historyRewritten(gitSession, commitLocal, commitRoot, walk);
+			historyRewritten(gitSession, commitLocal, commitRemote, walk);
 			diffString = null;
 			DIFF.setValue(false);
 		} else {
@@ -1054,104 +1052,114 @@ public final class VersionControl implements Module {
 
 	private void historyRewritten(final Git gitSession,
 			final RevCommit commitLocal, final RevCommit commitRemote,
-			final RevWalk walk) throws NoHeadException, NoMessageException, UnmergedPathsException, ConcurrentRefUpdateException, WrongRepositoryStateException, GitAPIException, IncorrectObjectTypeException, IOException {
+			final RevWalk walk) throws NoHeadException, NoMessageException,
+			UnmergedPathsException, ConcurrentRefUpdateException,
+			WrongRepositoryStateException, GitAPIException,
+			IncorrectObjectTypeException, IOException {
 		io.startProgress("Reset - History has been rewritten", -1);
-		gitSession.branchCreate().setName(tmpBranchName).call();
-		gitSession.reset().setRef(commitRemote.getName())
-				.setMode(ResetType.SOFT).call();
+		gitSession.branchCreate().setForce(true).setName(tmpBranchName).call();
+		try {
+			gitSession.reset().setRef(commitRemote.getName())
+					.setMode(ResetType.SOFT).call();
 
-		// restore committed files
-		final ObjectReader reader = gitSession.getRepository()
-				.newObjectReader();
-		final RevTree treeOld = walk.parseTree(commitLocal.getTree().getId());
-		final RevTree treeNew = walk.parseTree(commitRemote.getTree().getId());
-		final CanonicalTreeParser treeParserOld = new CanonicalTreeParser();
-		final CanonicalTreeParser treeParserNew = new CanonicalTreeParser();
+			// restore committed files
+			final ObjectReader reader = gitSession.getRepository()
+					.newObjectReader();
+			final RevTree treeOld = walk.parseTree(commitLocal.getTree()
+					.getId());
+			final RevTree treeNew = walk.parseTree(commitRemote.getTree()
+					.getId());
+			final CanonicalTreeParser treeParserOld = new CanonicalTreeParser();
+			final CanonicalTreeParser treeParserNew = new CanonicalTreeParser();
 
-		treeParserOld.reset(reader, treeOld.getId());
-		treeParserNew.reset(reader, treeNew.getId());
+			treeParserOld.reset(reader, treeOld.getId());
+			treeParserNew.reset(reader, treeNew.getId());
 
-		final List<DiffEntry> diffs = gitSession.diff()
-				.setOldTree(treeParserOld).setNewTree(treeParserNew)
-				.setShowNameAndStatusOnly(true).call();
+			final List<DiffEntry> diffs = gitSession.diff()
+					.setOldTree(treeParserOld).setNewTree(treeParserNew)
+					.setShowNameAndStatusOnly(true).call();
 
-		// clear stage
-		final Status status = gitSession.status().call();
-		final RevCommit stashUncommitted = gitSession.commit()
-				.setMessage("stash").call();
-		gitSession.branchCreate().setForce(true).setName("stash").call();
-		gitSession.reset().setMode(ResetType.SOFT)
-				.setRef(commitRemote.getName()).call();
+			if (!diffs.isEmpty()) {
+				// clear stage
+				final Status status = gitSession.status().call();
+				final RevCommit stashUncommitted = gitSession.commit()
+						.setMessage("stash").call();
+				gitSession.branchCreate().setForce(true).setName("stash")
+						.call();
+				gitSession.reset().setMode(ResetType.SOFT)
+						.setRef(commitRemote.getName()).call();
 
-		// reset state to last commit of old tree
-		for (final DiffEntry diff : diffs) {
-			switch (diff.getChangeType()) {
-			case ADD:
-				Debug.print("+ s\n", diff.getNewPath());
-				break;
-			case COPY:
-				break;
-			case DELETE:
-				Debug.print("- %s\n", diff.getOldPath());
-				gitSession.checkout().addPath(diff.getOldPath())
-						.setStartPoint(commitLocal).call();
-				break;
-			case MODIFY:
-				Debug.print("M %s\n", diff.getOldPath());
-				break;
-			case RENAME:
-				break;
-			default:
-				break;
+				// reset state to last commit of old tree
+				for (final DiffEntry diff : diffs) {
+					switch (diff.getChangeType()) {
+					case ADD:
+						Debug.print("+ s\n", diff.getNewPath());
+						break;
+					case COPY:
+						break;
+					case DELETE:
+						Debug.print("- %s\n", diff.getOldPath());
+						gitSession.checkout().addPath(diff.getOldPath())
+								.setStartPoint(commitLocal).call();
+						break;
+					case MODIFY:
+						Debug.print("M %s\n", diff.getOldPath());
+						break;
+					case RENAME:
+						break;
+					default:
+						break;
+					}
+				}
+				commit(gitSession);
+
+				// restore stashed files
+				final Set<String> changes = new HashSet<>();
+				changes.addAll(status.getAdded());
+				changes.addAll(status.getChanged());
+				changes.addAll(status.getRemoved());
+
+				treeParserOld.reset(reader, commitRemote.getTree().getId());
+				treeParserNew.reset(reader, stashUncommitted.getTree().getId());
+				final List<DiffEntry> diffsStash = gitSession.diff()
+						.setOldTree(treeParserOld).setNewTree(treeParserNew)
+						.setShowNameAndStatusOnly(true).call();
+
+				for (final DiffEntry diff : diffsStash) {
+					switch (diff.getChangeType()) {
+					case ADD:
+						Debug.print("(+) %s\n", diff.getNewPath());
+						gitSession.checkout().addPath(diff.getNewPath())
+								.setStartPoint(stashUncommitted).call();
+						break;
+					case COPY:
+						break;
+					case DELETE:
+						Debug.print("(-) %s\n", diff.getOldPath());
+						gitSession.rm().addFilepattern(diff.getOldPath())
+								.call();
+						break;
+					case MODIFY:
+						Debug.print("(M) %s\n", diff.getOldPath());
+						gitSession.reset().addPath(diff.getNewPath())
+								.setRef(stashUncommitted.getName()).call();
+						gitSession.checkout().addPath(diff.getNewPath())
+								.setName(stashUncommitted.getName()).call();
+						gitSession.add().addFilepattern(diff.getNewPath())
+								.call();
+						break;
+					case RENAME:
+						break;
+					default:
+						break;
+					}
+				}
 			}
+		} finally {
+			// clean up
+			gitSession.branchDelete().setForce(true)
+					.setBranchNames(tmpBranchName, "stash").call();
+			io.endProgress();
 		}
-		if (!diffs.isEmpty()) {
-			commit(gitSession);
-		}
-
-		// restore stashed files
-		final Set<String> changes = new HashSet<>();
-		changes.addAll(status.getAdded());
-		changes.addAll(status.getChanged());
-		changes.addAll(status.getRemoved());
-
-		treeParserOld.reset(reader, commitRemote.getTree().getId());
-		treeParserNew.reset(reader, stashUncommitted.getTree().getId());
-		final List<DiffEntry> diffsStash = gitSession.diff()
-				.setOldTree(treeParserOld).setNewTree(treeParserNew)
-				.setShowNameAndStatusOnly(true).call();
-
-		for (final DiffEntry diff : diffsStash) {
-			switch (diff.getChangeType()) {
-			case ADD:
-				Debug.print("(+) %s\n", diff.getNewPath());
-				gitSession.checkout().addPath(diff.getNewPath())
-						.setStartPoint(stashUncommitted).call();
-				break;
-			case COPY:
-				break;
-			case DELETE:
-				Debug.print("(-) %s\n", diff.getOldPath());
-				gitSession.rm().addFilepattern(diff.getOldPath()).call();
-				break;
-			case MODIFY:
-				Debug.print("(M) %s\n", diff.getOldPath());
-				gitSession.reset().addPath(diff.getNewPath())
-						.setRef(stashUncommitted.getName()).call();
-				gitSession.checkout().addPath(diff.getNewPath())
-						.setName(stashUncommitted.getName()).call();
-				gitSession.add().addFilepattern(diff.getNewPath()).call();
-				break;
-			case RENAME:
-				break;
-			default:
-				break;
-			}
-		}
-
-		// clean up
-		gitSession.branchDelete().setForce(true)
-				.setBranchNames(tmpBranchName, "stash").call();
-		io.endProgress();
 	}
 }

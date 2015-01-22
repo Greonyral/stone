@@ -8,13 +8,13 @@ import stone.util.Path;
 class Crawler implements Runnable {
 
 	private final ArrayDeque<Path> wl = new ArrayDeque<>();
-	private final SongDataDeserializer sdd;
+	private final Deserializer sdd;
 
 	private boolean terminated = false;
 
 	private final java.util.concurrent.atomic.AtomicInteger threads = new java.util.concurrent.atomic.AtomicInteger();
 
-	public Crawler(final SongDataDeserializer sdd) {
+	public Crawler(final Deserializer sdd) {
 		wl.add(sdd.getRoot());
 		this.sdd = sdd;
 	}

@@ -53,7 +53,7 @@ public final class Scanner implements Runnable {
 
 	private final MasterThread master;
 
-	private final SongDataDeserializer sdd;
+	private final Deserializer sdd;
 
 	/**
 	 * @param io
@@ -63,7 +63,7 @@ public final class Scanner implements Runnable {
 	 * @param tree
 	 * @param songsFound
 	 */
-	public Scanner(MasterThread master, final SongDataDeserializer sdd,
+	public Scanner(MasterThread master, final Deserializer sdd,
 			final DirTree tree) {
 		this.io = sdd.getIO();
 		this.tree = tree;

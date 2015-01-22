@@ -20,6 +20,7 @@ public class SongData {
 		}
 		return new SongData(song.getKey(), voicesMap, song.getValue());
 	}
+	
 
 	private final TreeMap<Integer, String> sortedVoices;
 	private final Path song;
@@ -95,5 +96,12 @@ public class SongData {
 		sb.append("\t\t\t\t}\r\n");
 		sb.append("\t\t\t}\r\n");
 		return sb.toString();
+	}
+
+	public void serialize(final MTDeserializer sdd) {
+		final SerializeConainer sc = sdd.createSerializeConainer();
+		sdd.serialize(sc, song);
+		sdd.serialize(sc, mod);
+		sdd.serialize(sc, sortedVoices);
 	}
 }

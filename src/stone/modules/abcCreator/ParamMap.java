@@ -77,7 +77,7 @@ class ParamMap {
 				paramSet.adeptValues(orig, instrument);
 				return orig;
 			}
-			if (orig != ParamMap.instrumentToTrackMap.get(instrument)) {
+			if (orig == ParamMap.instrumentToTrackMap.get(instrument)) {
 				ParamMap.instrument.put(instrument, paramSet, orig);
 				paramSet.adeptValues(orig, instrument);
 				return orig;

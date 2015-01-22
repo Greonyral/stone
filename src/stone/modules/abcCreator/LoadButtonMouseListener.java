@@ -73,7 +73,7 @@ final class LoadButtonMouseListener extends ReleaseListener {
 			abcMapPlugin.state.loadingMap = true;
 			final File mapToLoad = fc.getSelectedFile();
 			ParamMap.setTracks(abcMapPlugin.trackMap);
-			new MapLoadingThread(abcMapPlugin, mapToLoad).start();
+			abcMapPlugin.caller.exec(new MapLoadingThread(abcMapPlugin, mapToLoad));
 		}
 	}
 }

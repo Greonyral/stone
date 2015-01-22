@@ -55,12 +55,7 @@ public class StagePlugin extends GUIPlugin {
 		@Override
 		public void mouseReleased(final MouseEvent e) {
 			e.consume();
-			if (!ok) {
-				master.interrupt();
-			}
-			synchronized (GUI.Button.class) {
-				GUI.Button.class.notifyAll();
-			}
+			StagePlugin.this.terminate(ok);
 		}
 
 		@Override
@@ -339,6 +334,15 @@ public class StagePlugin extends GUIPlugin {
 		right.setEditable(false);
 	}
 
+	final void terminate(boolean ok) {
+		if (!ok) {
+			master.interrupt();
+		}
+		synchronized (GUI.Button.class) {
+			GUI.Button.class.notifyAll();
+		}
+	}
+
 	@Override
 	protected boolean display(final JPanel panel) {
 		final JButton abortButton = new JButton("Abort");
@@ -487,7 +491,6 @@ public class StagePlugin extends GUIPlugin {
 		panel.removeAll();
 		panel.add(new JLabel("Performing changes - please wait"));
 		repack(new Dimension(140, 20));
-
 		return true;
 	}
 

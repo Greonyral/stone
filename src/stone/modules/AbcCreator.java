@@ -41,6 +41,7 @@ import stone.modules.abcCreator.StreamPrinter;
 import stone.modules.midiData.MidiInstrument;
 import stone.modules.midiData.MidiMap;
 import stone.modules.midiData.MidiParser;
+import stone.util.Debug;
 import stone.util.FileSystem;
 import stone.util.Flag;
 import stone.util.Option;
@@ -197,7 +198,7 @@ public class AbcCreator implements Module,
 
 	private static final PathOptionFileFilter INSTR_MAP_FILTER = new InstrumentMapFileFilter();
 
-	private final static int VERSION = 10;
+	private final static int VERSION = 11;
 
 	private static final FileFilter midiFilter = new MidiFileFilter();
 
@@ -586,7 +587,7 @@ public class AbcCreator implements Module,
 					System.out.println(". " + line);
 					return;
 				}
-				System.out.println(". " + line);
+				Debug.print(". %s", line);
 			}
 
 			final void toggleComment() {
@@ -595,7 +596,7 @@ public class AbcCreator implements Module,
 		}
 
 		final ParseState state = new ParseState();
-		System.out.println("loading map " + mapToLoad);
+		Debug.print("loading map %s\n", mapToLoad);
 		try {
 			while (true) {
 				if (c.error()) {
@@ -755,9 +756,9 @@ public class AbcCreator implements Module,
 		case EXE:
 		case EXE_WAIT:
 			if (FileSystem.type == FileSystem.OSType.UNIX) {
-				System.out.println("Unix System\n... checking for wine");
+				Debug.print("Unix System\n... checking for wine\n");
 				if (Path.getPath("~", ".wine").exists()) {
-					System.out.println("\nfound ~/.wine");
+					Debug.print("found ~/.wine\n");
 				} else {
 					System.err.println("unable to run \""
 							+ location.getFileName() + "\"");
@@ -823,7 +824,10 @@ public class AbcCreator implements Module,
 				}
 				if (line.contains("/")) {
 					final String[] s = line.replaceFirst("\r\n", "").split("/");
-					if (first) {
+					final char start = s[1].charAt(0);
+					if (start < '0' || start >= '9')
+						;
+					else if (first) {
 						first = false;
 						io.setProgressSize(Integer.parseInt(s[1]) + 1);
 					}
@@ -1227,7 +1231,7 @@ public class AbcCreator implements Module,
 			initState.startPhase(InitState.UNPACK_JAR);
 			if (!bruteArchive.exists()) {
 				final Path bruteArchive2 = bruteArchive.getParent().resolve(
-						"..", bruteArchive.getFileName());
+						"..", "brute", bruteArchive.getFileName());
 				if (!bruteArchive2.exists()) {
 					System.err.println("Unable to find Brute\n" + bruteArchive
 							+ " does not exist.");
@@ -1247,6 +1251,11 @@ public class AbcCreator implements Module,
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public void exec(final Runnable task) {
+		taskPool.addTask(task);
 	}
 
 }

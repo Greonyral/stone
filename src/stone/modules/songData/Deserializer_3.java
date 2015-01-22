@@ -11,7 +11,7 @@ import stone.io.InputStream;
 import stone.io.OutputStream;
 import stone.util.Path;
 
-class SongDataDeserializer_3 extends SongDataDeserializer {
+class Deserializer_3 extends Deserializer {
 
 	private final static byte VERSION = 0x3;
 	private final static byte SEPERATOR_3 = 0;
@@ -23,7 +23,7 @@ class SongDataDeserializer_3 extends SongDataDeserializer {
 	private final InputStream in;
 	private final Path inFile;
 
-	SongDataDeserializer_3(final SongDataContainer sdc) {
+	Deserializer_3(final SongDataContainer sdc) {
 		super(sdc);
 		final String entry = idx.getFileName().replace(".idx", "").replace(".zip", "");
 		inFile = idx.resolve("..", entry);
@@ -46,10 +46,10 @@ class SongDataDeserializer_3 extends SongDataDeserializer {
 		nameBuffer.position(0);
 		do {
 			final int read = in.read();
-			if (read == SongDataDeserializer_3.SEPERATOR_3) {
+			if (read == Deserializer_3.SEPERATOR_3) {
 				return false;
 			}
-			if (read == SongDataDeserializer_3.SEPERATOR_EXT_3) {
+			if (read == Deserializer_3.SEPERATOR_EXT_3) {
 				return true;
 			}
 			nameBuffer.put((byte) read);
@@ -115,7 +115,7 @@ class SongDataDeserializer_3 extends SongDataDeserializer {
 					idxBuffer.position(0);
 					final int idx = idxBuffer.getShort();
 					final String desc = new String(
-							in.readTo(SongDataDeserializer_3.SEPERATOR_3));
+							in.readTo(Deserializer_3.SEPERATOR_3));
 					voices.put(idx, desc);
 				}
 			}
@@ -137,7 +137,7 @@ class SongDataDeserializer_3 extends SongDataDeserializer {
 
 		bb.put(path);
 		final int pos = bb.position();
-		bb.put(SongDataDeserializer_3.SEPERATOR_3);
+		bb.put(Deserializer_3.SEPERATOR_3);
 		bb.putLong(song.getLastModification());
 		if (voices.isEmpty()) {
 			put(bb);
@@ -147,7 +147,7 @@ class SongDataDeserializer_3 extends SongDataDeserializer {
 		boolean extend = voiceExt != 0;
 		if (extend) {
 			bb.position(pos);
-			bb.put(SongDataDeserializer_3.SEPERATOR_EXT_3);
+			bb.put(Deserializer_3.SEPERATOR_EXT_3);
 			bb.putInt(voicesSize);
 		} else {
 			final int posTmp = bb.position();
@@ -181,7 +181,7 @@ class SongDataDeserializer_3 extends SongDataDeserializer {
 					voicesBytes.clear();
 					voicesBytes.addAll(voicesBytesTmp);
 					bb.position(pos);
-					bb.put(SongDataDeserializer_3.SEPERATOR_EXT_3);
+					bb.put(Deserializer_3.SEPERATOR_EXT_3);
 					bb.putShort((short) 0);
 					bb.position((bb.position() + (Long.SIZE / 8))
 							- (Short.SIZE / 8));
@@ -194,14 +194,14 @@ class SongDataDeserializer_3 extends SongDataDeserializer {
 						+ (Integer.SIZE / 8));
 				bbVoice.putInt(idx);
 				bbVoice.put(name);
-				bbVoice.put(SongDataDeserializer_3.SEPERATOR_3);
+				bbVoice.put(Deserializer_3.SEPERATOR_3);
 				voicesBytes.add(bbVoice.array());
 			} else {
 				bbVoice = ByteBuffer.allocate(name.length + 1
 						+ (Short.SIZE / 8));
 				bbVoice.putShort((short) idx);
 				bbVoice.put(name);
-				bbVoice.put(SongDataDeserializer_3.SEPERATOR_3);
+				bbVoice.put(Deserializer_3.SEPERATOR_3);
 				voicesBytes.add(bbVoice.array());
 			}
 		}
@@ -216,7 +216,7 @@ class SongDataDeserializer_3 extends SongDataDeserializer {
 		}
 		if (extend) {
 			bb.position(bb.position() - 1);
-			bb.put(SongDataDeserializer_3.SEPERATOR_EXT_3);
+			bb.put(Deserializer_3.SEPERATOR_EXT_3);
 		}
 		put(bb);
 	}

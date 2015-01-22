@@ -2,11 +2,13 @@ package stone.modules.songData;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.Map;
+
+import stone.io.AbstractInputStream;
 import stone.io.IOHandler;
-import stone.io.InputStream;
 import stone.util.Path;
 
-abstract class SongDataDeserializer {
+abstract class Deserializer {
 	protected final Path root, idx;
 	protected final IOHandler io;
 	protected final SongDataContainer sdc;
@@ -15,43 +17,60 @@ abstract class SongDataDeserializer {
 	private int songsFound = 0, songsParsed = 0;
 	private boolean crawlDone = false, deserialDone = false;
 
-	protected SongDataDeserializer(final SongDataContainer sdc) {
+	protected Deserializer(final SongDataContainer sdc) {
 		this.sdc = sdc;
 		this.root = sdc.getRoot();
 		this.io = sdc.getIOHandler();
 		this.idx = getIdx(root);
 	}
 
-	public final static SongDataDeserializer init(final SongDataContainer sdc) {
+	public final static Deserializer init(final SongDataContainer sdc) {
 		final Path idx = getIdx(sdc.getRoot());
 		final IOHandler io = sdc.getIOHandler();
-		final InputStream in = io.openIn(idx.toFile());
-		final SongDataDeserializer instance;
+		final Map<String, AbstractInputStream> zipEntriesMap = io
+				.openInZip(idx);
+		final AbstractInputStream in;
+		final Deserializer instance;
+		if (zipEntriesMap == null)
+			in = null;
+		else if (zipEntriesMap.size() == 1)
+			in = zipEntriesMap.values().iterator().next();
+		else
+			in = zipEntriesMap.get("sdd");
 		try {
-			int version = in.read();
+			int version = in == null ? - 1: in.read();
 			switch (version) {
 			case 3:
-				instance = new SongDataDeserializer_3(sdc);
+				instance = new Deserializer_3(sdc);
 				// TODO replace as soon decoder 0 is done
-				// {
-				// private final java.util.concurrent.atomic.AtomicInteger id =
-				// new java.util.concurrent.atomic.AtomicInteger(
-				// -1);
-				//
-				// @Override
-				// protected void deserialize_() throws IOException {
-				// final int id = this.id.incrementAndGet();
-				// if (id == 0)
-				// new SongDataDeserializer_0(sdc).deserialize();
-				// }
-				// };
+//				{
+//					private final java.util.concurrent.atomic.AtomicInteger id = new java.util.concurrent.atomic.AtomicInteger(
+//							-1);
+//
+//					@Override
+//					protected final void deserialize_() throws IOException {
+//						final int id = this.id.incrementAndGet();
+//						if (id == 0) {
+//							final Deserializer sdd = new Deserializer_3(
+//									sdc);
+//							sdd.deserialize();
+//							sdd.abort_();
+//						}
+//					}
+//					
+//					@Override
+//					public final Runnable getDeserialTask() {
+//						return null;
+//						
+//					}
+//				};
 				break;
 			case 0:
-				instance = new SongDataDeserializer_0(sdc);
+				instance = new Deserializer_0(sdc);
 				break;
 			case -1: // first run
 			default:
-				instance = new SongDataDeserializer_3(sdc);
+				instance = new Deserializer_3(sdc);
 			}
 			return instance;
 		} catch (final IOException e) {
@@ -105,9 +124,9 @@ abstract class SongDataDeserializer {
 		synchronized (this) {
 			deserialDone = true;
 			notifyAll();
-//			System.err
-//					.printf("\n\n==========\nDeserial completed %f parsed\n\n==========\n\n",
-//							songsParsed / 1196.0);
+			// System.err
+			// .printf("\n\n==========\nDeserial completed %f parsed\n\n==========\n\n",
+			// songsParsed / 1196.0);
 			if (crawlDone) {
 				io.startProgress("Parsing songs", songsFound);
 				io.updateProgress(songsParsed);

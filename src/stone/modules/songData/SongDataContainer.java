@@ -47,10 +47,6 @@ public class SongDataContainer implements Container {
 
 	private final MasterThread master;
 
-	private final boolean crawlNeeded = true;
-
-	private boolean dirty = true;
-
 	/**
 	 * @param sc
 	 */
@@ -83,49 +79,43 @@ public class SongDataContainer implements Container {
 		if (master.isInterrupted()) {
 			return;
 		}
-		if (dirty) {
-			Debug.print("Searching for songs at \"" + tree.getRoot() + "\".\n");
+		Debug.print("Searching for songs at \"" + tree.getRoot() + "\".\n");
 
-			final SongDataDeserializer sdd = SongDataDeserializer.init(this);
-			final Scanner scanner = new Scanner(master, sdd, tree);
-			if (crawlNeeded) {
-				final Crawler crawler;
-				crawler = new Crawler(sdd);
-				final Runnable taskDeserial = sdd.getDeserialTask();
-				if (taskDeserial == null) { 
-					taskPool.addTaskForAll(crawler, 30);
-					taskPool.addTaskForAll(scanner);
-					try {
-						sdd.deserialize();
-					} catch (final IOException e) {
-						master.interrupt();
-						e.printStackTrace();
-						sdd.abort();
-					}
-				} else {
-					taskPool.addTaskForAll(taskDeserial, 75);
-					taskPool.addTaskForAll(crawler, 25);
-					taskPool.addTaskForAll(scanner);
-				}
-				taskPool.addTaskForAll(scanner);
-				crawler.run();
-			} else
-				taskPool.addTaskForAll(scanner);
-			scanner.run();
-			taskPool.waitForTasks();
-			if (master.isInterrupted()) {
+		final Deserializer sdd = Deserializer.init(this);
+		final Scanner scanner = new Scanner(master, sdd, tree);
+		final Crawler crawler = new Crawler(sdd);
+		final Runnable taskDeserial = sdd.getDeserialTask();
+		
+		if (taskDeserial == null) {
+			taskPool.addTaskForAll(crawler, 30);
+			taskPool.addTaskForAll(scanner);
+			try {
+				sdd.deserialize();
+			} catch (final IOException e) {
+				master.interrupt();
+				e.printStackTrace();
 				sdd.abort();
-				return;
-			} else
-				sdd.finish();
-			dirty = false;
-
-			for (final AbtractEoWInAbc e : AbtractEoWInAbc.messages.values()) {
-				io.printError(e.printMessage(), true);
 			}
-
-			Debug.print("%4d songs found -", sdd.songsFound());
+		} else {
+			taskPool.addTaskForAll(taskDeserial, 75);
+			taskPool.addTaskForAll(crawler, 25);
+			taskPool.addTaskForAll(scanner);
 		}
+		
+		crawler.run();
+		scanner.run();
+		taskPool.waitForTasks();
+		if (master.isInterrupted()) {
+			sdd.abort();
+			return;
+		} else
+			sdd.finish();
+
+		for (final AbtractEoWInAbc e : AbtractEoWInAbc.messages.values()) {
+			io.printError(e.printMessage(), true);
+		}
+
+		Debug.print("%4d songs found -", sdd.songsFound());
 	}
 
 	/**
@@ -186,7 +176,6 @@ public class SongDataContainer implements Container {
 	 * @return container size
 	 */
 	public final int size() {
-		fill();
 		return tree.getFilesCount();
 	}
 

@@ -45,9 +45,7 @@ public abstract class GUIPlugin {
 	 */
 	protected void repack() {
 		if (gui != null) {
-			final Dimension d = gui.getFrameSize();
 			gui.revalidate(true, false);
-			gui.setFrameSize(d);
 		}
 	}
 
