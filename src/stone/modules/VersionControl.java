@@ -12,10 +12,12 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.DiffCommand;
+import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
@@ -39,9 +41,19 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.JschConfigSessionFactory;
+import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.SshSessionFactory;
+import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.util.FS;
+
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 
 import stone.MasterThread;
 import stone.StartupContainer;
@@ -69,7 +81,7 @@ import stone.util.StringOption;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 8;
+	private final static int VERSION = 9;
 
 	private final static String SECTION = Main.VC_SECTION;
 
@@ -441,8 +453,6 @@ public final class VersionControl implements Module {
 							+ commitRet.getFullMessage()
 							+ "\nStarting to upload changes after checking remote repository for changes",
 					false);
-		} else if (COMMIT.getValue()) {
-			COMMIT.changeValue();
 		}
 		if (master.isInterrupted())
 			return;
@@ -452,8 +462,8 @@ public final class VersionControl implements Module {
 		}
 	}
 
-	private final RevCommit commit(final Git gitSession) throws NoHeadException,
-			NoMessageException, UnmergedPathsException,
+	private final RevCommit commit(final Git gitSession)
+			throws NoHeadException, NoMessageException, UnmergedPathsException,
 			ConcurrentRefUpdateException, WrongRepositoryStateException,
 			GitAPIException {
 		final CommitCommand commit = gitSession.commit();
@@ -757,13 +767,89 @@ public final class VersionControl implements Module {
 	private final ObjectId getRemoteHead(final Git gitSession)
 			throws InvalidRemoteException, TransportException, GitAPIException {
 		final String refS = "refs/heads/" + BRANCH.value();
-		final FetchResult fetch = gitSession
+		final FetchCommand fetch = gitSession
 				.fetch()
 				.setRefSpecs(
 						new RefSpec(refS + ":refs/remotes/origin/"
 								+ BRANCH.value()))
-				.setProgressMonitor(getProgressMonitor()).call();
-		final Ref ref = fetch.getAdvertisedRef(refS);
+				.setProgressMonitor(getProgressMonitor());
+		if (USE_SSH.getValue()) {
+			final String url = GIT_URL_SSH.value();
+			final String[] split = url.replace("ssh://", "").split(":", 2);
+			if (split.length == 2) {
+				final Path configFile = Path.getPath("~", ".ssh", "config");
+				String hostname = "github.com", user = "git", id = "id_rsa";
+				if (configFile.exists()) {
+					final InputStream in = io.openIn(configFile.toFile());
+					while (true) {
+						try {
+							String line = in.readLine();
+							if (line == null)
+								break;
+							if (line.equalsIgnoreCase("HOST " + split[0])) {
+								line = in.readLine();
+								while (line != null) {
+									final String[] ls = line.split(" ", 2);
+									final String key = ls[0].toLowerCase();
+									final String value = ls[1];
+									if (key.equals("hostname")) {
+										hostname = value;
+									} else if (key.equals("user")) {
+										user = value;
+									} else if (key.equals("identityfile")) {
+										id = value;
+									} else if (key.equals("host"))
+										break;
+									line = in.readLine();
+								}
+								break;
+							}
+						} catch (final IOException e) {
+							io.handleException(ExceptionHandle.CONTINUE, e);
+							return null;
+						} finally {
+							io.close(in);
+						}
+					}
+					final Path idFile = Path.getPath("~", ".ssh", id);
+					if (!idFile.exists()) {
+						io.printError("Missing file for ssh connection", false);
+						master.interrupt();
+						return null;
+					}
+					final String userFinal = user, hostnameFinal = hostname;
+					final SshSessionFactory sshSessionFactory = new JschConfigSessionFactory() {
+
+						@Override
+						protected void configure(final Host host,
+								final Session session) {
+							// do nothing
+							Debug.print("Configure\nhost %s\n", host);
+						}
+
+						@Override
+						protected JSch createDefaultJSch(FS fs)
+								throws JSchException {
+							JSch defaultJSch = super.createDefaultJSch(fs);
+							defaultJSch.addIdentity(idFile.toString());
+							return defaultJSch;
+						}
+					};
+					fetch.setTransportConfigCallback(new TransportConfigCallback() {
+
+						@Override
+						public void configure(final Transport transport) {
+							SshTransport sshTransport = (SshTransport) transport;
+							sshTransport
+									.setSshSessionFactory(sshSessionFactory);
+							
+						}
+					});
+					// TODO adjust url
+				}
+			}
+		}
+		final Ref ref = fetch.call().getAdvertisedRef(refS);
 		if (ref == null)
 			return null;
 		return ref.getObjectId();
@@ -1050,7 +1136,7 @@ public final class VersionControl implements Module {
 		}
 	}
 
-	private void historyRewritten(final Git gitSession,
+	private final void historyRewritten(final Git gitSession,
 			final RevCommit commitLocal, final RevCommit commitRemote,
 			final RevWalk walk) throws NoHeadException, NoMessageException,
 			UnmergedPathsException, ConcurrentRefUpdateException,

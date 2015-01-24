@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import stone.util.LinkedMap;
 
 final class Config {
 
@@ -26,7 +27,7 @@ final class Config {
 					final String section = line;
 					map = mapSKV.get(section);
 					if (map == null) {
-						final Map<String, String> _map = new HashMap<String, String>();
+						final Map<String, String> _map = new LinkedMap<String, String>();
 						mapSKV.put(section, _map);
 						map = _map;
 					}
