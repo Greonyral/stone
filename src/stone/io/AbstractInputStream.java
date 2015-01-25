@@ -83,6 +83,10 @@ public abstract class AbstractInputStream extends InputStream {
 			_length += read;
 		}
 	}
+	
+	protected void finalize() {
+		io.close(this);
+	}
 
 	/**
 	 * Tries to read as many bytes as needed to fill given buffer

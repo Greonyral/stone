@@ -2,8 +2,12 @@ package stone.modules.songData;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import stone.Container;
 import stone.MasterThread;
@@ -81,7 +85,7 @@ public class SongDataContainer implements Container {
 		}
 		Debug.print("Searching for songs at \"" + tree.getRoot() + "\".\n");
 
-		final Deserializer sdd = Deserializer.init(this);
+		final Deserializer sdd = Deserializer.init(this, master);
 		final Scanner scanner = new Scanner(master, sdd, tree);
 		final Crawler crawler = new Crawler(sdd);
 		final Runnable taskDeserial = sdd.getDeserialTask();
@@ -254,5 +258,24 @@ public class SongDataContainer implements Container {
 
 	final DirTree getDirTree() {
 		return tree;
+	}
+
+	public static void writeExternal(final Map<Integer, String> voices, final SerializeConainer out) throws IOException {
+		out.writeSize(voices.size());
+		for (final Map.Entry<Integer, String> entry : voices.entrySet()) {
+			out.writeSize(entry.getKey().intValue());
+			out.write(entry.getValue());
+		}
+	}
+
+	public static Map<Integer, String> readExternal(final InputStream is, final DeserializeContainer in) throws IOException {
+		int parts = in.readSize(is);
+		final Map<Integer, String> voices = new TreeMap<>();
+		while (parts-- > 0) {
+			final int id = in.readSize(is);
+			final String value = in.read(is);
+			voices.put(id, value);
+		}
+		return voices;
 	}
 }

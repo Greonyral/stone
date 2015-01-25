@@ -1,5 +1,6 @@
 package stone.modules.songData;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -98,10 +99,8 @@ public class SongData {
 		return sb.toString();
 	}
 
-	public void serialize(final MTDeserializer sdd) {
+	public void serialize(final MTDeserializer sdd) throws IOException {
 		final SerializeConainer sc = sdd.createSerializeConainer();
-		sdd.serialize(sc, song);
-		sdd.serialize(sc, mod);
-		sdd.serialize(sc, sortedVoices);
+		sc.write(song, mod, sortedVoices);
 	}
 }

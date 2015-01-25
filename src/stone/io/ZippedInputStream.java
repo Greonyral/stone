@@ -45,6 +45,11 @@ public final class ZippedInputStream extends AbstractInputStream {
 	public final long skip(long n) {
 		throw new UnsupportedOperationException();
 	}
+	
+	public final int available() throws IOException {
+		return _in.available();
+		
+	}
 
 
 	@Override

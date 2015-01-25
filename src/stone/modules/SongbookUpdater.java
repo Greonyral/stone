@@ -208,7 +208,9 @@ public final class SongbookUpdater implements Module {
 		}
 		io.close(in);
 		container.fill();
-
+		if (master.isInterrupted())
+			return;
+		
 		final File masterPluginData = songbookPlugindataPath.toFile();
 		masterPluginData.deleteOnExit();
 

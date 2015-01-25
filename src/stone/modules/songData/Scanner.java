@@ -85,7 +85,11 @@ public final class Scanner implements Runnable {
 		if (song == null)
 			return false;
 		final SongData voices = getVoices(song);
-		sdd.serialize(voices);
+		try {
+			sdd.serialize(voices);
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
 		return true;
 	}
 

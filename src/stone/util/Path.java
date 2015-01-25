@@ -1,7 +1,11 @@
 package stone.util;
 
+import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -20,7 +24,7 @@ import java.util.TreeMap;
  * Represents paths relative to a certain base or absolute, specified by
  * FileSystem
  */
-public final class Path implements Comparable<Path> {
+public final class Path implements Comparable<Path>, Externalizable {
 
 	private static int nextHash;
 
@@ -709,5 +713,43 @@ public final class Path implements Comparable<Path> {
 			} else
 				Path.reusableHashes.push(Integer.valueOf(hash));
 		}
+	}
+
+	@Override
+	public final void writeExternal(final ObjectOutput out) throws IOException {
+		final byte[] bytes = str.getBytes(FileSystem.UTF8);
+		encode(bytes.length, out);
+		out.write(bytes);
+	}
+
+	private final void encode(int length, final ObjectOutput out)
+			throws IOException {
+		int lowByte = length & 0x7f;
+		int highBytes = length & ~0x7f;
+		if (highBytes != 0) {
+			lowByte |= 0x80;
+			encode(length >> 7, out);
+		}
+		out.write(lowByte);
+	}
+
+	@Override
+	public final void readExternal(final ObjectInput in)
+			throws UnsupportedOperationException {
+		throw new UnsupportedOperationException();
+	}
+
+	public final static Path read(final InputStream in) throws IOException {
+		int length = 0;
+		while (true) {
+			length <<= 7;
+			int read = in.read();
+			length += read & 0x7f;
+			if (read <= 0x80)
+				break;
+		}
+		byte[] bytes = new byte[length];
+		in.read(bytes);
+		return Path.getPath(new String(bytes, FileSystem.UTF8).split("/"));
 	}
 }
