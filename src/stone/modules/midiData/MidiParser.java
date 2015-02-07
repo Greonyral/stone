@@ -675,7 +675,7 @@ public abstract class MidiParser {
 	 * @return the currently used midi-file
 	 */
 	public final String getMidi() {
-		return midi.getFileName();
+		return midi.getFilename();
 	}
 
 	/**

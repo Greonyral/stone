@@ -41,13 +41,15 @@ final class DirTree {
 	private final void add(final SongData songdata) {
 		final Path path = songdata.getPath();
 		final DirTree t = walkTo(path.getParent());
+		if (t == null)
+			return;
 		synchronized (t) {
-			final SongData sd = t.files.get(path.getFileName());
+			final SongData sd = t.files.get(path.getFilename());
 			if (sd == null) {
-				t.files.put(path.getFileName(), songdata);
+				t.files.put(path.getFilename(), songdata);
 			} else if (sd.getLastModification() < songdata
 					.getLastModification()) {
-				t.files.put(path.getFileName(), songdata);
+				t.files.put(path.getFilename(), songdata);
 			} else {
 				synchronized (AbtractEoWInAbc.messages) {
 					AbtractEoWInAbc.messages.remove(path);
@@ -171,7 +173,7 @@ final class DirTree {
 	final SongData get(final Path path) {
 		final DirTree tree = walkTo(path.getParent());
 		synchronized (tree) {
-			return tree.files.get(path.getFileName());
+			return tree.files.get(path.getFilename());
 		}
 	}
 
@@ -196,6 +198,8 @@ final class DirTree {
 	}
 
 	final DirTree walkTo(final Path path) {
+		if (path == null)
+			return null;
 		DirTree t = this;
 		if (path == base) {
 			return t;

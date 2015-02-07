@@ -156,7 +156,7 @@ public class ModuleLoader extends ClassLoader {
 			if (!path.exists()) {
 				continue;
 			}
-			if (path.getFileName().endsWith(".jar")) {
+			if (path.getFilename().endsWith(".jar")) {
 				try {
 					jarFile = new JarFile(path.toFile());
 					final java.util.zip.ZipEntry e = jarFile.getEntry(name

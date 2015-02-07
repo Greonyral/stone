@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -46,7 +47,7 @@ public class IOHandler {
 	private static final String openJDK = "OpenJDK Runtime Environment";
 	private static final String oracleKey = "Recommended Version";
 
-	private final HashSet<Closeable> openStreams;
+	private final HashSet<WeakReference<Closeable>> openStreams;
 
 	private final ProgressMonitor progressMonitor;
 
@@ -95,9 +96,8 @@ public class IOHandler {
 			public Object invoke(final Object proxy, final Method method,
 					final Object[] args) throws Throwable {
 				if (master.isInterrupted()) {
-					if (Thread.currentThread() == master) {
-						guiReal.destroy();
-					}
+					if (Thread.currentThread() != master)
+						throw new InterruptedException();
 					return null;
 				}
 				return method.invoke(guiReal, args);
@@ -147,15 +147,21 @@ public class IOHandler {
 			return;
 		}
 		try {
+
 			try {
 				out = new OutputStream(fileToAppendTo, FileSystem.UTF8, true);
-				openStreams.add(out);
+				synchronized (this) {
+					openStreams.add(new WeakReference<Closeable>(out));
+				}
 				in = new InputStream(content, FileSystem.UTF8);
-				openStreams.add(in);
+				synchronized (this) {
+					openStreams.add(new WeakReference<Closeable>(in));
+				}
 			} catch (final FileNotFoundException e) {
 				handleException(ExceptionHandle.TERMINATE, e);
 				return;
 			}
+
 
 			try {
 				in.read(new byte[bytesToDiscard]);
@@ -235,16 +241,17 @@ public class IOHandler {
 				}
 			}
 			closed = true;
-		}
-
-		for (final Closeable c : openStreams) {
-			try {
-				c.close();
-			} catch (final IOException e) {
-				handleException(ExceptionHandle.SUPPRESS, e);
+			for (final WeakReference<Closeable> c : openStreams) {
+				final Closeable cla = c.get();
+				if (cla != null)
+					try {
+						cla.close();
+					} catch (final IOException e) {
+						handleException(ExceptionHandle.SUPPRESS, e);
+					}
 			}
+			openStreams.clear();
 		}
-		openStreams.clear();
 		if (!logStack.isEmpty()) {
 			final StringBuilder sb = new StringBuilder();
 			for (final Iterator<String> s = logStack.iterator(); true;) {
@@ -265,14 +272,21 @@ public class IOHandler {
 	 * @param c
 	 *            object to close
 	 */
-	public final void close(final Closeable c) {
-		if (openStreams.remove(c)) {
-			try {
-				c.close();
-			} catch (final IOException e) {
-				handleException(ExceptionHandle.SUPPRESS, e);
+	public final synchronized void close(final Closeable c) {
+		final Set<WeakReference<Closeable>> openStreamsDel = new HashSet<>();
+		for (final WeakReference<Closeable> w : openStreams) {
+			if (w.get() == null)
+				openStreamsDel.add(w);
+			else if (w.get() == c) {
+				openStreamsDel.add(w);
+				try {
+					c.close();
+				} catch (final IOException e) {
+					handleException(ExceptionHandle.SUPPRESS, e);
+				}
 			}
 		}
+		openStreams.removeAll(openStreamsDel);
 	}
 
 	/**
@@ -309,7 +323,7 @@ public class IOHandler {
 	/**
 	 * @return the GUI used by this IO-Handler
 	 */
-	public GUIInterface getGUI() {
+	public final GUIInterface getGUI() {
 		return gui;
 	}
 
@@ -392,9 +406,10 @@ public class IOHandler {
 	 *            charset to use for encoding
 	 * @return the opened stream or <i>null</i> if an error occured
 	 */
-	public final InputStream openIn(final File file, final Charset cs) {
+	public final synchronized InputStream openIn(final File file,
+			final Charset cs) {
 		final InputStream stream = new InputStream(file, cs);
-		openStreams.add(stream);
+		openStreams.add(new WeakReference<Closeable>(stream));
 		return stream;
 	}
 
@@ -405,10 +420,10 @@ public class IOHandler {
 	 * @param file
 	 * @return the opened stream or <i>null</i> if an error occurred
 	 */
-	public final OutputStream openOut(final File file) {
+	public final synchronized OutputStream openOut(final File file) {
 		try {
 			final OutputStream stream = new OutputStream(file, FileSystem.UTF8);
-			openStreams.add(stream);
+			openStreams.add(new WeakReference<Closeable>(stream));
 			return stream;
 		} catch (final IOException e) {
 			handleException(ExceptionHandle.TERMINATE, e);
@@ -424,10 +439,10 @@ public class IOHandler {
 	 * @param cs
 	 * @return the opened stream or <i>null</i> if an error occurred
 	 */
-	public final OutputStream openOut(final File file, final Charset cs) {
+	public final  synchronized OutputStream openOut(final File file, final Charset cs) {
 		try {
 			final OutputStream stream = new OutputStream(file, cs);
-			openStreams.add(stream);
+			openStreams.add(new WeakReference<Closeable>(stream));
 			return stream;
 		} catch (final IOException e) {
 			handleException(ExceptionHandle.TERMINATE, e);
@@ -454,14 +469,16 @@ public class IOHandler {
 		}
 
 		final Enumeration<? extends ZipEntry> entries = zip.entries();
-		while (entries.hasMoreElements()) {
-			final ZipEntry e = entries.nextElement();
-			
-			try {
-				final AbstractInputStream in = new ZippedInputStream(zip, e);
-				openStreams.add(in);
-				map.put(e.getName(), in);
-			} catch (final IOException ioe) {
+		synchronized (this) {
+			while (entries.hasMoreElements()) {
+				final ZipEntry e = entries.nextElement();
+
+				try {
+					final AbstractInputStream in = new ZippedInputStream(zip, e);
+					openStreams.add(new WeakReference<Closeable>(in));
+					map.put(e.getName(), in);
+				} catch (final IOException ioe) {
+				}
 			}
 		}
 		try {

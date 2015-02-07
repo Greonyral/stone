@@ -94,7 +94,7 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 			final JCheckBox box =
 					p == currentDir.getParent() ? null : new JCheckBox();
 			final JLabel label =
-					new JLabel(box == null ? "  ../  [" + p.getFileName()
+					new JLabel(box == null ? "  ../  [" + p.getFilename()
 							+ "]" : dir);
 
 			if (box != null) {

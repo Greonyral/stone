@@ -282,7 +282,7 @@ public class SongChangeData {
 	public final String getTitle() {
 		final Set<String> set = new HashSet<>(titles.values());
 		if (set.isEmpty()) {
-			return file.getFileName().replaceFirst("\\.abc", "");
+			return file.getFilename().replaceFirst("\\.abc", "");
 		}
 		if (set.size() == 1) {
 			return set.iterator().next();
@@ -369,7 +369,7 @@ public class SongChangeData {
 		final String rel = file.relativize(getBase());
 		final Path base =
 				SongChangeData.basePath.getParent().resolve(
-						SongChangeData.basePath.getFileName()
+						SongChangeData.basePath.getFilename()
 								+ "_rewritten");
 		tmp.renameTo(base.resolve(rel.split("/")));
 	}
@@ -847,9 +847,9 @@ public class SongChangeData {
 
 	private final Path writeChunks(final IOHandler io,
 			final NameScheme scheme) {
-		final Path tmp = MasterThread.tmp().resolve(file.getFileName());
+		final Path tmp = MasterThread.tmp().resolve(file.getFilename());
 		final Path headerChunk =
-				tmp.getParent().resolve(file.getFileName() + "_head");
+				tmp.getParent().resolve(file.getFilename() + "_head");
 		final Map<Integer, Path> partsToChunk = new HashMap<>();
 		final OutputStream out;
 
@@ -927,7 +927,7 @@ public class SongChangeData {
 					final Integer keyNew = idxMap.get(key);
 					io.close(out);
 					final Path chunk =
-							tmp.resolve(file.getFileName() + "_" + keyNew);
+							tmp.resolve(file.getFilename() + "_" + keyNew);
 					partsToChunk.put(keyNew, chunk);
 					out = io.openOut(chunk.toFile());
 					if (idxMap != null) {

@@ -169,8 +169,8 @@ public class SongName implements Map<Integer, String> {
 			}
 			if (title == null) {
 				title =
-						path.getFileName().substring(0,
-								path.getFileName().length() - 4);
+						path.getFilename().substring(0,
+								path.getFilename().length() - 4);
 			}
 		}
 		final Integer x = renumberMap.get(xIdx);

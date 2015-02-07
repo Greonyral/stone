@@ -479,7 +479,7 @@ public final class VersionControl implements Module {
 
 	private final void checkoutBand() {
 		final NoYesPlugin plugin = new NoYesPlugin("Local repository "
-				+ repoRoot.getFileName() + " does not exist",
+				+ repoRoot.getFilename() + " does not exist",
 				Main.formatMaxLength(repoRoot, null, "The directory ",
 						" does not exist or is no git-repository.\n")
 						+ "It can take a while to create it. Continue?",
@@ -704,9 +704,9 @@ public final class VersionControl implements Module {
 		engine.init(encrypt, keyParam);
 		streamIn.registerProgressMonitor(io);
 		if (encrypt) {
-			io.setProgressTitle("Encrypting " + output.getFileName());
+			io.setProgressTitle("Encrypting " + output.getFilename());
 		} else {
-			io.setProgressTitle("Decrypting " + output.getFileName());
+			io.setProgressTitle("Decrypting " + output.getFilename());
 		}
 		try {
 			while (true) {

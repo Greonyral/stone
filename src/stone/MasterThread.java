@@ -167,7 +167,7 @@ public class MasterThread extends Thread {
 			state.handleEvent(Event.INT);
 			notifyAll();
 		}
-		taskPool.waitForTasks();
+		taskPool.close();
 	}
 
 	/** */
@@ -388,7 +388,9 @@ public class MasterThread extends Thread {
 			newMaster.start();
 		} else {
 			taskPool.close();
+			state.handleEvent(Event.LOCK_INT);
 			io.close();
+			state.handleEvent(Event.UNLOCK_INT);
 			tmp.delete();
 			interrupt();
 		}

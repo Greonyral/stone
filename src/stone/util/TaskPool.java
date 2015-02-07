@@ -1,6 +1,8 @@
 package stone.util;
 
 import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Set;
 
 import stone.MasterThread;
 import stone.StartupContainer;
@@ -22,6 +24,8 @@ public class TaskPool {
 	private boolean closed = false;
 
 	private int runningTasks = 0;
+
+	private final Set<Thread> runningTaskList = new HashSet<>();
 
 	/**
 	 * Creates a new task Pool
@@ -45,19 +49,18 @@ public class TaskPool {
 			taskPool.notify();
 		}
 	}
-	
+
 	@Deprecated
-	public final void addTaskForAll(final Runnable... task ) {
+	public final void addTaskForAll(final Runnable... task) {
 		for (final Runnable t : task)
 			addTaskForAll(t);
 	}
 
 
 	/**
-	 * Adds one task to the pool to be executed. Each task will be
-	 * executed by all available WorkerThreads for the pool. The next task
-	 * will be executed after the previous task has been completed with all
-	 * threads.
+	 * Adds one task to the pool to be executed. Each task will be executed by
+	 * all available WorkerThreads for the pool. The next task will be executed
+	 * after the previous task has been completed with all threads.
 	 * 
 	 * @param tasks
 	 */
@@ -66,15 +69,14 @@ public class TaskPool {
 	}
 
 	/**
-	 * Adds one task to the pool to be executed. Each task will be
-	 * executed by set percent of available WorkerThreads for the pool. The next task
-	 * will be executed after the previous task has been completed with all
-	 * threads.
+	 * Adds one task to the pool to be executed. Each task will be executed by
+	 * set percent of available WorkerThreads for the pool. The next task will
+	 * be executed after the previous task has been completed with all threads.
 	 * 
 	 * @param tasks
 	 */
 	public final void addTaskForAll(final Runnable task, int percent) {
-		final int n = NUM_CPUS * Math.max(0, Math.min(100, percent)) / 100;
+		final int n = NUM_CPUS * Math.max(1, Math.min(100, percent) / 100);
 		synchronized (taskPool) {
 			for (int i = 0; i < n; i++) {
 				taskPool.add(task);
@@ -93,6 +95,10 @@ public class TaskPool {
 			}
 			closed = true;
 			taskPool.notifyAll();
+			synchronized (runningTaskList) {
+				for (final Thread t : runningTaskList)
+					t.interrupt();
+			}
 			while (runningTasks > 0) {
 				try {
 					taskPool.wait();
@@ -177,14 +183,22 @@ public class TaskPool {
 			++runningTasks;
 			t = taskPool.remove();
 		}
+		synchronized (runningTaskList) {
+			runningTaskList.add(Thread.currentThread());
+		}
 		try {
 			t.run();
 		} catch (final Exception e) {
-			e.printStackTrace();
+			Throwable tr = e;
+			while (tr.getCause() != null)
+				tr = tr.getCause();
+			if (!InterruptedException.class.isAssignableFrom(tr.getClass()))
+				e.printStackTrace();
 		} finally {
 			synchronized (taskPool) {
 				taskPool.notifyAll();
 				--runningTasks;
+				runningTaskList.remove(Thread.currentThread());
 			}
 		}
 		return !master.isInterrupted();

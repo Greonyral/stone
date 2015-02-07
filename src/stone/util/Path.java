@@ -26,9 +26,17 @@ import java.util.TreeMap;
  */
 public final class Path implements Comparable<Path>, Externalizable {
 
-	private static int nextHash;
+	public interface PathAwareObjectOutput {
 
+		int getId(final Path path) throws InterruptedException;
+
+		void registerId(final Path parent, final String filename);
+
+	}
+
+	private static int nextHash;
 	private static final Map<String, Path> rootMap = buildRootMap();
+
 	private static final ArrayDeque<Integer> reusableHashes = new ArrayDeque<>();
 
 	/**
@@ -156,6 +164,80 @@ public final class Path implements Comparable<Path>, Externalizable {
 		}
 	}
 
+	public final static Path readExternal(final InputStream in)
+			throws IOException {
+		int length = 0;
+		while (true) {
+			length <<= 7;
+			int read = in.read();
+			length += read & 0x7f;
+			if (read <= 0x80)
+				break;
+		}
+		byte[] bytes = new byte[length];
+		in.read(bytes);
+		return Path.getPath(new String(bytes, FileSystem.UTF8).split("/"));
+	}
+
+	public final static Map<Integer, Path> readExternals(final InputStream in)
+			throws IOException {
+		final Map<Integer, Path> map = new HashMap<>();
+		if (in != null)
+			while (true) {
+				final IntegerPointer available = new IntegerPointer(
+						in.available());
+				if (available.isZero())
+					break;
+				while (available.greaterZero()) {
+					final Integer idPrev = readInt(in, available);
+					final Integer id = readInt(in, available);
+					final String name = readName(in, available);
+					final Path p;
+					if (idPrev < 0) {
+						p = getPath(name);
+					} else {
+						p = map.get(idPrev).resolve(name);
+					}
+					map.put(id, p);
+				}
+			}
+		if (map.isEmpty()) {
+			map.put(-1, null);
+		}
+		return map;
+	}
+
+	private final static String readName(final InputStream in,
+			final IntegerPointer iPtr) throws IOException {
+		int length = 0;
+		while (true) {
+			final int byteRead = in.read();
+			iPtr.decrement();
+			length = (length << 7) | (byteRead & 0x7f);
+			if (byteRead < 0x80)
+				break;
+		}
+		final byte[] buffer = new byte[length];
+		in.read(buffer);
+		iPtr.decrement(length);
+		return new String(buffer, FileSystem.UTF8);
+	}
+
+	private final static Integer readInt(final InputStream in,
+			final IntegerPointer iPtr) throws IOException {
+		int ret = 0;
+		while (true) {
+			final int byteRead = in.read();
+			iPtr.decrement();
+			if (byteRead < 0)
+				throw new IOException("Unexpected end of file");
+			ret = (ret << 7) | (byteRead & 0x7f);
+			if (byteRead < 0x80)
+				break;
+		}
+		return Integer.valueOf(ret);
+	}
+
 	private final static Map<String, Path> buildRootMap() {
 		final String[] bases = FileSystem.getBases();
 		final Map<String, Path> map = new HashMap<>();
@@ -234,9 +316,9 @@ public final class Path implements Comparable<Path>, Externalizable {
 	private final String[] dirs;
 
 	private final int hash;
-
 	private final Map<String, PathReference> successors = new TreeMap<>();
 	private File file = null;
+
 	private final String filename;
 
 	private final Path parent;
@@ -283,26 +365,6 @@ public final class Path implements Comparable<Path>, Externalizable {
 		}
 	}
 
-	/**
-	 * creates a new base for absolute paths
-	 * 
-	 * @param name
-	 */
-	private Path(final String name) {
-		dirs = null;
-		filename = name;
-		parent = null;
-		if (name.endsWith(FileSystem.getFileSeparator())) {
-			str = name.substring(0, name.length() - 1) + "/";
-			pathStr = name;
-		} else {
-			str = name + "/";
-			pathStr = name + FileSystem.getFileSeparator();
-		}
-
-		hash = ++Path.nextHash;
-	}
-
 	private Path(final Path p, final String[] names, int offset) {
 		Path p0 = p;
 		for (int i = offset; i < names.length - 1; ++i) {
@@ -332,9 +394,29 @@ public final class Path implements Comparable<Path>, Externalizable {
 		p0.successors.put(filename, new PathReference(this));
 	}
 
+	/**
+	 * creates a new base for absolute paths
+	 * 
+	 * @param name
+	 */
+	private Path(final String name) {
+		dirs = null;
+		filename = name;
+		parent = null;
+		if (name.endsWith(FileSystem.getFileSeparator())) {
+			str = name.substring(0, name.length() - 1) + "/";
+			pathStr = name;
+		} else {
+			str = name + "/";
+			pathStr = name + FileSystem.getFileSeparator();
+		}
+
+		hash = ++Path.nextHash;
+	}
+
 	/** */
 	@Override
-	public int compareTo(final Path o) {
+	public final int compareTo(final Path o) {
 		if (this == o) {
 			return 0;
 		}
@@ -459,7 +541,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * 
 	 * @return the last part of <i>this</i> path.
 	 */
-	public final String getFileName() {
+	public final String getFilename() {
 		return filename;
 	}
 
@@ -488,6 +570,12 @@ public final class Path implements Comparable<Path>, Externalizable {
 	@Override
 	public final int hashCode() {
 		return hash;
+	}
+
+	@Override
+	public final void readExternal(final ObjectInput in)
+			throws UnsupportedOperationException {
+		throw new UnsupportedOperationException();
 	}
 
 	/**
@@ -655,6 +743,42 @@ public final class Path implements Comparable<Path>, Externalizable {
 		return str;
 	}
 
+	@Override
+	public final void writeExternal(final ObjectOutput out) throws IOException {
+		final byte[] bytes = str.getBytes(FileSystem.UTF8);
+		encode(bytes.length, out);
+		out.write(bytes);
+	}
+
+	public final void writeExternals(final PathAwareObjectOutput out)
+			throws IOException {
+		if (parent != null) {
+			int parentId;
+			try {
+				parentId = out.getId(parent);
+			} catch (final InterruptedException e) {
+				return;
+			}
+			if (parent == null) {
+				out.registerId(null, filename);
+			} else if (parentId == -1) {
+				parent.writeExternals(out);
+			}
+		}
+		out.registerId(parent, filename);
+	}
+
+	private final void encode(int length, final ObjectOutput out)
+			throws IOException {
+		int lowByte = length & 0x7f;
+		int highBytes = length & ~0x7f;
+		if (highBytes != 0) {
+			lowByte |= 0x80;
+			encode(length >> 7, out);
+		}
+		out.write(lowByte);
+	}
+
 	private final Path getPathFunc(final String[] names, int offset) {
 		Path p = this;
 		for (int i = offset; i < names.length; ++i) {
@@ -713,43 +837,5 @@ public final class Path implements Comparable<Path>, Externalizable {
 			} else
 				Path.reusableHashes.push(Integer.valueOf(hash));
 		}
-	}
-
-	@Override
-	public final void writeExternal(final ObjectOutput out) throws IOException {
-		final byte[] bytes = str.getBytes(FileSystem.UTF8);
-		encode(bytes.length, out);
-		out.write(bytes);
-	}
-
-	private final void encode(int length, final ObjectOutput out)
-			throws IOException {
-		int lowByte = length & 0x7f;
-		int highBytes = length & ~0x7f;
-		if (highBytes != 0) {
-			lowByte |= 0x80;
-			encode(length >> 7, out);
-		}
-		out.write(lowByte);
-	}
-
-	@Override
-	public final void readExternal(final ObjectInput in)
-			throws UnsupportedOperationException {
-		throw new UnsupportedOperationException();
-	}
-
-	public final static Path read(final InputStream in) throws IOException {
-		int length = 0;
-		while (true) {
-			length <<= 7;
-			int read = in.read();
-			length += read & 0x7f;
-			if (read <= 0x80)
-				break;
-		}
-		byte[] bytes = new byte[length];
-		in.read(bytes);
-		return Path.getPath(new String(bytes, FileSystem.UTF8).split("/"));
 	}
 }

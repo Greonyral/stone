@@ -159,7 +159,7 @@ public class NumberingGUI extends GUIPlugin {
 
 	@Override
 	protected final String getTitle() {
-		return "Change Numbering - " + scd.file().getFileName();
+		return "Change Numbering - " + scd.file().getFilename();
 	}
 
 }

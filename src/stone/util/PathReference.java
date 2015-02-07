@@ -11,16 +11,16 @@ public class PathReference extends WeakReference<Path> {
 		super(referent, queue);
 	}
 	
+	  public boolean enqueue() {
+		  return super.enqueue();
+	  }
+	  
 	  public Path get() {
 		  return isEnqueued() ? null : super.get();
 	  }
 	  
 	  public boolean isEnqueued() {
 		  return super.isEnqueued();
-	  }
-	  
-	  public boolean enqueue() {
-		  return super.enqueue();
 	  }
 
 }

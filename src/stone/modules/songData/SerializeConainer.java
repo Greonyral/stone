@@ -5,7 +5,7 @@ import java.util.Map;
 import stone.util.Path;
 
 interface SerializeConainer {
-
+	
 	void write(final Path song, long mod, final Map<Integer, String> voices)
 			throws IOException;
 

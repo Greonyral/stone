@@ -72,7 +72,7 @@ class Crawler implements Runnable {
 				}
 			}
 		} else if (path.toFile().isFile()
-				&& path.getFileName().endsWith(".abc")) {
+				&& path.getFilename().endsWith(".abc")) {
 			Debug.print("found %s\n", path);
 			synchronized (sdd) {
 				sdd.addToQueue(new ModEntry(path));

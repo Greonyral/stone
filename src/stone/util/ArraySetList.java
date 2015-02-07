@@ -13,16 +13,16 @@ final class ArraySetList<E> extends ArrayList<E> implements Set<E> {
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	public final Stream<E> stream() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public final Stream<E> parallelStream() {
 		throw new UnsupportedOperationException();
 	}
 
 	public final Spliterator<E> spliterator() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public final Stream<E> stream() {
 		throw new UnsupportedOperationException();
 	}
 

@@ -389,7 +389,7 @@ public class AbcCreator implements Module,
 			int abcTracks) {
 		io.startProgress("Creating map", abcTracks + 1);
 		final Path map = generateMap(name == null ? "<insert your name here>"
-				: name, title == null ? abc.getFileName() : title);
+				: name, title == null ? abc.getFilename() : title);
 		io.endProgress();
 		if (map == null) {
 			// no abc-tracks
@@ -761,7 +761,7 @@ public class AbcCreator implements Module,
 					Debug.print("found ~/.wine\n");
 				} else {
 					System.err.println("unable to run \""
-							+ location.getFileName() + "\"");
+							+ location.getFilename() + "\"");
 					return -8;
 				}
 			}
@@ -884,7 +884,7 @@ public class AbcCreator implements Module,
 	}
 
 	private final Path generateMap(final Object name, final Object title) {
-		final Path map = midi.getParent().resolve(midi.getFileName() + ".map");
+		final Path map = midi.getParent().resolve(midi.getFilename() + ".map");
 		final OutputStream out = io.openOut(map.toFile());
 		final String style = STYLE.value();
 
@@ -1004,7 +1004,7 @@ public class AbcCreator implements Module,
 				break;
 			}
 
-			String abcName = midi.getFileName();
+			String abcName = midi.getFilename();
 			{
 				final int end = abcName.lastIndexOf('.');
 				if (end >= 0) {
@@ -1050,7 +1050,7 @@ public class AbcCreator implements Module,
 			if (master.isInterrupted()) {
 				return;
 			}
-			final String defaultTitle = midi.getFileName();
+			final String defaultTitle = midi.getFilename();
 			final List<Option> options = new ArrayList<>();
 
 			if (TITLE.value() == null) {
@@ -1231,7 +1231,7 @@ public class AbcCreator implements Module,
 			initState.startPhase(InitState.UNPACK_JAR);
 			if (!bruteArchive.exists()) {
 				final Path bruteArchive2 = bruteArchive.getParent().resolve(
-						"..", "brute", bruteArchive.getFileName());
+						"..", "brute", bruteArchive.getFilename());
 				if (!bruteArchive2.exists()) {
 					System.err.println("Unable to find Brute\n" + bruteArchive
 							+ " does not exist.");

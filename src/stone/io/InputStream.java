@@ -16,8 +16,7 @@ import java.util.Queue;
  */
 public class InputStream extends AbstractInputStream {
 
-	private final static byte[] merge(final Queue<byte[]> parts,
-			int stackSize) {
+	private final static byte[] merge(final Queue<byte[]> parts, int stackSize) {
 		if (parts.size() == 1) {
 			return parts.poll();
 		}
@@ -32,7 +31,6 @@ public class InputStream extends AbstractInputStream {
 		return ret;
 	}
 
-	
 
 	private final ArrayDeque<Integer> marked = new ArrayDeque<>();
 	private FileInputStream stream;
@@ -77,7 +75,6 @@ public class InputStream extends AbstractInputStream {
 	}
 
 
-
 	/**
 	 * Returns relative offset from current position in <i>this</i> stream to a
 	 * previously marked location.
@@ -92,7 +89,6 @@ public class InputStream extends AbstractInputStream {
 		return marked.pop();
 	}
 
-	
 
 	/**
 	 * Reads all remaining bytes and returns them in a byte array.
@@ -155,9 +151,15 @@ public class InputStream extends AbstractInputStream {
 	 *             if an error occurs reading the file
 	 * @see #getMarkedLoc()
 	 */
-	public final byte[] readTo(byte terminal, byte mark)
-			throws IOException {
+	public final byte[] readTo(byte terminal, byte mark) throws IOException {
 		return readTo(terminal, 0xff & mark);
+	}
+
+	public final int available() throws IOException {
+		if (EOFreached())
+			return 0;
+		return stream.available() + _length - _offset;
+
 	}
 
 	/**
@@ -228,8 +230,7 @@ public class InputStream extends AbstractInputStream {
 		return len;
 	}
 
-	private final byte[] readTo(byte terminal, int mark)
-			throws IOException {
+	private final byte[] readTo(byte terminal, int mark) throws IOException {
 		marked.clear();
 		if (EOFreached()) {
 			return null;

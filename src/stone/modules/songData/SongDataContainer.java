@@ -3,7 +3,6 @@ package stone.modules.songData;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -230,8 +229,8 @@ public class SongDataContainer implements Container {
 				io.writeln(outMaster, "\t\t[" + songIdx + "] =");
 				io.writeln(outMaster, "\t\t{");
 				final String name;
-				name = path.getFileName().substring(0,
-						path.getFileName().lastIndexOf("."));
+				name = path.getFilename().substring(0,
+						path.getFilename().lastIndexOf("."));
 
 				io.write(outMaster, "\t\t\t[\"Filepath\"] = \"/");
 				if (path.getParent() != tree.getRoot()) {

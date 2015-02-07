@@ -27,13 +27,27 @@ public class LinkedMap<K, V> implements Map<K, V> {
 	private Entry head = null;
 
 	@Override
-	public int size() {
-		return lookUpMap.size();
+	public void clear() {
+		head = tail = null;
+		lookUpMap.clear();
 	}
 
 	@Override
-	public boolean isEmpty() {
-		return tail == null;
+	public V compute(final K key,
+			final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public V computeIfAbsent(final K key,
+			final Function<? super K, ? extends V> mappingFunction) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public V computeIfPresent(final K key,
+			final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -47,12 +61,49 @@ public class LinkedMap<K, V> implements Map<K, V> {
 	}
 
 	@Override
+	public Set<java.util.Map.Entry<K, V>> entrySet() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void forEach(final BiConsumer<? super K, ? super V> action) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public V get(final Object key) {
 		final Entry e = lookUpMap.get(key);
 		if (e == null) {
 			return null;
 		}
 		return e.value;
+	}
+
+	@Override
+	public V getOrDefault(final Object key, final V defaultValue) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return tail == null;
+	}
+
+	@Override
+	public Set<K> keySet() {
+		final Set<K> list = new ArraySetList<>();
+		Entry cur = head;
+		while (cur != null) {
+			list.add(cur.key);
+			cur = cur.next;
+		}
+		return list;
+	}
+
+	@Override
+	public V merge(final K key, final V value,
+			final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -76,11 +127,6 @@ public class LinkedMap<K, V> implements Map<K, V> {
 	}
 
 	@Override
-	public V remove(final Object key) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public void putAll(final Map<? extends K, ? extends V> m) {
 		for (final java.util.Map.Entry<? extends K, ? extends V> entry : m.entrySet()) {
 			final K key = entry.getKey();
@@ -94,39 +140,27 @@ public class LinkedMap<K, V> implements Map<K, V> {
 	}
 
 	@Override
-	public void clear() {
-		head = tail = null;
-		lookUpMap.clear();
-	}
-
-	@Override
-	public Set<K> keySet() {
-		final Set<K> list = new ArraySetList<>();
-		Entry cur = head;
-		while (cur != null) {
-			list.add(cur.key);
-			cur = cur.next;
-		}
-		return list;
-	}
-
-	@Override
-	public Collection<V> values() {
+	public V putIfAbsent(K key, V value) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Set<java.util.Map.Entry<K, V>> entrySet() {
+	public V remove(final Object key) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public V getOrDefault(final Object key, final V defaultValue) {
+	public boolean remove(final Object key, final Object value) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void forEach(final BiConsumer<? super K, ? super V> action) {
+	public V replace(final K key, final V value) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean replace(K key, V oldValue, V newValue) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -137,46 +171,12 @@ public class LinkedMap<K, V> implements Map<K, V> {
 	}
 
 	@Override
-	public V putIfAbsent(K key, V value) {
-		throw new UnsupportedOperationException();
+	public int size() {
+		return lookUpMap.size();
 	}
 
 	@Override
-	public boolean remove(final Object key, final Object value) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean replace(K key, V oldValue, V newValue) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public V replace(final K key, final V value) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public V computeIfAbsent(final K key,
-			final Function<? super K, ? extends V> mappingFunction) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public V computeIfPresent(final K key,
-			final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public V compute(final K key,
-			final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public V merge(final K key, final V value,
-			final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+	public Collection<V> values() {
 		throw new UnsupportedOperationException();
 	}
 

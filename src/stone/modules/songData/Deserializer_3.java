@@ -25,7 +25,7 @@ class Deserializer_3 extends Deserializer {
 
 	Deserializer_3(final SongDataContainer sdc) {
 		super(sdc);
-		final String entry = idx.getFileName().replace(".idx", "").replace(".zip", "");
+		final String entry = idx.getFilename().replace(".idx", "").replace(".zip", "");
 		inFile = idx.resolve("..", entry);
 		tmp = idx.getParent().resolve(entry + ".tmp");
 		final Set<String> zip = io.openZipIn(idx);
