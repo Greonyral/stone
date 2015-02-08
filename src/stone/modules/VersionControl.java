@@ -40,7 +40,6 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.FetchResult;
 import org.eclipse.jgit.transport.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.RefSpec;
@@ -842,7 +841,7 @@ public final class VersionControl implements Module {
 							SshTransport sshTransport = (SshTransport) transport;
 							sshTransport
 									.setSshSessionFactory(sshSessionFactory);
-							
+
 						}
 					});
 					// TODO adjust url
@@ -1051,9 +1050,7 @@ public final class VersionControl implements Module {
 
 			// remove lock
 			repoRoot.resolve(".git", "index.lock").delete();
-			// remove branches
-			gitSession.branchDelete()
-					.setBranchNames(BRANCH.value(), tmpBranchName).call();
+			
 			// set to remote head
 			io.startProgress("Checking out " + remoteHead.getName(), -1);
 			gitSession.checkout().setName(remoteHead.getName().substring(0, 8))
@@ -1061,6 +1058,12 @@ public final class VersionControl implements Module {
 			io.startProgress("Resetting local to remote head", -1);
 			gitSession.reset().setRef(remoteHead.getName())
 					.setMode(ResetType.HARD).call();
+
+			// remove possible old branches - active branch and the temporarily branch
+			gitSession.branchDelete().setForce(true)
+					.setBranchNames(BRANCH.value(), tmpBranchName).call();
+
+			// create and checkout active branch
 			gitSession.branchCreate().setName(BRANCH.value()).call();
 			gitSession.checkout().setName(BRANCH.value()).call();
 			io.endProgress();
@@ -1099,7 +1102,6 @@ public final class VersionControl implements Module {
 		}
 		final RevWalk walk = new RevWalk(gitSession.getRepository());
 		final RevCommit commitRemote = walk.parseCommit(remoteHead);
-
 		final RevCommit commitLocal = walk.parseCommit(localHead);
 
 		final String diffString;

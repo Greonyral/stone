@@ -48,7 +48,8 @@ abstract class Deserializer {
 			int version = in == null ? -1 : in.read();
 			switch (version) {
 			case 3:
-				instance = new Deserializer_0(sdc, master)
+				instance = new Deserializer_3(sdc);
+				/*
 				// TODO replace as soon decoder 0 is done
 				{
 					private final java.util.concurrent.atomic.AtomicInteger id = new java.util.concurrent.atomic.AtomicInteger(
@@ -70,13 +71,14 @@ abstract class Deserializer {
 
 					}
 				};
+				*/
 				break;
 			case 0:
 				instance = new Deserializer_0(sdc, master);
 				break;
 			case -1: // first run
 			default:
-				instance = new Deserializer_0(sdc, master);
+				instance = new Deserializer_3(sdc);
 			}
 			return instance;
 		} catch (final IOException e) {
