@@ -83,9 +83,10 @@ public abstract class AbstractInputStream extends InputStream {
 			_length += read;
 		}
 	}
-	
+
 	protected void finalize() {
-		io.close(this);
+		if (io != null)
+			io.close(this);
 	}
 
 	/**
