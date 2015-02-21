@@ -32,7 +32,7 @@ public class NoYesPlugin extends GUIPlugin {
 			final GUIInterface guiInterface, boolean progress) {
 		this.title = title;
 		this.message = message;
-		gui = guiInterface;
+		this.gui = guiInterface;
 		this.progress = progress;
 	}
 
@@ -40,7 +40,7 @@ public class NoYesPlugin extends GUIPlugin {
 	 * @return true if yes was activated
 	 */
 	public final boolean get() {
-		return gui.getPressedButton() == GUI.Button.YES;
+		return this.gui.getPressedButton() == GUI.Button.YES;
 	}
 
 	/** */
@@ -49,15 +49,15 @@ public class NoYesPlugin extends GUIPlugin {
 		final JPanel panelButton = new JPanel();
 		final JTextArea text = new JTextArea();
 		text.setEditable(false);
-		text.setText(message);
+		text.setText(this.message);
 		panel.setLayout(new BorderLayout());
 		panelButton.setLayout(new BorderLayout());
 		panel.add(panelButton, BorderLayout.SOUTH);
 		panel.add(text);
 		panelButton.add(GUI.Button.NO.getButton(), BorderLayout.EAST);
 		panelButton.add(GUI.Button.YES.getButton(), BorderLayout.WEST);
-		if (progress) {
-			panel.add(gui.getProgressBar(), BorderLayout.NORTH);
+		if (this.progress) {
+			panel.add(this.gui.getProgressBar(), BorderLayout.NORTH);
 		}
 		return false;
 	}
@@ -65,7 +65,7 @@ public class NoYesPlugin extends GUIPlugin {
 	/** */
 	@Override
 	protected final String getTitle() {
-		return title;
+		return this.title;
 	}
 
 }

@@ -25,27 +25,27 @@ public abstract class GUIPlugin {
 	 * @return the title of this GUIPlugin
 	 */
 	protected abstract String getTitle();
-	
+
 	protected void lockResize() {
-		gui.setResizable(false);
-	}
-	
-	/**
-	 * Requests the gui to repack and resize frame to Dimesion d
-	 */
-	protected void repack(final Dimension d) {
-		if (gui != null) {
-			gui.revalidate(true, false);
-			gui.setFrameSize(d);
-		}
+		this.gui.setResizable(false);
 	}
 
 	/**
 	 * Requests the gui to repack
 	 */
 	protected void repack() {
-		if (gui != null) {
-			gui.revalidate(true, false);
+		if (this.gui != null) {
+			this.gui.revalidate(true, false);
+		}
+	}
+
+	/**
+	 * Requests the gui to repack and resize frame to Dimesion d
+	 */
+	protected void repack(final Dimension d) {
+		if (this.gui != null) {
+			this.gui.revalidate(true, false);
+			this.gui.setFrameSize(d);
 		}
 	}
 
@@ -55,8 +55,8 @@ public abstract class GUIPlugin {
 	}
 
 	final void endDisplay() {
-		gui.setResizable(true);
-		gui = null;
+		this.gui.setResizable(true);
+		this.gui = null;
 	}
 
 }

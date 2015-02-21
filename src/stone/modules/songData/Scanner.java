@@ -74,33 +74,19 @@ public final class Scanner implements Runnable {
 	/** */
 	@Override
 	public final void run() {
-		while (!master.isInterrupted() && parseSongs());
-	}
-
-	private final boolean parseSongs() {
-		final ModEntry song;
-		synchronized (sdd) {
-			song = sdd.pollFromQueue();
+		while (!this.master.isInterrupted() && parseSongs()) {
+			;
 		}
-		if (song == null)
-			return false;
-		final SongData voices = getVoices(song);
-		try {
-			sdd.serialize(voices);
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
-		return true;
 	}
 
 	private final SongData getVoices(final ModEntry song) {
-		final SongData songdata = tree.get(song.getKey());
+		final SongData songdata = this.tree.get(song.getKey());
 		if ((songdata == null)
 				|| (songdata.getLastModification() != song.getValue())) {
 			final Path songFile = song.getKey();
 
 			final Map<String, String> voices = new HashMap<>();
-			final InputStream songContent = io.openIn(songFile.toFile(),
+			final InputStream songContent = this.io.openIn(songFile.toFile(),
 					FileSystem.DEFAULT_CHARSET);
 
 			try {
@@ -109,7 +95,7 @@ public final class Scanner implements Runnable {
 				try {
 					line = songContent.readLine();
 				} catch (final IOException e) {
-					io.handleException(ExceptionHandle.TERMINATE, e);
+					this.io.handleException(ExceptionHandle.TERMINATE, e);
 					return null;
 				}
 				boolean error = false;
@@ -125,7 +111,8 @@ public final class Scanner implements Runnable {
 							line = songContent.readLine();
 							++lineNumber;
 						} catch (final IOException e) {
-							io.handleException(ExceptionHandle.TERMINATE, e);
+							this.io.handleException(ExceptionHandle.TERMINATE,
+									e);
 						}
 						if ((line == null) || !line.startsWith("T:")) {
 							Debug.print("%s\n",
@@ -144,7 +131,8 @@ public final class Scanner implements Runnable {
 								line = songContent.readLine();
 								++lineNumber;
 							} catch (final IOException e) {
-								io.handleException(ExceptionHandle.TERMINATE, e);
+								this.io.handleException(
+										ExceptionHandle.TERMINATE, e);
 							}
 							if (line == null) {
 								break;
@@ -173,26 +161,43 @@ public final class Scanner implements Runnable {
 						line = songContent.readLine();
 						++lineNumber;
 					} catch (final IOException e) {
-						io.handleException(ExceptionHandle.TERMINATE, e);
+						this.io.handleException(ExceptionHandle.TERMINATE, e);
 					}
 				}
 				if (error) {
 					return null;
 				}
 				if (voices.isEmpty()) {
-					io.printError(String.format("Warning: %-50s %s", song
+					this.io.printError(String.format("Warning: %-50s %s", song
 							.getKey().toString(), "has no voices"), true);
 				}
 				final SongData sd = SongData.create(song, voices);
 				synchronized (song) {
-					tree.put(sd);
+					this.tree.put(sd);
 				}
 
 				return sd;
 			} finally {
-				io.close(songContent);
+				this.io.close(songContent);
 			}
 		}
 		return songdata;
+	}
+
+	private final boolean parseSongs() {
+		final ModEntry song;
+		synchronized (this.sdd) {
+			song = this.sdd.pollFromQueue();
+		}
+		if (song == null) {
+			return false;
+		}
+		final SongData voices = getVoices(song);
+		try {
+			this.sdd.serialize(voices);
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+		return true;
 	}
 }

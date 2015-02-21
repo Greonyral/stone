@@ -33,30 +33,30 @@ public class FileSelectionGUIPlugin extends GUIPlugin {
 		this.title = title;
 		this.startDir = startDir;
 		this.filter = filter;
-		mode = JFileChooser.FILES_ONLY;
+		this.mode = JFileChooser.FILES_ONLY;
 	}
 
 	/**
 	 * @return the path of selected file
 	 */
 	public final Path getSelection() {
-		if (selected == null) {
+		if (this.selected == null) {
 			return null;
 		}
-		return Path.getPath(selected.toString().split(
+		return Path.getPath(this.selected.toString().split(
 				"\\" + FileSystem.getFileSeparator()));
 	}
 
 	/** */
 	@Override
 	protected final boolean display(final JPanel panel) {
-		final JFileChooser fileChooser = new JFileChooser(startDir);
-		fileChooser.setDialogTitle(title);
-		fileChooser.setFileFilter(filter);
-		fileChooser.setFileSelectionMode(mode);
+		final JFileChooser fileChooser = new JFileChooser(this.startDir);
+		fileChooser.setDialogTitle(this.title);
+		fileChooser.setFileFilter(this.filter);
+		fileChooser.setFileSelectionMode(this.mode);
 		final int ret = fileChooser.showOpenDialog(panel);
 		if (ret == JFileChooser.APPROVE_OPTION) {
-			selected = fileChooser.getSelectedFile();
+			this.selected = fileChooser.getSelectedFile();
 		}
 		synchronized (GUI.Button.class) {
 			GUI.Button.class.notifyAll();
@@ -67,7 +67,7 @@ public class FileSelectionGUIPlugin extends GUIPlugin {
 	/** */
 	@Override
 	protected final String getTitle() {
-		return title;
+		return this.title;
 	}
 
 }

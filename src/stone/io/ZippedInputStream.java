@@ -24,15 +24,22 @@ public final class ZippedInputStream extends AbstractInputStream {
 	 *            file to read from
 	 * @param cs
 	 *            charset used for encoding
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	public ZippedInputStream(final ZipFile zip, final ZipEntry entry) throws IOException {
+	public ZippedInputStream(final ZipFile zip, final ZipEntry entry)
+			throws IOException {
 		super(new byte[0x8000]);
-		_zip = new ZipFile(zip.getName()); // ensure my ZipFile stays open 
-		_in = _zip.getInputStream(_zip.getEntry(entry.getName()));
+		this._zip = new ZipFile(zip.getName()); // ensure my ZipFile stays open
+		this._in = this._zip
+				.getInputStream(this._zip.getEntry(entry.getName()));
 	}
 
 
+	@Override
+	public final int available() throws IOException {
+		return this._in.available();
+
+	}
 
 	/**
 	 * Not supported
@@ -45,21 +52,17 @@ public final class ZippedInputStream extends AbstractInputStream {
 	public final long skip(long n) {
 		throw new UnsupportedOperationException();
 	}
-	
-	public final int available() throws IOException {
-		return _in.available();
-		
-	}
 
 
 	@Override
 	protected final void fillBuff() throws IOException {
-		super.fillBuffByStream(_in);
+		super.fillBuffByStream(this._in);
 	}
-	
+
+	@Override
 	protected final void finalize() {
 		try {
-			_zip.close();
+			this._zip.close();
 		} catch (final IOException e) {
 		}
 	}

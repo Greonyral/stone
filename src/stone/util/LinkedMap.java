@@ -28,12 +28,13 @@ public class LinkedMap<K, V> implements Map<K, V> {
 
 	@Override
 	public void clear() {
-		head = tail = null;
-		lookUpMap.clear();
+		this.head = this.tail = null;
+		this.lookUpMap.clear();
 	}
 
 	@Override
-	public V compute(final K key,
+	public V compute(
+			final K key,
 			final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
 		throw new UnsupportedOperationException();
 	}
@@ -45,19 +46,20 @@ public class LinkedMap<K, V> implements Map<K, V> {
 	}
 
 	@Override
-	public V computeIfPresent(final K key,
+	public V computeIfPresent(
+			final K key,
 			final BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public boolean containsKey(final Object key) {
-		return lookUpMap.containsKey(key);
+		return this.lookUpMap.containsKey(key);
 	}
 
 	@Override
 	public boolean containsValue(final Object value) {
-		return lookUpMap.containsValue(value);
+		return this.lookUpMap.containsValue(value);
 	}
 
 	@Override
@@ -72,7 +74,7 @@ public class LinkedMap<K, V> implements Map<K, V> {
 
 	@Override
 	public V get(final Object key) {
-		final Entry e = lookUpMap.get(key);
+		final Entry e = this.lookUpMap.get(key);
 		if (e == null) {
 			return null;
 		}
@@ -86,13 +88,13 @@ public class LinkedMap<K, V> implements Map<K, V> {
 
 	@Override
 	public boolean isEmpty() {
-		return tail == null;
+		return this.tail == null;
 	}
 
 	@Override
 	public Set<K> keySet() {
 		final Set<K> list = new ArraySetList<>();
-		Entry cur = head;
+		Entry cur = this.head;
 		while (cur != null) {
 			list.add(cur.key);
 			cur = cur.next;
@@ -101,7 +103,9 @@ public class LinkedMap<K, V> implements Map<K, V> {
 	}
 
 	@Override
-	public V merge(final K key, final V value,
+	public V merge(
+			final K key,
+			final V value,
 			final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
 		throw new UnsupportedOperationException();
 	}
@@ -109,15 +113,15 @@ public class LinkedMap<K, V> implements Map<K, V> {
 	@Override
 	public V put(final K key, final V value) {
 		final Entry newEntry = new Entry(key, value);
-		if (tail == null) {
-			head = tail = newEntry;
-			lookUpMap.put(key, tail);
+		if (this.tail == null) {
+			this.head = this.tail = newEntry;
+			this.lookUpMap.put(key, this.tail);
 			return null;
 		} else {
-			final Entry oldEntry = lookUpMap.put(key, newEntry);
+			final Entry oldEntry = this.lookUpMap.put(key, newEntry);
 			if (oldEntry == null) {
-				tail.next = newEntry;
-				tail = tail.next;
+				this.tail.next = newEntry;
+				this.tail = this.tail.next;
 				return null;
 			} else {
 				oldEntry.value = value;
@@ -128,13 +132,14 @@ public class LinkedMap<K, V> implements Map<K, V> {
 
 	@Override
 	public void putAll(final Map<? extends K, ? extends V> m) {
-		for (final java.util.Map.Entry<? extends K, ? extends V> entry : m.entrySet()) {
+		for (final java.util.Map.Entry<? extends K, ? extends V> entry : m
+				.entrySet()) {
 			final K key = entry.getKey();
 			final Entry newEntry = new Entry(key, entry.getValue());
-			final Entry old = lookUpMap.put(key, newEntry);
+			final Entry old = this.lookUpMap.put(key, newEntry);
 			if (old == null) {
-				tail.next = newEntry;
-				tail = tail.next;
+				this.tail.next = newEntry;
+				this.tail = this.tail.next;
 			}
 		}
 	}
@@ -172,7 +177,7 @@ public class LinkedMap<K, V> implements Map<K, V> {
 
 	@Override
 	public int size() {
-		return lookUpMap.size();
+		return this.lookUpMap.size();
 	}
 
 	@Override

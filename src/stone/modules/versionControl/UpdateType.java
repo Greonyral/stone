@@ -33,13 +33,13 @@ public enum UpdateType {
 	 * @return first part of the question
 	 */
 	public final String getQuestionPart0() {
-		return p0;
+		return this.p0;
 	}
 
 	/**
 	 * @return secind part of the question
 	 */
 	public final String getQuestionPart1() {
-		return p1;
+		return this.p1;
 	}
 }

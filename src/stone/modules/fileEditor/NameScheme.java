@@ -22,12 +22,12 @@ public class NameScheme {
 
 		@Override
 		public final String toString() {
-			return s;
+			return this.s;
 		}
 
 		@Override
 		final void print(final StringBuilder sb) {
-			sb.append(s);
+			sb.append(this.s);
 		}
 	}
 
@@ -35,10 +35,8 @@ public class NameScheme {
 		sb.append(idcs);
 	}
 
-	final static StringBuilder printInstrumentName(
-			final InstrumentType type) {
-		final StringBuilder name =
-				new StringBuilder(type.name().toLowerCase());
+	final static StringBuilder printInstrumentName(final InstrumentType type) {
+		final StringBuilder name = new StringBuilder(type.name().toLowerCase());
 		name.setCharAt(0, name.substring(0, 1).toUpperCase().charAt(0));
 		return name;
 	}
@@ -64,17 +62,17 @@ public class NameScheme {
 
 				@Override
 				final void print(final StringBuilder sb, int track) {
-					NameScheme.printIdx(sb, indices.get(track));
+					NameScheme.printIdx(sb, NameScheme.this.indices.get(track));
 				}
 
-			}, TOTAL_NUM = new Variable("TOTAL_NUM"),
-			TITLE = new Variable("TITLE"), MOD_DATE = new Variable(
-					"MOD_DATE"), INSTRUMENT = new Variable("INSTRUMENT") {
+			}, TOTAL_NUM = new Variable("TOTAL_NUM"), TITLE = new Variable(
+					"TITLE"), MOD_DATE = new Variable("MOD_DATE"),
+			INSTRUMENT = new Variable("INSTRUMENT") {
 
 				@Override
 				final void print(final StringBuilder sb, int track) {
 					boolean first = true;
-					for (final Instrument i : map.get(track)) {
+					for (final Instrument i : NameScheme.this.map.get(track)) {
 						if (!first) {
 							sb.append(", ");
 						} else {
@@ -86,8 +84,7 @@ public class NameScheme {
 			};
 	private final Map<String, Variable> variables = buildVariableMap();
 
-	private final ArrayDeque<NameSchemeElement> elements =
-			new ArrayDeque<>();
+	private final ArrayDeque<NameSchemeElement> elements = new ArrayDeque<>();
 
 	private final Map<InstrumentType, Integer> countMap = new HashMap<>();
 
@@ -97,54 +94,50 @@ public class NameScheme {
 	 * @param string
 	 * @throws InvalidNameSchemeException
 	 */
-	public NameScheme(final String string)
-			throws InvalidNameSchemeException {
+	public NameScheme(final String string) throws InvalidNameSchemeException {
 		int pos = 0;
 		int[] idcs = null;
 		while (pos < string.length()) {
 			final char c = string.charAt(pos);
 			switch (c) {
-				case '}':
-					++pos;
-					idcs = null;
-					continue;
-				case '$':
-					if (idcs != null) {
-						throw new InvalidNameSchemeException();
+			case '}':
+				++pos;
+				idcs = null;
+				continue;
+			case '$':
+				if (idcs != null) {
+					throw new InvalidNameSchemeException();
+				}
+				final int endIdx = string.indexOf('{', pos);
+				final String idx = string.substring(pos + 1, endIdx);
+				final String[] idcsS = idx.split(",");
+				idcs = new int[idcsS.length];
+				for (int i = 0; i < idcs.length; i++) {
+					idcs[i] = Integer.parseInt(idcsS[i]);
+				}
+				pos = endIdx + 1;
+				continue;
+			case '%':
+				final Variable v;
+				int end = pos;
+				do {
+					final String variableTmp = string.substring(pos, ++end);
+					final Variable vTmp = this.variables.get(variableTmp);
+					if (vTmp != null) {
+						v = vTmp;
+						pos = end;
+						break;
 					}
-					final int endIdx = string.indexOf('{', pos);
-					final String idx = string.substring(pos + 1, endIdx);
-					final String[] idcsS = idx.split(",");
-					idcs = new int[idcsS.length];
-					for (int i = 0; i < idcs.length; i++) {
-						idcs[i] = Integer.parseInt(idcsS[i]);
-					}
-					pos = endIdx + 1;
-					continue;
-				case '%':
-					final Variable v;
-					int end = pos;
-					do {
-						final String variableTmp =
-								string.substring(pos, ++end);
-						final Variable vTmp = variables.get(variableTmp);
-						if (vTmp != null) {
-							v = vTmp;
-							pos = end;
-							break;
-						}
-					} while (true);
-					if (idcs != null) {
-						elements.add(v.dep(idcs));
-					} else {
-						elements.add(v);
-					}
-					continue;
+				} while (true);
+				if (idcs != null) {
+					this.elements.add(v.dep(idcs));
+				} else {
+					this.elements.add(v);
+				}
+				continue;
 			}
-			final int[] ends =
-					new int[] { string.indexOf('%', pos),
-							string.indexOf('$', pos),
-							string.indexOf('}', pos) };
+			final int[] ends = new int[] { string.indexOf('%', pos),
+					string.indexOf('$', pos), string.indexOf('}', pos) };
 			int end = string.length();
 			for (final int endI : ends) {
 				if (endI >= 0) {
@@ -158,7 +151,7 @@ public class NameScheme {
 				constant = string.substring(pos, end);
 			}
 			pos += constant.length();
-			elements.add(new Constant(constant, idcs));
+			this.elements.add(new Constant(constant, idcs));
 		}
 	}
 
@@ -169,7 +162,7 @@ public class NameScheme {
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		for (final NameSchemeElement e : elements) {
+		for (final NameSchemeElement e : this.elements) {
 			sb.append(e.toString());
 		}
 		return sb.toString();
@@ -177,18 +170,18 @@ public class NameScheme {
 
 	private final Map<String, Variable> buildVariableMap() {
 		final Map<String, Variable> map_ = new HashMap<>();
-		map_.put("%title", TITLE);
-		map_.put("%index", PART_NUM);
-		map_.put("%total", TOTAL_NUM);
-		map_.put("%duration", DURATION);
-		map_.put("%mod", MOD_DATE);
-		map_.put("%instrument", INSTRUMENT);
+		map_.put("%title", this.TITLE);
+		map_.put("%index", this.PART_NUM);
+		map_.put("%total", this.TOTAL_NUM);
+		map_.put("%duration", this.DURATION);
+		map_.put("%mod", this.MOD_DATE);
+		map_.put("%instrument", this.INSTRUMENT);
 		return map_;
 	}
 
 
 	final void duration(final String duration) {
-		DURATION.value(duration);
+		this.DURATION.value(duration);
 	}
 
 	final void instrument(final Map<Integer, Set<Instrument>> instruments) {
@@ -196,41 +189,40 @@ public class NameScheme {
 		for (final Set<Instrument> is : instruments.values()) {
 			for (final Instrument i : is) {
 				if (i.uniqueIdx()) {
-					final Integer countOld = countMap.get(i.type());
+					final Integer countOld = this.countMap.get(i.type());
 					if (countOld == null) {
-						countMap.put(i.type(), 1);
+						this.countMap.put(i.type(), 1);
 					} else {
-						countMap.put(i.type(), countOld.intValue() + 1);
+						this.countMap.put(i.type(), countOld.intValue() + 1);
 					}
 					++countTotal;
 				}
 			}
 		}
-		TOTAL_NUM.value(String.valueOf(countTotal));
-		map.putAll(instruments);
+		this.TOTAL_NUM.value(String.valueOf(countTotal));
+		this.map.putAll(instruments);
 	}
 
 	final void mod(final String mod) {
-		MOD_DATE.value(mod);
+		this.MOD_DATE.value(mod);
 	}
 
 	final boolean needsDuration() {
-		return elements.contains(DURATION);
+		return this.elements.contains(this.DURATION);
 	}
 
 	final boolean needsMod() {
-		return elements.contains(MOD_DATE);
+		return this.elements.contains(this.MOD_DATE);
 	}
 
 	final void partNum(final Map<Integer, String> newIndices) {
 		int seq = 1;
-		for (final Map.Entry<Integer, String> entry : newIndices
-				.entrySet()) {
+		for (final Map.Entry<Integer, String> entry : newIndices.entrySet()) {
 			if (entry.getValue().isEmpty()) {
-				indices.put(entry.getKey(), Integer.valueOf(seq)
+				this.indices.put(entry.getKey(), Integer.valueOf(seq)
 						.toString());
 			} else {
-				indices.put(entry.getKey(), entry.getValue());
+				this.indices.put(entry.getKey(), entry.getValue());
 			}
 			seq++;
 		}
@@ -239,28 +231,28 @@ public class NameScheme {
 
 	final String print(int track) {
 		final StringBuilder sb = new StringBuilder();
-		for (final NameSchemeElement e : elements) {
+		for (final NameSchemeElement e : this.elements) {
 			e.print(sb, track);
 		}
 		return sb.toString();
 	}
 
 	final void reset() {
-		DURATION.clear();
-		TITLE.clear();
-		MOD_DATE.clear();
-		TOTAL_NUM.value("0");
-		PART_NUM.clear();
-		map.clear();
-		countMap.clear();
-		indices.clear();
+		this.DURATION.clear();
+		this.TITLE.clear();
+		this.MOD_DATE.clear();
+		this.TOTAL_NUM.value("0");
+		this.PART_NUM.clear();
+		this.map.clear();
+		this.countMap.clear();
+		this.indices.clear();
 	}
 
 	final void title(final String title) {
-		TITLE.value(title);
+		this.TITLE.value(title);
 	}
 
 	final void totalNum(int total) {
-		TOTAL_NUM.value(String.valueOf(total));
+		this.TOTAL_NUM.value(String.valueOf(total));
 	}
 }

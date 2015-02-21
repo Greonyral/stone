@@ -33,6 +33,27 @@ public class SongDataContainer implements Container {
 		return new SongDataContainer(sc);
 	}
 
+	public static Map<Integer, String> readExternal(final InputStream is,
+			final DeserializeContainer in) throws IOException {
+		int parts = in.readSize(is);
+		final Map<Integer, String> voices = new TreeMap<>();
+		while (parts-- > 0) {
+			final int id = in.readSize(is);
+			final String value = in.read(is);
+			voices.put(id, value);
+		}
+		return voices;
+	}
+
+	public static void writeExternal(final Map<Integer, String> voices,
+			final SerializeConainer out) throws IOException {
+		out.writeSize(voices.size());
+		for (final Map.Entry<Integer, String> entry : voices.entrySet()) {
+			out.writeSize(entry.getKey().intValue());
+			out.write(entry.getValue());
+		}
+	}
+
 	@SuppressWarnings("unused")
 	private final static void cleanUp(final StringBuilder title_i) {
 		int i = title_i.indexOf("]");
@@ -54,16 +75,16 @@ public class SongDataContainer implements Container {
 	 * @param sc
 	 */
 	public SongDataContainer(final StartupContainer sc) {
-		io = sc.getIO();
-		taskPool = sc.getTaskPool();
-		master = sc.getMaster();
+		this.io = sc.getIO();
+		this.taskPool = sc.getTaskPool();
+		this.master = sc.getMaster();
 		final String home = sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
 				Main.PATH_KEY, null);
 		assert home != null;
 		final Path basePath = Path.getPath(home.split("/")).resolve("Music");
 		if (!basePath.exists()) {
 			if (!basePath.getParent().exists() || !basePath.toFile().mkdir()) {
-				io.printError(
+				this.io.printError(
 						Main.formatMaxLength(
 								basePath,
 								null,
@@ -72,50 +93,51 @@ public class SongDataContainer implements Container {
 						false);
 			}
 		}
-		tree = new DirTree(basePath);
+		this.tree = new DirTree(basePath);
 	}
 
 	/**
 	 * fills the container
 	 */
 	public final void fill() {
-		if (master.isInterrupted()) {
+		if (this.master.isInterrupted()) {
 			return;
 		}
-		Debug.print("Searching for songs at \"" + tree.getRoot() + "\".\n");
+		Debug.print("Searching for songs at \"" + this.tree.getRoot() + "\".\n");
 
-		final Deserializer sdd = Deserializer.init(this, master);
-		final Scanner scanner = new Scanner(master, sdd, tree);
+		final Deserializer sdd = Deserializer.init(this, this.master);
+		final Scanner scanner = new Scanner(this.master, sdd, this.tree);
 		final Crawler crawler = new Crawler(sdd);
 		final Runnable taskDeserial = sdd.getDeserialTask();
-		
+
 		if (taskDeserial == null) {
-			taskPool.addTaskForAll(crawler, 30);
-			taskPool.addTaskForAll(scanner);
+			this.taskPool.addTaskForAll(crawler, 30);
+			this.taskPool.addTaskForAll(scanner);
 			try {
 				sdd.deserialize();
 			} catch (final IOException e) {
-				master.interrupt();
+				this.master.interrupt();
 				e.printStackTrace();
 				sdd.abort();
 			}
 		} else {
-			taskPool.addTaskForAll(taskDeserial, 75);
-			taskPool.addTaskForAll(crawler, 25);
-			taskPool.addTaskForAll(scanner);
+			this.taskPool.addTaskForAll(taskDeserial, 75);
+			this.taskPool.addTaskForAll(crawler, 25);
+			this.taskPool.addTaskForAll(scanner);
 		}
-		
+
 		crawler.run();
 		scanner.run();
-		taskPool.waitForTasks();
-		if (master.isInterrupted()) {
+		this.taskPool.waitForTasks();
+		if (this.master.isInterrupted()) {
 			sdd.abort();
 			return;
-		} else
+		} else {
 			sdd.finish();
+		}
 
 		for (final AbtractEoWInAbc e : AbtractEoWInAbc.messages.values()) {
-			io.printError(e.printMessage(), true);
+			this.io.printError(e.printMessage(), true);
 		}
 
 		Debug.print("%4d songs found -", sdd.songsFound());
@@ -128,8 +150,8 @@ public class SongDataContainer implements Container {
 	 * @return directories at given directory
 	 */
 	public final String[] getDirs(final Path directory) {
-		final Set<String> dirs = tree.getDirs(directory);
-		if (directory == tree.getRoot()) {
+		final Set<String> dirs = this.tree.getDirs(directory);
+		if (directory == this.tree.getRoot()) {
 			return dirs.toArray(new String[dirs.size()]);
 		}
 		final String[] array = dirs.toArray(new String[dirs.size() + 1]);
@@ -144,14 +166,14 @@ public class SongDataContainer implements Container {
 	 * @return the used IO-Handler
 	 */
 	public final IOHandler getIOHandler() {
-		return io;
+		return this.io;
 	}
 
 	/**
 	 * @return the base of relative paths
 	 */
 	public final Path getRoot() {
-		return tree.getRoot();
+		return this.tree.getRoot();
 	}
 
 	/**
@@ -161,7 +183,7 @@ public class SongDataContainer implements Container {
 	 * @return songs at given directory
 	 */
 	public final String[] getSongs(final Path directory) {
-		final Set<String> files = tree.getFiles(directory);
+		final Set<String> files = this.tree.getFiles(directory);
 		return files.toArray(new String[files.size()]);
 	}
 
@@ -170,7 +192,7 @@ public class SongDataContainer implements Container {
 	 * @return the songs of given song
 	 */
 	public final SongData getVoices(final Path song) {
-		return tree.get(song);
+		return this.tree.get(song);
 	}
 
 	/**
@@ -179,7 +201,7 @@ public class SongDataContainer implements Container {
 	 * @return container size
 	 */
 	public final int size() {
-		return tree.getFilesCount();
+		return this.tree.getFilesCount();
 	}
 
 	/**
@@ -192,89 +214,72 @@ public class SongDataContainer implements Container {
 	public final void writeNewSongbookData(final File masterPluginData) {
 		final OutputStream outMaster;
 
-		outMaster = io.openOut(masterPluginData);
+		outMaster = this.io.openOut(masterPluginData);
 		try {
 			// head
-			io.write(outMaster, "return\r\n{\r\n");
+			this.io.write(outMaster, "return\r\n{\r\n");
 
 			// section dirs
-			io.write(outMaster, "\t[\"Directories\"] =\r\n\t{\r\n");
-			final Iterator<Path> dirIterator = tree.dirsIterator();
+			this.io.write(outMaster, "\t[\"Directories\"] =\r\n\t{\r\n");
+			final Iterator<Path> dirIterator = this.tree.dirsIterator();
 			if (dirIterator.hasNext()) {
-				io.write(outMaster, "\t\t[1] = \"/\"");
+				this.io.write(outMaster, "\t\t[1] = \"/\"");
 				for (int dirIdx = 2; dirIterator.hasNext(); dirIdx++) {
-					io.writeln(outMaster, ",");
-					io.write(outMaster, "\t\t[" + dirIdx + "] = \"/"
-							+ dirIterator.next().relativize(tree.getRoot())
-							+ "/\"");
+					this.io.writeln(outMaster, ",");
+					this.io.write(outMaster, "\t\t["
+							+ dirIdx
+							+ "] = \"/"
+							+ dirIterator.next()
+									.relativize(this.tree.getRoot()) + "/\"");
 				}
-				io.writeln(outMaster, "");
+				this.io.writeln(outMaster, "");
 			}
-			io.writeln(outMaster, "\t},");
+			this.io.writeln(outMaster, "\t},");
 
 			// section songs
-			io.writeln(outMaster, "\t[\"Songs\"] =");
+			this.io.writeln(outMaster, "\t[\"Songs\"] =");
 			int songIdx = 0;
 
-			final Iterator<Path> songsIterator = tree.filesIterator();
+			final Iterator<Path> songsIterator = this.tree.filesIterator();
 			while (songsIterator.hasNext()) {
 				final Path path = songsIterator.next();
-				final SongData song = tree.get(path);
+				final SongData song = this.tree.get(path);
 				if (songIdx++ == 0) {
-					io.writeln(outMaster, "\t{");
+					this.io.writeln(outMaster, "\t{");
 				} else {
-					io.writeln(outMaster, "\t\t},");
+					this.io.writeln(outMaster, "\t\t},");
 				}
 
-				io.writeln(outMaster, "\t\t[" + songIdx + "] =");
-				io.writeln(outMaster, "\t\t{");
+				this.io.writeln(outMaster, "\t\t[" + songIdx + "] =");
+				this.io.writeln(outMaster, "\t\t{");
 				final String name;
 				name = path.getFilename().substring(0,
 						path.getFilename().lastIndexOf("."));
 
-				io.write(outMaster, "\t\t\t[\"Filepath\"] = \"/");
-				if (path.getParent() != tree.getRoot()) {
-					io.write(outMaster,
-							path.getParent().relativize(tree.getRoot()));
-					io.write(outMaster, "/");
+				this.io.write(outMaster, "\t\t\t[\"Filepath\"] = \"/");
+				if (path.getParent() != this.tree.getRoot()) {
+					this.io.write(outMaster,
+							path.getParent().relativize(this.tree.getRoot()));
+					this.io.write(outMaster, "/");
 				}
-				io.writeln(outMaster, "\",");
-				io.writeln(outMaster, "\t\t\t[\"Filename\"] = \"" + name
+				this.io.writeln(outMaster, "\",");
+				this.io.writeln(outMaster, "\t\t\t[\"Filename\"] = \"" + name
 						+ "\",");
-				io.writeln(outMaster, "\t\t\t[\"Tracks\"] = ");
-				io.write(outMaster, song.toPluginData());
-				io.updateProgress();
+				this.io.writeln(outMaster, "\t\t\t[\"Tracks\"] = ");
+				this.io.write(outMaster, song.toPluginData());
+				this.io.updateProgress();
 			}
 
 			// tail
-			io.writeln(outMaster, "\t\t}");
-			io.writeln(outMaster, "\t}");
-			io.write(outMaster, "}");
+			this.io.writeln(outMaster, "\t\t}");
+			this.io.writeln(outMaster, "\t}");
+			this.io.write(outMaster, "}");
 		} finally {
-			io.close(outMaster);
+			this.io.close(outMaster);
 		}
 	}
 
 	final DirTree getDirTree() {
-		return tree;
-	}
-
-	public static void writeExternal(final Map<Integer, String> voices, final SerializeConainer out) throws IOException {
-		out.writeSize(voices.size());
-		for (final Map.Entry<Integer, String> entry : voices.entrySet()) {
-			out.writeSize(entry.getKey().intValue());
-			out.write(entry.getValue());
-		}
-	}
-
-	public static Map<Integer, String> readExternal(final InputStream is, final DeserializeContainer in) throws IOException {
-		int parts = in.readSize(is);
-		final Map<Integer, String> voices = new TreeMap<>();
-		while (parts-- > 0) {
-			final int id = in.readSize(is);
-			final String value = in.read(is);
-			voices.put(id, value);
-		}
-		return voices;
+		return this.tree;
 	}
 }

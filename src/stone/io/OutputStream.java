@@ -55,6 +55,6 @@ public class OutputStream extends FileOutputStream {
 	 *             if an error occurs
 	 */
 	public final void write(final String string) throws IOException {
-		write(string.getBytes(cs));
+		write(string.getBytes(this.cs));
 	}
 }

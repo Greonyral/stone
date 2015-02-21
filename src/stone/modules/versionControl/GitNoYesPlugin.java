@@ -16,23 +16,22 @@ public final class GitNoYesPlugin extends NoYesPlugin {
 	private final JCheckBox box;
 
 	public GitNoYesPlugin(final String title, final String message,
-			final GUIInterface guiInterface, boolean progress,
-			boolean showBox) {
+			final GUIInterface guiInterface, boolean progress, boolean showBox) {
 		super(title, message, guiInterface, progress);
 		this.showBox = showBox;
 		if (!showBox) {
-			box = null;
+			this.box = null;
 		} else {
-			box = new JCheckBox("encrypt");
+			this.box = new JCheckBox("encrypt");
 		}
 	}
 
 	public final boolean encrypt() {
-		return showBox && box.isSelected();
+		return this.showBox && this.box.isSelected();
 	}
 
 	public final void preSelectEncryption() {
-		box.setSelected(true);
+		this.box.setSelected(true);
 	}
 
 	@Override
@@ -40,15 +39,15 @@ public final class GitNoYesPlugin extends NoYesPlugin {
 		final JPanel panelButton = new JPanel();
 		final JTextArea text = new JTextArea();
 		text.setEditable(false);
-		text.setText(message);
+		text.setText(this.message);
 		panel.setLayout(new BorderLayout());
 		panelButton.setLayout(new BorderLayout());
 		panel.add(panelButton, BorderLayout.SOUTH);
 		panel.add(text);
 		panelButton.add(GUI.Button.NO.getButton(), BorderLayout.EAST);
 		panelButton.add(GUI.Button.YES.getButton(), BorderLayout.WEST);
-		if (progress) {
-			panel.add(gui.getProgressBar(), BorderLayout.NORTH);
+		if (this.progress) {
+			panel.add(this.gui.getProgressBar(), BorderLayout.NORTH);
 		}
 		return false;
 	}

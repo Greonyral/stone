@@ -36,7 +36,7 @@ public enum ExceptionHandle {
 	 *         shall be printed to log only
 	 */
 	public final boolean suppress() {
-		return suppress;
+		return this.suppress;
 	}
 
 	/**
@@ -45,6 +45,6 @@ public enum ExceptionHandle {
 	 * @return <i>true</i> if program shall be aborted
 	 */
 	public final boolean terminate() {
-		return abort;
+		return this.abort;
 	}
 }

@@ -21,7 +21,7 @@ class Variable extends NameSchemeElement {
 
 		@Override
 		public final String toString() {
-			return s;
+			return Variable.this.s;
 		}
 
 		@Override
@@ -49,16 +49,16 @@ class Variable extends NameSchemeElement {
 
 	@Override
 	public final int hashCode() {
-		return s.hashCode() ^ super.hashCode();
+		return this.s.hashCode() ^ super.hashCode();
 	}
 
 	@Override
 	public final String toString() {
-		return s;
+		return this.s;
 	}
 
 	final void clear() {
-		value = null;
+		this.value = null;
 	}
 
 	final NameSchemeElement dep(final int[] indices) {
@@ -67,7 +67,7 @@ class Variable extends NameSchemeElement {
 
 	@Override
 	final void print(final StringBuilder sb) {
-		sb.append(value);
+		sb.append(this.value);
 	}
 
 	final void value(final String value) {

@@ -9,32 +9,33 @@ final class TempoChangeState {
 	private final int ticks;
 	final double minutes;
 
-	TempoChangeState(final MidiParserImpl midiParser,
-			final TempoChange tc, final TempoChangeState last) {
+	TempoChangeState(final MidiParserImpl midiParser, final TempoChange tc,
+			final TempoChangeState last) {
 		this.midiParser = midiParser;
-		microsPerQuarter = tc.tempo;
-		ticks = this.midiParser.d.tmp += tc.delta;
+		this.microsPerQuarter = tc.tempo;
+		this.ticks = this.midiParser.d.tmp += tc.delta;
 		if (last == null) {
 			if (tc.delta == 0) {
-				minutes = 0;
+				this.minutes = 0;
 			} else {
 				// generate default
-				minutes = this.midiParser.d.getMinutes(tc.delta);
+				this.minutes = this.midiParser.d.getMinutes(tc.delta);
 			}
 		} else {
-			minutes = last.minutes + last.getMinutes(ticks - last.ticks);
+			this.minutes = last.minutes
+					+ last.getMinutes(this.ticks - last.ticks);
 		}
 	}
 
 	@Override
 	public final String toString() {
-		return minutes + "@" + ticks + "[" + microsPerQuarter + "]";
+		return this.minutes + "@" + this.ticks + "[" + this.microsPerQuarter
+				+ "]";
 	}
 
 	final double getMinutes(int deltaTicks) {
-		final double quarters =
-				(double) deltaTicks
-						/ (double) midiParser.deltaTicksPerQuarter;
-		return (quarters * microsPerQuarter) / 6e7;
+		final double quarters = (double) deltaTicks
+				/ (double) this.midiParser.deltaTicksPerQuarter;
+		return (quarters * this.microsPerQuarter) / 6e7;
 	}
 }

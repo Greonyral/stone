@@ -8,7 +8,7 @@ final class Break extends MidiEvent {
 
 	@Override
 	public final String toString() {
-		return delta + " NOP";
+		return this.delta + " NOP";
 	}
 
 	@Override

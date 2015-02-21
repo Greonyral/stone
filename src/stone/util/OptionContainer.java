@@ -52,9 +52,10 @@ public class OptionContainer {
 	public final void addOption(final String id, final String tooltip,
 			char shortFlag, final String longFlag, boolean argExpected,
 			final Option option) {
-		flags.registerOption(id, tooltip, shortFlag, longFlag, argExpected);
-		options.put(id, option);
-		final String valueOfFlag = flags.getValue(id);
+		this.flags
+				.registerOption(id, tooltip, shortFlag, longFlag, argExpected);
+		this.options.put(id, option);
+		final String valueOfFlag = this.flags.getValue(id);
 		if (valueOfFlag != null) {
 			option.setByFlagValue(valueOfFlag);
 		}
@@ -66,7 +67,7 @@ public class OptionContainer {
 	 * @param values
 	 */
 	public final void copyValues(final Map<String, String> values) {
-		flags.setValue(values);
+		this.flags.setValue(values);
 	}
 
 	/**
@@ -74,9 +75,10 @@ public class OptionContainer {
 	 * options
 	 */
 	public final void setValuesByParsedFlags() {
-		for (final Map.Entry<String, Option> entry : options.entrySet()) {
-			if (flags.isEnabled(entry.getKey())) {
-				entry.getValue().value(flags.getValue(entry.getKey()));
+		for (final Map.Entry<String, Option> entry : this.options.entrySet()) {
+			if (this.flags.isEnabled(entry.getKey())) {
+				entry.getValue().setByFlagValue(
+						this.flags.getValue(entry.getKey()));
 			}
 		}
 
@@ -91,7 +93,7 @@ public class OptionContainer {
 	 */
 	final String getConfigValue(final String section, final String key,
 			final String defaultValue) {
-		return main.getConfigValue(section, key, defaultValue);
+		return this.main.getConfigValue(section, key, defaultValue);
 	}
 
 	/**
@@ -104,7 +106,7 @@ public class OptionContainer {
 	 */
 	final void setConfigValue(final String section, final String key,
 			final String value) {
-		main.setConfigValue(section, key, value);
+		this.main.setConfigValue(section, key, value);
 	}
 
 }

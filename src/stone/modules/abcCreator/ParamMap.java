@@ -10,17 +10,15 @@ import stone.modules.midiData.MidiInstrumentDropTarget;
 
 class ParamMap {
 
-	private final static DoubleMap<MidiInstrumentDropTarget, ParamSet, Track> instrument =
-			new DoubleMap<>();
+	private final static DoubleMap<MidiInstrumentDropTarget, ParamSet, Track> instrument = new DoubleMap<>();
 
 	private final static Map<Integer, Object> trackMap = new HashMap<>();
 	private final static Set<Object> unassignedTracks = new HashSet<>();
-	private final static Map<MidiInstrumentDropTarget, Track> instrumentToTrackMap =
-			new HashMap<>();
+	private final static Map<MidiInstrumentDropTarget, Track> instrumentToTrackMap = new HashMap<>();
 
 	public final static Track parseParams(
-			final MidiInstrumentDropTarget instrument,
-			final String[] params) throws Exception {
+			final MidiInstrumentDropTarget instrument, final String[] params)
+			throws Exception {
 
 		final Integer id;
 
@@ -95,8 +93,9 @@ class ParamMap {
 	public static final void setTracks(final Map<Integer, ?> trackMap) {
 		ParamMap.trackMap.clear();
 		for (final Map.Entry<Integer, ?> entry : trackMap.entrySet()) {
-			ParamMap.trackMap.put(Integer.valueOf(entry.getKey()
-					.intValue() + 1), entry.getValue());
+			ParamMap.trackMap.put(
+					Integer.valueOf(entry.getKey().intValue() + 1),
+					entry.getValue());
 		}
 		ParamMap.unassignedTracks.clear();
 		ParamMap.unassignedTracks.addAll(trackMap.values());

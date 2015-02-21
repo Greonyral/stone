@@ -11,8 +11,7 @@ import javax.swing.JPanel;
 /**
  * @author Nelphindal
  */
-class Track implements Comparable<Track>,
-		DragObject<JPanel, JPanel, JPanel> {
+class Track implements Comparable<Track>, DragObject<JPanel, JPanel, JPanel> {
 
 	public final static BruteParams<?>[] getParams() {
 		return BruteParams.valuesLocal();
@@ -21,8 +20,7 @@ class Track implements Comparable<Track>,
 	private final int idBrute;
 
 	private final String name;
-	private final Set<DropTarget<JPanel, JPanel, JPanel>> targets =
-			new HashSet<>();
+	private final Set<DropTarget<JPanel, JPanel, JPanel>> targets = new HashSet<>();
 	private final Set<Track> aliases;
 	private final Track original;
 
@@ -40,47 +38,47 @@ class Track implements Comparable<Track>,
 	 *            as in the midi
 	 */
 	public Track(int idInBrute, int idInMidi, final String name) {
-		idBrute = idInBrute;
+		this.idBrute = idInBrute;
 		if (name == null) {
 			this.name = "<Track " + idInMidi + ">";
 		} else {
 			this.name = name;
 		}
-		aliases = new HashSet<>();
-		original = null;
+		this.aliases = new HashSet<>();
+		this.original = null;
 
-		panel.setLayout(new BorderLayout());
+		this.panel.setLayout(new BorderLayout());
 	}
 
 	private Track(final Track track) {
-		idBrute = track.idBrute;
-		name = track.name;
-		aliases = null;
-		original = track;
+		this.idBrute = track.idBrute;
+		this.name = track.name;
+		this.aliases = null;
+		this.original = track;
 		track.aliases.add(this);
-		panel.setLayout(new BorderLayout());
+		this.panel.setLayout(new BorderLayout());
 	}
 
 	/** */
 	@Override
 	public final boolean addTarget(
 			final DropTarget<JPanel, JPanel, JPanel> target) {
-		if (c != target.getContainer()) {
-			c = target.getContainer();
+		if (this.c != target.getContainer()) {
+			this.c = target.getContainer();
 		}
-		if (targets.size() == 4) {
+		if (this.targets.size() == 4) {
 			return false;
 		}
-		targets.add(target);
+		this.targets.add(target);
 		return true;
 	}
 
 	/** */
 	@Override
 	public Iterator<DropTarget<JPanel, JPanel, JPanel>> clearTargets() {
-		final Iterator<DropTarget<JPanel, JPanel, JPanel>> t =
-				new HashSet<>(targets).iterator();
-		targets.clear();
+		final Iterator<DropTarget<JPanel, JPanel, JPanel>> t = new HashSet<>(
+				this.targets).iterator();
+		this.targets.clear();
 		BruteParams.clear();
 		return t;
 	}
@@ -90,8 +88,8 @@ class Track implements Comparable<Track>,
 	 */
 	@Override
 	public final Track clone() {
-		if (original != null) {
-			return original.clone();
+		if (this.original != null) {
+			return this.original.clone();
 		}
 		return new Track(this);
 	}
@@ -101,28 +99,28 @@ class Track implements Comparable<Track>,
 	 */
 	@Override
 	public final int compareTo(final Track o) {
-		return idBrute - o.idBrute;
+		return this.idBrute - o.idBrute;
 	}
 
 	/** */
 	@Override
 	public final void forgetAlias() {
-		original.aliases.remove(this);
+		this.original.aliases.remove(this);
 	}
 
 	/**  */
 	@Override
 	public final DragObject<JPanel, JPanel, JPanel>[] getAliases() {
-		if (original != null) {
-			return original.getAliases();
+		if (this.original != null) {
+			return this.original.getAliases();
 		}
-		return aliases.toArray(new Track[aliases.size()]);
+		return this.aliases.toArray(new Track[this.aliases.size()]);
 
 	}
 
 	@Override
 	public final JPanel getDisplayableComponent() {
-		return panel;
+		return this.panel;
 	}
 
 	/**
@@ -130,44 +128,43 @@ class Track implements Comparable<Track>,
 	 */
 	@Override
 	public final int getId() {
-		return idBrute;
+		return this.idBrute;
 	}
 
 	/** */
 	@Override
 	public final String getName() {
-		return name;
+		return this.name;
 	}
 
 	/** */
 	@Override
 	public final DragObject<JPanel, JPanel, JPanel> getOriginal() {
-		return original;
+		return this.original;
 	}
 
 	/** */
 	@Override
-	public final DropTargetContainer<JPanel, JPanel, JPanel>
-			getTargetContainer() {
-		return c;
+	public final DropTargetContainer<JPanel, JPanel, JPanel> getTargetContainer() {
+		return this.c;
 	}
 
 	@Override
 	public final int getTargets() {
-		return targets.size();
+		return this.targets.size();
 	}
 
 
 	/** */
 	@Override
 	public final boolean isAlias() {
-		return aliases == null;
+		return this.aliases == null;
 	}
 
 	/** */
 	@Override
 	public final Iterator<DropTarget<JPanel, JPanel, JPanel>> iterator() {
-		return targets.iterator();
+		return this.targets.iterator();
 	}
 
 
@@ -176,7 +173,7 @@ class Track implements Comparable<Track>,
 	 */
 	@Override
 	public final String toString() {
-		return idBrute + " " + name + " " + targets;
+		return this.idBrute + " " + this.name + " " + this.targets;
 	}
 
 

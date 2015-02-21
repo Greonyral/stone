@@ -22,8 +22,8 @@ final class DirMouseListener implements MouseListener {
 	private final JPanel panel;
 	private final JScrollPane scroll;
 
-	DirMouseListener(FileEditorPlugin fileEditorPlugin, String[] dirs,
-			Path p, String[] songs, JPanel panel, JScrollPane scroll) {
+	DirMouseListener(FileEditorPlugin fileEditorPlugin, String[] dirs, Path p,
+			String[] songs, JPanel panel, JScrollPane scroll) {
 		this.fileEditorPlugin = fileEditorPlugin;
 		this.dirs = dirs;
 		this.p = p;
@@ -54,16 +54,16 @@ final class DirMouseListener implements MouseListener {
 
 	@Override
 	public final void mouseReleased(final MouseEvent e) {
-		panel.removeAll();
-		if (fileEditorPlugin.currentDir.getParent() == p) {
+		this.panel.removeAll();
+		if (this.fileEditorPlugin.currentDir.getParent() == this.p) {
 			boolean all = true;
 			final Set<Path> paths = new HashSet<>();
-			for (final String dir : dirs) {
-				final Path p_ = fileEditorPlugin.currentDir.resolve(dir);
-				if (p_ == fileEditorPlugin.currentDir.getParent()) {
+			for (final String dir : this.dirs) {
+				final Path p_ = this.fileEditorPlugin.currentDir.resolve(dir);
+				if (p_ == this.fileEditorPlugin.currentDir.getParent()) {
 					continue;
 				}
-				if (!fileEditorPlugin.selection.contains(p_)) {
+				if (!this.fileEditorPlugin.selection.contains(p_)) {
 					all = false;
 					break;
 				}
@@ -71,10 +71,10 @@ final class DirMouseListener implements MouseListener {
 
 			}
 			if (all) {
-				for (final String song : songs) {
-					final Path path =
-							fileEditorPlugin.currentDir.resolve(song);
-					if (!fileEditorPlugin.selection.contains(path)) {
+				for (final String song : this.songs) {
+					final Path path = this.fileEditorPlugin.currentDir
+							.resolve(song);
+					if (!this.fileEditorPlugin.selection.contains(path)) {
 						all = false;
 						break;
 					}
@@ -82,27 +82,28 @@ final class DirMouseListener implements MouseListener {
 				}
 			}
 			if (all) {
-				fileEditorPlugin.selection.removeAll(paths);
-				fileEditorPlugin.selection
-						.add(fileEditorPlugin.currentDir);
+				this.fileEditorPlugin.selection.removeAll(paths);
+				this.fileEditorPlugin.selection
+						.add(this.fileEditorPlugin.currentDir);
 			}
-		} else if (fileEditorPlugin.selection.remove(p)) {
-			fileEditorPlugin.selection.remove(p);
-			for (final String dir : fileEditorPlugin.fileEditor.getDirs(p)) {
+		} else if (this.fileEditorPlugin.selection.remove(this.p)) {
+			this.fileEditorPlugin.selection.remove(this.p);
+			for (final String dir : this.fileEditorPlugin.fileEditor
+					.getDirs(this.p)) {
 				if (dir.equals("..")) {
 					continue;
 				}
-				fileEditorPlugin.selection.add(p.resolve(dir));
+				this.fileEditorPlugin.selection.add(this.p.resolve(dir));
 			}
-			for (final String song : fileEditorPlugin.fileEditor
-					.getFiles(p)) {
-				fileEditorPlugin.selection.add(p.resolve(song));
+			for (final String song : this.fileEditorPlugin.fileEditor
+					.getFiles(this.p)) {
+				this.fileEditorPlugin.selection.add(this.p.resolve(song));
 			}
 		}
-		fileEditorPlugin.currentDir = p;
-		fileEditorPlugin.displayDir(panel, scroll);
-		panel.revalidate();
+		this.fileEditorPlugin.currentDir = this.p;
+		this.fileEditorPlugin.displayDir(this.panel, this.scroll);
+		this.panel.revalidate();
 
-		fileEditorPlugin.repack();
+		this.fileEditorPlugin.repack();
 	}
 }

@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
 import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.eclipse.jgit.api.CheckoutCommand;
@@ -50,10 +51,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.util.FS;
 
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-
+import stone.Config;
 import stone.MasterThread;
 import stone.StartupContainer;
 import stone.io.ExceptionHandle;
@@ -73,6 +71,10 @@ import stone.util.OptionContainer;
 import stone.util.Path;
 import stone.util.StringOption;
 
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+
 /**
  * The class handling all interaction with the jgit library
  * 
@@ -80,13 +82,17 @@ import stone.util.StringOption;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 9;
+	private final static int VERSION = 10;
 
 	private final static String SECTION = Main.VC_SECTION;
 
-	private static final String DEFAULT_GIT_URL_SSH = "git@github.com:Greonyral/lotro-songs.git";
+	private static final String URL_HTTPS_KEY = "url_https";
 
-	private static final String DEFAULT_GIT_URL_HTTPS = "https://github.com/Greonyral/lotro-songs.git";
+	private static final String DEFAULT_GIT_URL_SSH = stone.Config
+			.getInstance().getValue("url_ssh");
+
+	private static final String DEFAULT_GIT_URL_HTTPS = stone.Config
+			.getInstance().getValue(URL_HTTPS_KEY);
 
 	private static final String AES_KEY = "aes-key";
 
@@ -96,7 +102,7 @@ public final class VersionControl implements Module {
 			final OptionContainer oc, final String key, boolean defaultValue,
 			final String label, final String tooltip, boolean store) {
 		return VersionControl.createBooleanOption(oc, key, Flag.NoShortFlag,
-				Flag.NoLongFlag, defaultValue, label, tooltip, store);
+				key, defaultValue, label, tooltip, store);
 	}
 
 	private static final BooleanOption createBooleanOption(
@@ -154,21 +160,21 @@ public final class VersionControl implements Module {
 	 * Constructor for building versionInfo
 	 */
 	public VersionControl() {
-		io = null;
-		GIT_URL_SSH = null;
-		GIT_URL_HTTPS = null;
-		PWD = null;
-		EMAIL = null;
-		USERNAME = null;
-		BRANCH = null;
-		COMMIT = null;
-		DIFF = null;
-		RESET = null;
-		USE_SSH = null;
-		VC_DIR = null;
-		master = null;
-		repoRoot = base = null;
-		main = null;
+		this.io = null;
+		this.GIT_URL_SSH = null;
+		this.GIT_URL_HTTPS = null;
+		this.PWD = null;
+		this.EMAIL = null;
+		this.USERNAME = null;
+		this.BRANCH = null;
+		this.COMMIT = null;
+		this.DIFF = null;
+		this.RESET = null;
+		this.USE_SSH = null;
+		this.VC_DIR = null;
+		this.master = null;
+		this.repoRoot = this.base = null;
+		this.main = null;
 	}
 
 	/**
@@ -186,28 +192,28 @@ public final class VersionControl implements Module {
 			}
 		}
 		oc = sc.getOptionContainer();
-		io = sc.getIO();
-		GIT_URL_SSH = VersionControl.createStringOption(oc, "url_ssh",
+		this.io = sc.getIO();
+		this.GIT_URL_SSH = VersionControl.createStringOption(oc, "url_ssh",
 				VersionControl.DEFAULT_GIT_URL_SSH, Flag.NoShortFlag,
 				"git-url-ssh",
 				"Changes the url to use when using ssh to connect");
-		GIT_URL_HTTPS = VersionControl.createStringOption(oc, "url_https",
+		this.GIT_URL_HTTPS = VersionControl.createStringOption(oc, "url_https",
 				VersionControl.DEFAULT_GIT_URL_HTTPS, Flag.NoShortFlag,
 				"git-url-https",
 				"Changes the url to use when using https to connect");
-		PWD = VersionControl
+		this.PWD = VersionControl
 				.createPwdOption(oc, "github-pwd", "Password at github",
 						"Changes the password to login at github");
-		EMAIL = VersionControl.createStringOption(oc, "email", null,
+		this.EMAIL = VersionControl.createStringOption(oc, "email", null,
 				"Changes the email supplied as part of commit messages",
 				"Email");
-		USERNAME = VersionControl.createStringOption(oc, "login", null,
+		this.USERNAME = VersionControl.createStringOption(oc, "login", null,
 				"The login name at remote repository, default github",
 				"Username");
-		BRANCH = VersionControl.createStringOption(oc, "branch", "master",
+		this.BRANCH = VersionControl.createStringOption(oc, "branch", "master",
 				Flag.NoShortFlag, "branch",
 				"Changes the working branch to work on");
-		COMMIT = VersionControl
+		this.COMMIT = VersionControl
 				.createBooleanOption(
 						oc,
 						"commit",
@@ -216,17 +222,17 @@ public final class VersionControl implements Module {
 						false,
 						"Commits changes in local repository und uploads them to remote repository",
 						"Commit", false);
-		DIFF = VersionControl.createBooleanOption(oc, "diff", false,
+		this.DIFF = VersionControl.createBooleanOption(oc, "diff", false,
 				"Displays differences after downloading changes", "Show diffs",
 				false);
-		RESET = VersionControl
+		this.RESET = VersionControl
 				.createBooleanOption(
 						oc,
 						"reset",
 						false,
-						"Discards uncommited changes, the working branch will be set to default branch",
+						"Discards uncommited changes and unlocks any locks created by git clients. The working branch will be set to default branch.",
 						"RESET", false);
-		USE_SSH = VersionControl
+		this.USE_SSH = VersionControl
 				.createBooleanOption(
 						oc,
 						"use_ssh",
@@ -235,7 +241,7 @@ public final class VersionControl implements Module {
 						false,
 						"Uses ssh protocol for connections. This option should be used only on Unix",
 						"SSH", true);
-		VC_DIR = VersionControl
+		this.VC_DIR = VersionControl
 				.createStringOption(
 						oc,
 						"repo",
@@ -246,45 +252,45 @@ public final class VersionControl implements Module {
 								+ Main.GLOBAL_SECTION
 								+ " at key "
 								+ Main.PATH_KEY);
-		master = sc.getMaster();
-		main = sc.getMain();
-		repoRoot = base = null;
+		this.master = sc.getMaster();
+		this.main = sc.getMain();
+		this.repoRoot = this.base = null;
 	}
 
 	private VersionControl(final VersionControl vc) {
-		main = vc.main;
-		final String baseValue = main.getConfigValue(Main.GLOBAL_SECTION,
+		this.main = vc.main;
+		final String baseValue = this.main.getConfigValue(Main.GLOBAL_SECTION,
 				Main.PATH_KEY, null);
-		io = vc.io;
-		GIT_URL_SSH = vc.GIT_URL_SSH;
-		GIT_URL_HTTPS = vc.GIT_URL_HTTPS;
-		RESET = vc.RESET;
-		EMAIL = vc.EMAIL;
-		USERNAME = vc.USERNAME;
-		BRANCH = vc.BRANCH;
-		PWD = vc.PWD;
-		DIFF = vc.DIFF;
-		COMMIT = vc.COMMIT;
-		USE_SSH = vc.USE_SSH;
-		VC_DIR = vc.VC_DIR;
-		master = vc.master;
-		base = Path.getPath(baseValue.split("/")).resolve("Music");
-		repoRoot = base.resolve(main.getConfigValue(Main.VC_SECTION,
-				Main.REPO_KEY, "band").split("/"));
+		this.io = vc.io;
+		this.GIT_URL_SSH = vc.GIT_URL_SSH;
+		this.GIT_URL_HTTPS = vc.GIT_URL_HTTPS;
+		this.RESET = vc.RESET;
+		this.EMAIL = vc.EMAIL;
+		this.USERNAME = vc.USERNAME;
+		this.BRANCH = vc.BRANCH;
+		this.PWD = vc.PWD;
+		this.DIFF = vc.DIFF;
+		this.COMMIT = vc.COMMIT;
+		this.USE_SSH = vc.USE_SSH;
+		this.VC_DIR = vc.VC_DIR;
+		this.master = vc.master;
+		this.base = Path.getPath(baseValue.split("/")).resolve("Music");
+		this.repoRoot = this.base.resolve(this.main.getConfigValue(
+				Main.VC_SECTION, Main.REPO_KEY, "band").split("/"));
 	}
 
 	/** */
 	@Override
 	public final List<Option> getOptions() {
 		final List<Option> list = new ArrayList<>();
-		list.add(EMAIL);
-		if (!USE_SSH.getValue()) {
-			list.add(USERNAME);
-			list.add(PWD);
+		list.add(this.EMAIL);
+		if (!this.USE_SSH.getValue()) {
+			list.add(this.USERNAME);
+			list.add(this.PWD);
 		}
-		list.add(DIFF);
-		list.add(COMMIT);
-		list.add(RESET);
+		list.add(this.DIFF);
+		list.add(this.COMMIT);
+		list.add(this.RESET);
 		return list;
 	}
 
@@ -305,7 +311,7 @@ public final class VersionControl implements Module {
 	 */
 	@Override
 	public final void repair() {
-		final String baseValue = main.getConfigValue(Main.GLOBAL_SECTION,
+		final String baseValue = this.main.getConfigValue(Main.GLOBAL_SECTION,
 				Main.PATH_KEY, null);
 		if (baseValue == null) {
 			System.out
@@ -313,7 +319,7 @@ public final class VersionControl implements Module {
 			return;
 		}
 		final Path base_ = Path.getPath(baseValue.split("/")).resolve("Music");
-		final Path repoRoot_ = base_.resolve(main.getConfigValue(
+		final Path repoRoot_ = base_.resolve(this.main.getConfigValue(
 				Main.VC_SECTION, Main.REPO_KEY, "band"));
 		if (repoRoot_.exists()) {
 			final NoYesPlugin plugin = new NoYesPlugin(
@@ -321,9 +327,9 @@ public final class VersionControl implements Module {
 					repoRoot_
 							+ "\nand all its contents will be deleted. You can\n"
 							+ "answer with NO and delete only the data used for git",
-					io.getGUI(), false);
-			synchronized (io) {
-				io.handleGUIPlugin(plugin);
+					this.io.getGUI(), false);
+			synchronized (this.io) {
+				this.io.handleGUIPlugin(plugin);
 			}
 			if (plugin.get()) {
 				final boolean success = repoRoot_.delete();
@@ -338,35 +344,39 @@ public final class VersionControl implements Module {
 	 */
 	@Override
 	public final void run() {
-		if (master.isInterrupted()) {
+		if (this.master.isInterrupted()) {
 			return;
 		}
 
-		final String name = main.getConfigValue(Main.GLOBAL_SECTION,
+		final String name = this.main.getConfigValue(Main.GLOBAL_SECTION,
 				Main.NAME_KEY, null);
 		final Git gitSession_band;
 
-		final String branch = BRANCH.value();
-		final boolean ssh = USE_SSH.getValue();
-		final String remoteURL = (ssh ? GIT_URL_SSH : GIT_URL_HTTPS).value();
+		final String branch = this.BRANCH.value();
+		final boolean ssh = this.USE_SSH.getValue();
+		final String remoteURL = (ssh ? this.GIT_URL_SSH : this.GIT_URL_HTTPS)
+				.value();
 		try {
-			if (!repoRoot.resolve(".git").exists()) {
+			if (!this.repoRoot.resolve(".git").exists()) {
 				checkoutBand();
 				final long end = System.currentTimeMillis();
 				System.out.println("needed "
-						+ stone.util.Time.delta(end - start) + " for clone");
-				if (!repoRoot.resolve(".git").exists()) {
+						+ stone.util.Time.delta(end - this.start)
+						+ " for clone");
+				if (!this.repoRoot.resolve(".git").exists()) {
 					gitSession_band = null;
 				} else {
-					gitSession_band = Git.open(repoRoot.toFile());
+					gitSession_band = Git.open(this.repoRoot.toFile());
 				}
 			} else {
 				Git git = null;
 				try {
-					git = Git.open(repoRoot.toFile());
+					git = Git.open(this.repoRoot.toFile());
 				} catch (final Exception e) {
-					if (!RESET.getValue())
-						io.printError("failed to open the repository", false);
+					if (!this.RESET.getValue()) {
+						this.io.printError("failed to open the repository",
+								false);
+					}
 
 				}
 				gitSession_band = git;
@@ -375,26 +385,26 @@ public final class VersionControl implements Module {
 			reset(gitSession_band);
 
 			if (gitSession_band != null) {
-				if (COMMIT.getValue()) {
-					if (EMAIL.value() == null) {
-						io.printError("For commits a valid email is needed",
-								false);
+				if (this.COMMIT.getValue()) {
+					if (this.EMAIL.value() == null) {
+						this.io.printError(
+								"For commits a valid email is needed", false);
 						return;
 					}
 					if ((name == null) || name.isEmpty()) {
-						io.printError("For commits a valid name is needed",
-								false);
+						this.io.printError(
+								"For commits a valid name is needed", false);
 						return;
 					}
-					if (!USE_SSH.getValue()) {
-						if (PWD.value() == null) {
-							io.printError(
+					if (!this.USE_SSH.getValue()) {
+						if (this.PWD.value() == null) {
+							this.io.printError(
 									"For commits a valid password is needed",
 									false);
 							return;
 						}
-						if (USERNAME.value() == null) {
-							io.printError(
+						if (this.USERNAME.value() == null) {
+							this.io.printError(
 									"For commits a valid username is needed",
 									false);
 							return;
@@ -404,19 +414,21 @@ public final class VersionControl implements Module {
 				final StoredConfig config = gitSession_band.getRepository()
 						.getConfig();
 				config.setString("user", null, "name", name);
-				config.setString("user", null, "email", EMAIL.value());
-				config.setString("branch", branch, "merge", "refs/heads/"
-						+ branch);
-				config.setString("branch", branch, "remote", "origin");
-				config.setString("remote", "origin", "url", remoteURL);
+				config.setString("user", null, "email", this.EMAIL.value());
+				if (!this.RESET.getValue()) {
+					config.setString("branch", branch, "merge", "refs/heads/"
+							+ branch);
+					config.setString("branch", branch, "remote", "origin");
+					config.setString("remote", "origin", "url", remoteURL);
+				}
 				config.save();
 			}
 		} catch (final JGitInternalException | IOException | GitAPIException e) {
-			io.handleException(ExceptionHandle.CONTINUE, e);
+			this.io.handleException(ExceptionHandle.CONTINUE, e);
 			return;
 		}
 		try {
-			if (master.isInterrupted()) {
+			if (this.master.isInterrupted()) {
 				return;
 			}
 			gotoBand(gitSession_band);
@@ -440,70 +452,57 @@ public final class VersionControl implements Module {
 				.getUntracked().toString(), status.getMissing().toString(),
 				status.getAdded().toString(), status.getChanged().toString(),
 				status.getRemoved().toString());
-		final StagePlugin stage = new StagePlugin(status, COMMIT.getValue(),
-				repoRoot, master);
-		io.handleGUIPlugin(stage);
+		final StagePlugin stage = new StagePlugin(status,
+				this.COMMIT.getValue(), this.repoRoot, this.master);
+		this.io.handleGUIPlugin(stage);
 		if (stage.doCommit(gitSession)) {
 			final RevCommit commitRet = commit(gitSession);
 
-			io.printMessage(
+			this.io.printMessage(
 					null,
 					"commit: "
 							+ commitRet.getFullMessage()
 							+ "\nStarting to upload changes after checking remote repository for changes",
 					false);
 		}
-		if (master.isInterrupted())
+		if (this.master.isInterrupted()) {
 			return;
+		}
 		update(gitSession);
-		if (COMMIT.getValue()) {
+		if (this.COMMIT.getValue()) {
 			push(gitSession);
 		}
 	}
 
-	private final RevCommit commit(final Git gitSession)
-			throws NoHeadException, NoMessageException, UnmergedPathsException,
-			ConcurrentRefUpdateException, WrongRepositoryStateException,
-			GitAPIException {
-		final CommitCommand commit = gitSession.commit();
-
-		commit.setAuthor(
-				main.getConfigValue(Main.GLOBAL_SECTION, Main.NAME_KEY, null),
-				EMAIL.value());
-		commit.setMessage("update " + commit.getAuthor().getName() + ", "
-				+ new Date(System.currentTimeMillis()));
-
-		return commit.call();
-	}
-
 	private final void checkoutBand() {
 		final NoYesPlugin plugin = new NoYesPlugin("Local repository "
-				+ repoRoot.getFilename() + " does not exist",
-				Main.formatMaxLength(repoRoot, null, "The directory ",
+				+ this.repoRoot.getFilename() + " does not exist",
+				Main.formatMaxLength(this.repoRoot, null, "The directory ",
 						" does not exist or is no git-repository.\n")
 						+ "It can take a while to create it. Continue?",
-				io.getGUI(), false);
-		io.handleGUIPlugin(plugin);
-		start = System.currentTimeMillis();
+				this.io.getGUI(), false);
+		this.io.handleGUIPlugin(plugin);
+		this.start = System.currentTimeMillis();
 		if (!plugin.get()) {
 			return;
 		}
-		repoRoot.getParent().toFile().mkdirs();
+		this.repoRoot.getParent().toFile().mkdirs();
 		try {
-			Git.init().setDirectory(repoRoot.toFile()).call();
+			Git.init().setDirectory(this.repoRoot.toFile()).call();
 		} catch (final GitAPIException e) {
-			io.handleException(ExceptionHandle.CONTINUE, e);
+			this.io.handleException(ExceptionHandle.CONTINUE, e);
 			return;
 		}
 
 		try {
-			final Git gitSession = Git.open(repoRoot.toFile());
+			final Git gitSession = Git.open(this.repoRoot.toFile());
 			final StoredConfig config = gitSession.getRepository().getConfig();
 			config.setString("remote", "origin", "url",
 					VersionControl.DEFAULT_GIT_URL_HTTPS);
-			config.setString("branch", BRANCH.value(), "remote", BRANCH.value());
-			config.setString("branch", BRANCH.value(), "merge", "+refs/heads/"
-					+ BRANCH.value());
+			config.setString("branch", this.BRANCH.value(), "remote",
+					this.BRANCH.value());
+			config.setString("branch", this.BRANCH.value(), "merge",
+					"+refs/heads/" + this.BRANCH.value());
 			config.save();
 
 			final ObjectId remoteHead = getRemoteHead(gitSession);
@@ -518,12 +517,12 @@ public final class VersionControl implements Module {
 
 			diffs = diffCommand.call();
 
-			io.startProgress("checking out", diffs.size());
+			this.io.startProgress("checking out", diffs.size());
 
 			for (final DiffEntry diff : diffs) {
 				if (diff.getChangeType() != ChangeType.DELETE) {
-					io.setProgressTitle("checking out ...");
-					io.updateProgress(1);
+					this.io.setProgressTitle("checking out ...");
+					this.io.updateProgress(1);
 					continue;
 				}
 				final String file0 = diff.getOldPath();
@@ -534,36 +533,50 @@ public final class VersionControl implements Module {
 				} else {
 					file = file0;
 				}
-				io.setProgressTitle("checking out " + file);
+				this.io.setProgressTitle("checking out " + file);
 				// unstage to make checkout working
 				gitSession.reset().setRef(remoteHead.getName()).addPath(file)
 						.call();
 				final CheckoutCommand checkout = gitSession.checkout().addPath(
 						file);
-				final boolean existing = repoRoot.resolve(file).exists();
+				final boolean existing = this.repoRoot.resolve(file).exists();
 				if (existing) {
-					final String old = repoRoot.resolve(file).createBackup(
-							"_old");
+					final String old = this.repoRoot.resolve(file)
+							.createBackup("_old");
 					if (old == null) {
-						io.printError("failed to checkout " + old, true);
-						io.updateProgress(1);
+						this.io.printError("failed to checkout " + old, true);
+						this.io.updateProgress(1);
 						continue;
 					}
-					io.printError(
+					this.io.printError(
 							String.format("%-40s renamed to %s\n", file, old),
 							true);
 				}
 				checkout.call();
 
-				io.updateProgress(1);
+				this.io.updateProgress(1);
 			}
 
-			io.endProgress();
+			this.io.endProgress();
 		} catch (final GitAPIException | IOException e) {
-			repoRoot.resolve(".git").delete();
-			io.handleException(ExceptionHandle.CONTINUE, e);
+			this.repoRoot.resolve(".git").delete();
+			this.io.handleException(ExceptionHandle.CONTINUE, e);
 			return;
 		}
+	}
+
+	private final RevCommit commit(final Git gitSession)
+			throws NoHeadException, NoMessageException, UnmergedPathsException,
+			ConcurrentRefUpdateException, WrongRepositoryStateException,
+			GitAPIException {
+		final CommitCommand commit = gitSession.commit();
+
+		commit.setAuthor(this.main.getConfigValue(Main.GLOBAL_SECTION,
+				Main.NAME_KEY, null), this.EMAIL.value());
+		commit.setMessage("update " + commit.getAuthor().getName() + ", "
+				+ new Date(System.currentTimeMillis()));
+
+		return commit.call();
 	}
 
 	private final String diff(final RevWalk walk, final RevCommit commitOld,
@@ -658,9 +671,9 @@ public final class VersionControl implements Module {
 					false);
 		}
 		for (final String deleted : encodedDeleted) {
-			repoRoot.resolve(deleted.substring(4)).delete();
-			repoRoot.resolve(deleted.substring(4).replace(".abc", ".enc.abc"))
-					.delete();
+			this.repoRoot.resolve(deleted.substring(4)).delete();
+			this.repoRoot.resolve(
+					deleted.substring(4).replace(".abc", ".enc.abc")).delete();
 		}
 		return sbHead.append(sbBody.toString()).toString();
 
@@ -669,14 +682,14 @@ public final class VersionControl implements Module {
 	private final void encrypt(final String source, final String target,
 			boolean encrypt) {
 		final AESEngine engine = new AESEngine();
-		final String savedKey = main.getConfigValue(Main.VC_SECTION,
+		final String savedKey = this.main.getConfigValue(Main.VC_SECTION,
 				VersionControl.AES_KEY, null);
 		final byte[] key;
 		if (savedKey == null) {
 			final SecretKeyPlugin secretKeyPlugin = new SecretKeyPlugin();
-			io.handleGUIPlugin(secretKeyPlugin);
+			this.io.handleGUIPlugin(secretKeyPlugin);
 			key = secretKeyPlugin.getKey();
-			main.setConfigValue(Main.VC_SECTION, VersionControl.AES_KEY,
+			this.main.setConfigValue(Main.VC_SECTION, VersionControl.AES_KEY,
 					secretKeyPlugin.getValue());
 		} else {
 			key = SecretKeyPlugin.decode(savedKey);
@@ -684,10 +697,10 @@ public final class VersionControl implements Module {
 		final KeyParameter keyParam;
 		keyParam = new KeyParameter(key);
 		if (savedKey == null) {
-			main.flushConfig();
+			this.main.flushConfig();
 		}
-		final Path input = repoRoot.resolve(source.split("/"));
-		final Path output = repoRoot.resolve(target.split("/"));
+		final Path input = this.repoRoot.resolve(source.split("/"));
+		final Path output = this.repoRoot.resolve(target.split("/"));
 		if (input.equals(output)) {
 			final Path tmp = Path.getTmpDirOrFile("");
 			encrypt(source, tmp.toString(), encrypt);
@@ -698,14 +711,14 @@ public final class VersionControl implements Module {
 		output.getParent().toFile().mkdirs();
 		final byte[] bufferIn = new byte[engine.getBlockSize()];
 		final byte[] bufferOut = new byte[engine.getBlockSize()];
-		final InputStream streamIn = io.openIn(input.toFile());
-		final OutputStream streamOut = io.openOut(output.toFile());
+		final InputStream streamIn = this.io.openIn(input.toFile());
+		final OutputStream streamOut = this.io.openOut(output.toFile());
 		engine.init(encrypt, keyParam);
-		streamIn.registerProgressMonitor(io);
+		streamIn.registerProgressMonitor(this.io);
 		if (encrypt) {
-			io.setProgressTitle("Encrypting " + output.getFilename());
+			this.io.setProgressTitle("Encrypting " + output.getFilename());
 		} else {
-			io.setProgressTitle("Decrypting " + output.getFilename());
+			this.io.setProgressTitle("Decrypting " + output.getFilename());
 		}
 		try {
 			while (true) {
@@ -719,20 +732,20 @@ public final class VersionControl implements Module {
 					}
 				}
 				engine.processBlock(bufferIn, 0, bufferOut, 0);
-				io.write(streamOut, bufferOut);
+				this.io.write(streamOut, bufferOut);
 			}
 		} catch (final IOException e) {
 			e.printStackTrace();
 			return;
 		} finally {
-			io.close(streamIn);
-			io.close(streamOut);
-			io.endProgress();
+			this.io.close(streamIn);
+			this.io.close(streamOut);
+			this.io.endProgress();
 		}
 	}
 
 	private final ProgressMonitor getProgressMonitor() {
-		final stone.io.ProgressMonitor monitor = io.getProgressMonitor();
+		final stone.io.ProgressMonitor monitor = this.io.getProgressMonitor();
 
 		return new ProgressMonitor() {
 
@@ -765,26 +778,27 @@ public final class VersionControl implements Module {
 
 	private final ObjectId getRemoteHead(final Git gitSession)
 			throws InvalidRemoteException, TransportException, GitAPIException {
-		final String refS = "refs/heads/" + BRANCH.value();
+		final String refS = "refs/heads/" + this.BRANCH.value();
 		final FetchCommand fetch = gitSession
 				.fetch()
 				.setRefSpecs(
 						new RefSpec(refS + ":refs/remotes/origin/"
-								+ BRANCH.value()))
+								+ this.BRANCH.value()))
 				.setProgressMonitor(getProgressMonitor());
-		if (USE_SSH.getValue()) {
-			final String url = GIT_URL_SSH.value();
+		if (this.USE_SSH.getValue()) {
+			final String url = this.GIT_URL_SSH.value();
 			final String[] split = url.replace("ssh://", "").split(":", 2);
 			if (split.length == 2) {
 				final Path configFile = Path.getPath("~", ".ssh", "config");
 				String hostname = "github.com", user = "git", id = "id_rsa";
 				if (configFile.exists()) {
-					final InputStream in = io.openIn(configFile.toFile());
+					final InputStream in = this.io.openIn(configFile.toFile());
 					while (true) {
 						try {
 							String line = in.readLine();
-							if (line == null)
+							if (line == null) {
 								break;
+							}
 							if (line.equalsIgnoreCase("HOST " + split[0])) {
 								line = in.readLine();
 								while (line != null) {
@@ -797,23 +811,25 @@ public final class VersionControl implements Module {
 										user = value;
 									} else if (key.equals("identityfile")) {
 										id = value;
-									} else if (key.equals("host"))
+									} else if (key.equals("host")) {
 										break;
+									}
 									line = in.readLine();
 								}
 								break;
 							}
 						} catch (final IOException e) {
-							io.handleException(ExceptionHandle.CONTINUE, e);
+							this.io.handleException(ExceptionHandle.CONTINUE, e);
 							return null;
 						} finally {
-							io.close(in);
+							this.io.close(in);
 						}
 					}
 					final Path idFile = Path.getPath("~", ".ssh", id);
 					if (!idFile.exists()) {
-						io.printError("Missing file for ssh connection", false);
-						master.interrupt();
+						this.io.printError("Missing file for ssh connection",
+								false);
+						this.master.interrupt();
 						return null;
 					}
 					final String userFinal = user, hostnameFinal = hostname;
@@ -829,7 +845,8 @@ public final class VersionControl implements Module {
 						@Override
 						protected JSch createDefaultJSch(FS fs)
 								throws JSchException {
-							JSch defaultJSch = super.createDefaultJSch(fs);
+							final JSch defaultJSch = super
+									.createDefaultJSch(fs);
 							defaultJSch.addIdentity(idFile.toString());
 							return defaultJSch;
 						}
@@ -838,7 +855,7 @@ public final class VersionControl implements Module {
 
 						@Override
 						public void configure(final Transport transport) {
-							SshTransport sshTransport = (SshTransport) transport;
+							final SshTransport sshTransport = (SshTransport) transport;
 							sshTransport
 									.setSshSessionFactory(sshSessionFactory);
 
@@ -849,8 +866,9 @@ public final class VersionControl implements Module {
 			}
 		}
 		final Ref ref = fetch.call().getAdvertisedRef(refS);
-		if (ref == null)
+		if (ref == null) {
 			return null;
+		}
 		return ref.getObjectId();
 	}
 
@@ -860,281 +878,23 @@ public final class VersionControl implements Module {
 		}
 		try {
 			final String branch = gitSession.getRepository().getBranch();
-			if (!branch.equals(BRANCH.value())) {
-				io.printMessage(null,
-						"not on working branch \"" + BRANCH.value()
+			if (!branch.equals(this.BRANCH.value())) {
+				this.io.printMessage(
+						null,
+						"Not on working branch \"" + this.BRANCH.value()
 								+ "\"\nCurrent branch is \"" + branch
-								+ "\"\nCheckout branch \"" + BRANCH.value()
+								+ "\"\nCheckout branch \""
+								+ this.BRANCH.value()
 								+ "\" or work on branch \"" + branch + "\"",
 						true);
 				return;
 			}
-			if (master.isInterrupted()) {
+			if (this.master.isInterrupted()) {
 				return;
 			}
 			checkForLocalChanges(gitSession);
 		} catch (final IOException | GitAPIException e) {
-			io.handleException(ExceptionHandle.CONTINUE, e);
-		}
-	}
-
-	private final boolean merge(final Git gitSession, final RevWalk walk,
-			final RevCommit commitLocal, final RevCommit commitRoot,
-			final RevCommit commitRemote) throws IOException {
-		if (commitRoot == null)
-			return true;
-		try {
-			gitSession.branchCreate().setName(tmpBranchName).setForce(true)
-					.call();
-			gitSession.checkout().setName(tmpBranchName).call();
-			gitSession.reset().setMode(ResetType.HARD)
-					.setRef(commitRemote.getName()).call();
-			// tmp branch is equal to FETCH_HEAD now
-
-			final ObjectReader reader = gitSession.getRepository()
-					.newObjectReader();
-			final TreeSet<RevCommit> commits = new TreeSet<>(
-					CommitComparator.instance());
-			final CanonicalTreeParser treeParserNew = new CanonicalTreeParser();
-			final CanonicalTreeParser treeParserOld = new CanonicalTreeParser();
-			final String name = main.getConfigValue(Main.GLOBAL_SECTION,
-					Main.NAME_KEY, null);
-
-			int time = commitLocal.getCommitTime();
-			io.startProgress("Merging", time - commitRoot.getCommitTime());
-			final Set<String> merged = new HashSet<>();
-
-			commits.add(commitLocal);
-			boolean doCommit = false;
-			while (!commits.isEmpty()) {
-				// go back until the latest commit contained in both branches
-				final RevCommit c = commits.pollLast();
-				if (c.equals(commitRoot)) {
-					io.updateProgress(time - c.getCommitTime());
-					time = c.getCommitTime();
-					continue;
-				}
-				walk.parseCommit(c);
-				final String author = c.getAuthorIdent().getName();
-				if (author.equals(name)) {
-					// discard foreign commits
-					treeParserNew.reset(reader, c.getTree());
-					treeParserOld.reset(reader, c.getParent(0).getTree());
-					final List<DiffEntry> diffs = gitSession.diff()
-							.setOldTree(treeParserOld)
-							.setNewTree(treeParserNew)
-							.setShowNameAndStatusOnly(true).call();
-					for (final DiffEntry e : diffs) {
-						final String old = e.getOldPath();
-						final String add = e.getNewPath();
-						doCommit = true;
-						switch (e.getChangeType()) {
-						case RENAME:
-							if (merged.add(add)) {
-								gitSession.checkout()
-										.setStartPoint(commitLocal)
-										.addPath(add).call();
-							}
-							gitSession.add().addFilepattern(add).call();
-
-							if (merged.add(old)) {
-								repoRoot.resolve(old).delete();
-							}
-							gitSession.add().addFilepattern(old).call();
-							break;
-						case DELETE:
-							if (merged.add(old)) {
-								repoRoot.resolve(old).delete();
-							}
-							gitSession.add().addFilepattern(old).call();
-							break;
-						case ADD:
-						case COPY:
-						case MODIFY:
-							if (merged.add(add)) {
-								gitSession.checkout()
-										.setStartPoint(commitLocal)
-										.addPath(add).call();
-							}
-							gitSession.add().addFilepattern(add).call();
-							break;
-						}
-					}
-				}
-				for (final RevCommit cP : c.getParents()) {
-					if (cP.getCommitTime() < commitRoot.getCommitTime()) {
-						continue;
-					}
-					commits.add(cP);
-				}
-				io.updateProgress(time - c.getCommitTime());
-				time = c.getCommitTime();
-			}
-			reader.release();
-			treeParserOld.stopWalk();
-			treeParserNew.stopWalk();
-			if (doCommit) {
-				io.startProgress("Creating new commit", -1);
-				gitSession
-						.commit()
-						.setMessage(
-								"update "
-										+ name
-										+ ", "
-										+ new Date(System.currentTimeMillis())
-										+ "\n\n"
-										+ "merge branch \'"
-										+ BRANCH.value()
-										+ "\' of "
-										+ (USE_SSH.getValue() ? GIT_URL_SSH
-												: GIT_URL_HTTPS).value())
-						.setCommitter(name, EMAIL.value()).call();
-			}
-			gitSession.branchCreate().setForce(true).setName(BRANCH.value())
-					.call();
-			gitSession.checkout().setName(BRANCH.value()).call();
-			gitSession.branchDelete().setBranchNames(tmpBranchName).call();
-			io.endProgress();
-			return true;
-		} catch (final GitAPIException e) {
-			e.printStackTrace();
-			try {
-				// reset previous state
-				gitSession.checkout().setName(BRANCH.value()).call();
-				gitSession.branchDelete().setBranchNames(tmpBranchName).call();
-				io.printError(
-						"Encountered a problem. The previous state has been recovered\n"
-								+ e.getLocalizedMessage(), false);
-			} catch (final GitAPIException ee) {
-				io.printError(
-						"Encountered a problem.\n"
-								+ e.getLocalizedMessage()
-								+ "\nRecovering from it another problem occured\n"
-								+ ee.getMessage(), false);
-			}
-			return false;
-		}
-	}
-
-	/*
-	 * do the upload of commits
-	 */
-	private final void push(final Git gitSession) throws GitAPIException {
-		final PushCommand push = gitSession.push();
-		final RefSpec ref = new RefSpec("refs/heads/"
-				+ main.getConfigValue(VersionControl.SECTION, "branch",
-						"master"));
-		push.setRefSpecs(ref).setProgressMonitor(getProgressMonitor());
-		if (!USE_SSH.getValue()) {
-			final CredentialsProvider login = new UsernamePasswordCredentialsProvider(
-					USERNAME.value(), PWD.value());
-			push.setCredentialsProvider(login);
-		}
-		push.call();
-		io.printMessage(null, "Push (upload) finished successfully", true);
-	}
-
-	private final void reset(final Git gitSession) throws GitAPIException,
-			IOException {
-		if (RESET.getValue()) {
-			final ObjectId remoteHead;
-			if (gitSession == null) {
-				if (!repoRoot.exists() || repoRoot.delete()) {
-					checkoutBand();
-					reset(Git.open(repoRoot.toFile()));
-				} else
-					io.printError("Reset failed", true);
-				return;
-			} else
-				remoteHead = getRemoteHead(gitSession);
-
-			// remove lock
-			repoRoot.resolve(".git", "index.lock").delete();
-			
-			// set to remote head
-			io.startProgress("Checking out " + remoteHead.getName(), -1);
-			gitSession.checkout().setName(remoteHead.getName().substring(0, 8))
-					.call();
-			io.startProgress("Resetting local to remote head", -1);
-			gitSession.reset().setRef(remoteHead.getName())
-					.setMode(ResetType.HARD).call();
-
-			// remove possible old branches - active branch and the temporarily branch
-			gitSession.branchDelete().setForce(true)
-					.setBranchNames(BRANCH.value(), tmpBranchName).call();
-
-			// create and checkout active branch
-			gitSession.branchCreate().setName(BRANCH.value()).call();
-			gitSession.checkout().setName(BRANCH.value()).call();
-			io.endProgress();
-		}
-	}
-
-	/*
-	 * download new songs
-	 */
-	private final void update(final Git gitSession) throws GitAPIException,
-			IOException {
-		final ObjectId remoteHead;
-		try {
-			remoteHead = getRemoteHead(gitSession);
-			if (remoteHead == null) {
-				io.printError("The remote branch does not exist", false);
-				return;
-			}
-			Debug.print("Remote head: %s\n", remoteHead.getName());
-		} catch (final TransportException e) {
-			io.printError(
-					"Failed to contact github.com.\nCheck if you have internet access and try again.",
-					false);
-			return;
-		}
-		final ObjectId localHead = gitSession.getRepository().getRef("HEAD")
-				.getObjectId();
-		if (localHead == null) {
-			io.printError("Unable to determine current head", false);
-			return;
-		}
-		Debug.print("Local  head: %s\n", localHead.getName());
-		if (remoteHead.equals(localHead)) {
-			io.printMessage(null, "Your repository is up-to-date", true);
-			return;
-		}
-		final RevWalk walk = new RevWalk(gitSession.getRepository());
-		final RevCommit commitRemote = walk.parseCommit(remoteHead);
-		final RevCommit commitLocal = walk.parseCommit(localHead);
-
-		final String diffString;
-
-		boolean success = true;
-
-		final RevCommit commitRoot = CommitComparator
-				.init(walk, gitSession, io)
-				.getParent(commitLocal, commitRemote);
-		if (commitRoot == null) {
-			historyRewritten(gitSession, commitLocal, commitRemote, walk);
-			diffString = null;
-			DIFF.setValue(false);
-		} else {
-			diffString = diff(walk, commitRoot, commitRemote, gitSession);
-		}
-		try {
-			success = merge(gitSession, walk, commitLocal, commitRoot,
-					commitRemote);
-		} catch (final Exception e) {
-			throw e;
-		} finally {
-			walk.release();
-		}
-
-		if (DIFF.getValue()) {
-			io.printMessage("Changes", diffString, true);
-		}
-
-		if (!success) {
-			io.printMessage(null, "Update failed", true);
-		} else {
-			io.printMessage(null, "Update completed succesully", true);
+			this.io.handleException(ExceptionHandle.CONTINUE, e);
 		}
 	}
 
@@ -1144,7 +904,7 @@ public final class VersionControl implements Module {
 			UnmergedPathsException, ConcurrentRefUpdateException,
 			WrongRepositoryStateException, GitAPIException,
 			IncorrectObjectTypeException, IOException {
-		io.startProgress("Reset - History has been rewritten", -1);
+		this.io.startProgress("Reset - History has been rewritten", -1);
 		gitSession.branchCreate().setForce(true).setName(tmpBranchName).call();
 		try {
 			gitSession.reset().setRef(commitRemote.getName())
@@ -1247,7 +1007,317 @@ public final class VersionControl implements Module {
 			// clean up
 			gitSession.branchDelete().setForce(true)
 					.setBranchNames(tmpBranchName, "stash").call();
-			io.endProgress();
+			this.io.endProgress();
+		}
+	}
+
+	private final boolean merge(final Git gitSession, final RevWalk walk,
+			final RevCommit commitLocal, final RevCommit commitRoot,
+			final RevCommit commitRemote) throws IOException {
+		if (commitRoot == null) {
+			return true;
+		}
+		try {
+			gitSession.branchCreate().setName(tmpBranchName).setForce(true)
+					.call();
+			gitSession.checkout().setName(tmpBranchName).call();
+			gitSession.reset().setMode(ResetType.HARD)
+					.setRef(commitRemote.getName()).call();
+			// tmp branch is equal to FETCH_HEAD now
+
+			final ObjectReader reader = gitSession.getRepository()
+					.newObjectReader();
+			final TreeSet<RevCommit> commits = new TreeSet<>(
+					CommitComparator.instance());
+			final CanonicalTreeParser treeParserNew = new CanonicalTreeParser();
+			final CanonicalTreeParser treeParserOld = new CanonicalTreeParser();
+			final String name = this.main.getConfigValue(Main.GLOBAL_SECTION,
+					Main.NAME_KEY, null);
+
+			int time = commitLocal.getCommitTime();
+			this.io.startProgress("Merging", time - commitRoot.getCommitTime());
+			final Set<String> merged = new HashSet<>();
+
+			commits.add(commitLocal);
+			boolean doCommit = false;
+			while (!commits.isEmpty()) {
+				// go back until the latest commit contained in both branches
+				final RevCommit c = commits.pollLast();
+				if (c.equals(commitRoot)) {
+					this.io.updateProgress(time - c.getCommitTime());
+					time = c.getCommitTime();
+					continue;
+				}
+				walk.parseCommit(c);
+				final String author = c.getAuthorIdent().getName();
+				if (author.equals(name)) {
+					// discard foreign commits
+					treeParserNew.reset(reader, c.getTree());
+					treeParserOld.reset(reader, c.getParent(0).getTree());
+					final List<DiffEntry> diffs = gitSession.diff()
+							.setOldTree(treeParserOld)
+							.setNewTree(treeParserNew)
+							.setShowNameAndStatusOnly(true).call();
+					for (final DiffEntry e : diffs) {
+						final String old = e.getOldPath();
+						final String add = e.getNewPath();
+						doCommit = true;
+						switch (e.getChangeType()) {
+						case RENAME:
+							if (merged.add(add)) {
+								gitSession.checkout()
+										.setStartPoint(commitLocal)
+										.addPath(add).call();
+							}
+							gitSession.add().addFilepattern(add).call();
+
+							if (merged.add(old)) {
+								this.repoRoot.resolve(old).delete();
+							}
+							gitSession.add().addFilepattern(old).call();
+							break;
+						case DELETE:
+							if (merged.add(old)) {
+								this.repoRoot.resolve(old).delete();
+							}
+							gitSession.add().addFilepattern(old).call();
+							break;
+						case ADD:
+						case COPY:
+						case MODIFY:
+							if (merged.add(add)) {
+								gitSession.checkout()
+										.setStartPoint(commitLocal)
+										.addPath(add).call();
+							}
+							gitSession.add().addFilepattern(add).call();
+							break;
+						}
+					}
+				}
+				for (final RevCommit cP : c.getParents()) {
+					if (cP.getCommitTime() < commitRoot.getCommitTime()) {
+						continue;
+					}
+					commits.add(cP);
+				}
+				this.io.updateProgress(time - c.getCommitTime());
+				time = c.getCommitTime();
+			}
+			reader.release();
+			treeParserOld.stopWalk();
+			treeParserNew.stopWalk();
+			if (doCommit) {
+				this.io.startProgress("Creating new commit", -1);
+				gitSession
+						.commit()
+						.setMessage(
+								"update "
+										+ name
+										+ ", "
+										+ new Date(System.currentTimeMillis())
+										+ "\n\n"
+										+ "merge branch \'"
+										+ this.BRANCH.value()
+										+ "\' of "
+										+ (this.USE_SSH.getValue() ? this.GIT_URL_SSH
+												: this.GIT_URL_HTTPS).value())
+						.setCommitter(name, this.EMAIL.value()).call();
+			}
+			gitSession.branchCreate().setForce(true)
+					.setName(this.BRANCH.value()).call();
+			gitSession.checkout().setName(this.BRANCH.value()).call();
+			gitSession.branchDelete().setBranchNames(tmpBranchName).call();
+			this.io.endProgress();
+			return true;
+		} catch (final GitAPIException e) {
+			e.printStackTrace();
+			try {
+				// reset previous state
+				gitSession.checkout().setName(this.BRANCH.value()).call();
+				gitSession.branchDelete().setBranchNames(tmpBranchName).call();
+				this.io.printError(
+						"Encountered a problem. The previous state has been recovered\n"
+								+ e.getLocalizedMessage(), false);
+			} catch (final GitAPIException ee) {
+				this.io.printError(
+						"Encountered a problem.\n"
+								+ e.getLocalizedMessage()
+								+ "\nRecovering from it another problem occured\n"
+								+ ee.getMessage(), false);
+			}
+			return false;
+		}
+	}
+
+	/*
+	 * do the upload of commits
+	 */
+	private final void push(final Git gitSession) throws GitAPIException {
+		final PushCommand push = gitSession.push();
+		final RefSpec ref = new RefSpec("refs/heads/"
+				+ this.main.getConfigValue(VersionControl.SECTION, "branch",
+						"master"));
+		push.setRefSpecs(ref).setProgressMonitor(getProgressMonitor());
+		if (!this.USE_SSH.getValue()) {
+			final CredentialsProvider login = new UsernamePasswordCredentialsProvider(
+					this.USERNAME.value(), this.PWD.value());
+			push.setCredentialsProvider(login);
+		}
+		push.call();
+		this.io.printMessage(null, "Push (upload) finished successfully", true);
+	}
+
+	private final void reset(final Git gitSession) throws GitAPIException,
+			IOException {
+		if (this.RESET.getValue()) {
+			// set options to default
+			this.GIT_URL_HTTPS.value(Config.getInstance().getValue(
+					URL_HTTPS_KEY));
+			this.main.flushConfig();
+			this.USE_SSH.setValue(false);
+			this.COMMIT.setValue(false);
+
+			final ObjectId remoteHead;
+			if (gitSession == null) {
+				if (!this.repoRoot.exists() || this.repoRoot.delete()) {
+					this.io.printError(
+							"Reset failed\n"
+									+ "The tool could not rebuild missing repo information",
+							false);
+					checkoutBand();
+					reset(Git.open(this.repoRoot.toFile()));
+				} else {
+					this.io.printError("Reset failed", true);
+				}
+				return;
+			} else {
+				// remove lock
+				this.repoRoot.resolve(".git", "index.lock").delete();
+
+				gitSession
+						.getRepository()
+						.getConfig()
+						.setString("remote", "origin", "url",
+								this.GIT_URL_HTTPS.value());
+				gitSession.getRepository().getConfig().save();
+				final Set<String> refs = gitSession.getRepository()
+						.getAllRefs().keySet();
+				if (!refs.contains("refs/heads/" + this.BRANCH.value())) {
+					this.io.printMessage("Specified branch missing in config",
+							"Branch \"" + this.BRANCH.value()
+									+ "\" does not exist.\n"
+									+ "Resetting to default \"master\".", true);
+					this.BRANCH.value("master");
+					final InputStream in = this.io.openIn(this.repoRoot
+							.resolve(".git", "HEAD").toFile());
+					final String localHead;
+					if (in == null) {
+						localHead = "refs/heads/master";
+						final OutputStream out = this.io.openOut(this.repoRoot
+								.resolve(".git", "HEAD").toFile());
+						out.write("ref: refs/heads/master");
+						this.io.close(out);
+					} else {
+						localHead = in.readLine().replace("ref: ", "");
+						this.io.close(in);
+					}
+					if (this.repoRoot.resolve(localHead.split("/")).exists()) {
+						this.io.printError(
+								"Reset failed\n"
+										+ "The tool could not rebuild missing repository information",
+								false);
+						return;
+					}
+				}
+				remoteHead = getRemoteHead(gitSession);
+			}
+
+
+			// set to remote head
+			this.io.startProgress("Checking out " + remoteHead.getName(), -1);
+			gitSession.checkout().setName(remoteHead.getName().substring(0, 8))
+					.call();
+			this.io.startProgress("Resetting local to remote head", -1);
+			gitSession.reset().setRef(remoteHead.getName())
+					.setMode(ResetType.HARD).call();
+
+			// remove possible old branches - active branch and the temporarily
+			// branch
+			gitSession.branchDelete().setForce(true)
+					.setBranchNames(this.BRANCH.value(), tmpBranchName).call();
+
+			// create and checkout active branch
+			gitSession.branchCreate().setName(this.BRANCH.value()).call();
+			gitSession.checkout().setName(this.BRANCH.value()).call();
+			this.io.endProgress();
+		}
+	}
+
+	/*
+	 * download new songs
+	 */
+	private final void update(final Git gitSession) throws GitAPIException,
+			IOException {
+		final ObjectId remoteHead;
+		try {
+			remoteHead = getRemoteHead(gitSession);
+			if (remoteHead == null) {
+				this.io.printError("The remote branch does not exist", false);
+				return;
+			}
+			Debug.print("Remote head: %s\n", remoteHead.getName());
+		} catch (final TransportException e) {
+			this.io.printError(
+					"Failed to contact github.com.\nCheck if you have internet access and try again.",
+					false);
+			return;
+		}
+		final ObjectId localHead = gitSession.getRepository().getRef("HEAD")
+				.getObjectId();
+		if (localHead == null) {
+			this.io.printError("Unable to determine current head", false);
+			return;
+		}
+		Debug.print("Local  head: %s\n", localHead.getName());
+		if (remoteHead.equals(localHead)) {
+			this.io.printMessage(null, "Your repository is up-to-date", true);
+			return;
+		}
+		final RevWalk walk = new RevWalk(gitSession.getRepository());
+		final RevCommit commitRemote = walk.parseCommit(remoteHead);
+		final RevCommit commitLocal = walk.parseCommit(localHead);
+
+		final String diffString;
+
+		boolean success = true;
+
+		final RevCommit commitRoot = CommitComparator.init(walk, gitSession,
+				this.io).getParent(commitLocal, commitRemote);
+		if (commitRoot == null) {
+			historyRewritten(gitSession, commitLocal, commitRemote, walk);
+			diffString = null;
+			this.DIFF.setValue(false);
+		} else {
+			diffString = diff(walk, commitRoot, commitRemote, gitSession);
+		}
+		try {
+			success = merge(gitSession, walk, commitLocal, commitRoot,
+					commitRemote);
+		} catch (final Exception e) {
+			throw e;
+		} finally {
+			walk.release();
+		}
+
+		if (this.DIFF.getValue()) {
+			this.io.printMessage("Changes", diffString, true);
+		}
+
+		if (!success) {
+			this.io.printMessage(null, "Update failed", true);
+		} else {
+			this.io.printMessage(null, "Update completed succesully", true);
 		}
 	}
 }

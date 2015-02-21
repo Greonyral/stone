@@ -19,13 +19,13 @@ final class DirTree {
 	final DirTree parent;
 
 	public DirTree(final Path base) {
-		parent = null;
-		name = null;
+		this.parent = null;
+		this.name = null;
 		this.base = base;
 	}
 
 	private DirTree(final DirTree parent, final String name) {
-		base = parent.base;
+		this.base = parent.base;
 		this.parent = parent;
 		this.name = name;
 	}
@@ -41,8 +41,9 @@ final class DirTree {
 	private final void add(final SongData songdata) {
 		final Path path = songdata.getPath();
 		final DirTree t = walkTo(path.getParent());
-		if (t == null)
+		if (t == null) {
 			return;
+		}
 		synchronized (t) {
 			final SongData sd = t.files.get(path.getFilename());
 			if (sd == null) {
@@ -63,43 +64,43 @@ final class DirTree {
 	}
 
 	final Path buildPath() {
-		if (parent == null) {
-			return base;
+		if (this.parent == null) {
+			return this.base;
 		}
-		return parent.buildPath().resolve(name);
+		return this.parent.buildPath().resolve(this.name);
 	}
 
 	final Iterator<Path> dirsIterator() {
 		return new Iterator<Path>() {
-			private DirTree currentTree = walkTo(base);
-			private Iterator<String> iter = currentTree.directories
+			private DirTree currentTree = walkTo(DirTree.this.base);
+			private Iterator<String> iter = this.currentTree.directories
 					.keySet().iterator();
-			private final ArrayDeque<Iterator<String>> iterStack =
-					new ArrayDeque<>();
+			private final ArrayDeque<Iterator<String>> iterStack = new ArrayDeque<>();
 
 			@Override
 			public boolean hasNext() {
 				while (true) {
-					if (iter.hasNext()) {
+					if (this.iter.hasNext()) {
 						return true;
 					}
-					if (iterStack.isEmpty()) {
+					if (this.iterStack.isEmpty()) {
 						return false;
 					}
 					// pop
-					currentTree = currentTree.parent;
-					iter = iterStack.removeLast();
+					this.currentTree = this.currentTree.parent;
+					this.iter = this.iterStack.removeLast();
 				}
 			}
 
 			@Override
 			public Path next() {
-				final String next = iter.next();
-				final Path ret = currentTree.buildPath().resolve(next);
-				if (currentTree.directories.get(next) != null) {
-					iterStack.add(iter);
-					currentTree = currentTree.directories.get(next);
-					iter = currentTree.directories.keySet().iterator();
+				final String next = this.iter.next();
+				final Path ret = this.currentTree.buildPath().resolve(next);
+				if (this.currentTree.directories.get(next) != null) {
+					this.iterStack.add(this.iter);
+					this.currentTree = this.currentTree.directories.get(next);
+					this.iter = this.currentTree.directories.keySet()
+							.iterator();
 				}
 				return ret;
 			}
@@ -115,51 +116,48 @@ final class DirTree {
 	final Iterator<Path> filesIterator() {
 		return new Iterator<Path>() {
 
-			private DirTree currentTree = walkTo(base);
-			private Iterator<String> dirIter = currentTree.directories
+			private DirTree currentTree = walkTo(DirTree.this.base);
+			private Iterator<String> dirIter = this.currentTree.directories
 					.keySet().iterator();
-			private Iterator<String> fileIter = currentTree.files.keySet()
+			private Iterator<String> fileIter = this.currentTree.files.keySet()
 					.iterator();
-			private final ArrayDeque<Iterator<String>> dirIterStack =
-					new ArrayDeque<>();
-			private final ArrayDeque<Iterator<String>> fileIterStack =
-					new ArrayDeque<>();
+			private final ArrayDeque<Iterator<String>> dirIterStack = new ArrayDeque<>();
+			private final ArrayDeque<Iterator<String>> fileIterStack = new ArrayDeque<>();
 
 			@Override
 			public boolean hasNext() {
 				while (true) {
-					if (fileIter.hasNext()) {
+					if (this.fileIter.hasNext()) {
 						return true;
 					}
-					if (dirIter.hasNext()) {
-						final String nextDir = dirIter.next();
-						if (currentTree.directories.get(nextDir) != null) {
-							dirIterStack.add(dirIter);
-							fileIterStack.add(fileIter);
-							currentTree =
-									currentTree.directories.get(nextDir);
-							dirIter =
-									currentTree.directories.keySet()
-											.iterator();
-							fileIter =
-									currentTree.files.keySet().iterator();
+					if (this.dirIter.hasNext()) {
+						final String nextDir = this.dirIter.next();
+						if (this.currentTree.directories.get(nextDir) != null) {
+							this.dirIterStack.add(this.dirIter);
+							this.fileIterStack.add(this.fileIter);
+							this.currentTree = this.currentTree.directories
+									.get(nextDir);
+							this.dirIter = this.currentTree.directories
+									.keySet().iterator();
+							this.fileIter = this.currentTree.files.keySet()
+									.iterator();
 						}
 						continue;
 					}
-					if (dirIterStack.isEmpty()) {
+					if (this.dirIterStack.isEmpty()) {
 						return false;
 					}
 					// pop
-					currentTree = currentTree.parent;
-					fileIter = fileIterStack.removeLast();
-					dirIter = dirIterStack.removeLast();
+					this.currentTree = this.currentTree.parent;
+					this.fileIter = this.fileIterStack.removeLast();
+					this.dirIter = this.dirIterStack.removeLast();
 				}
 			}
 
 			@Override
 			public Path next() {
-				final String next = fileIter.next();
-				return currentTree.buildPath().resolve(next);
+				final String next = this.fileIter.next();
+				return this.currentTree.buildPath().resolve(next);
 			}
 
 			@Override
@@ -183,14 +181,14 @@ final class DirTree {
 	}
 
 	final int getFilesCount() {
-		return size.get();
+		return this.size.get();
 	}
 
 	final Path getRoot() {
-		if (parent != null) {
-			return parent.getRoot();
+		if (this.parent != null) {
+			return this.parent.getRoot();
 		}
-		return base;
+		return this.base;
 	}
 
 	final void put(final SongData songData) {
@@ -198,13 +196,14 @@ final class DirTree {
 	}
 
 	final DirTree walkTo(final Path path) {
-		if (path == null)
+		if (path == null) {
 			return null;
+		}
 		DirTree t = this;
-		if (path == base) {
+		if (path == this.base) {
 			return t;
 		}
-		final String[] walkingPath = path.relativize(base).split("/");
+		final String[] walkingPath = path.relativize(this.base).split("/");
 		int layer = 0;
 		while (layer < walkingPath.length) {
 			final String base_ = walkingPath[layer++];

@@ -39,6 +39,13 @@ public final class Path implements Comparable<Path>, Externalizable {
 
 	private static final ArrayDeque<Integer> reusableHashes = new ArrayDeque<>();
 
+	private final static Object finalizerMonitor = new Object();
+
+	private final static StringBuilder relativizer = new StringBuilder();
+
+	private final static Path tmpRoot = getPath(System.getProperty(
+			"java.io.tmpdir").split("\\" + FileSystem.getFileSeparator()));
+
 	/**
 	 * Parses the given string <i>name</i> and returns a path representing the
 	 * corresponding path.
@@ -58,8 +65,9 @@ public final class Path implements Comparable<Path>, Externalizable {
 		final String base = name[idx];
 		if (Path.rootMap == null) {
 			p = new Path(base);
-			while (++idx < name.length)
+			while (++idx < name.length) {
 				p = p.getRootMapPathFunc(name[idx]);
+			}
 			return p;
 		} else {
 			p = Path.rootMap.get(base);
@@ -100,9 +108,10 @@ public final class Path implements Comparable<Path>, Externalizable {
 			switch (sb.charAt(pos)) {
 			case '!':
 				names.add(sb.toString().substring(0, pos));
-				if (path == null)
+				if (path == null) {
 					return Path
 							.getPath(names.toArray(new String[names.size()]));
+				}
 				return path.resolve(names.toArray(new String[names.size()]));
 			case '%':
 				final byte b0 = sb.getByte(pos + 1);
@@ -169,12 +178,13 @@ public final class Path implements Comparable<Path>, Externalizable {
 		int length = 0;
 		while (true) {
 			length <<= 7;
-			int read = in.read();
+			final int read = in.read();
 			length += read & 0x7f;
-			if (read <= 0x80)
+			if (read <= 0x80) {
 				break;
+			}
 		}
-		byte[] bytes = new byte[length];
+		final byte[] bytes = new byte[length];
 		in.read(bytes);
 		return Path.getPath(new String(bytes, FileSystem.UTF8).split("/"));
 	}
@@ -182,12 +192,13 @@ public final class Path implements Comparable<Path>, Externalizable {
 	public final static Map<Integer, Path> readExternals(final InputStream in)
 			throws IOException {
 		final Map<Integer, Path> map = new HashMap<>();
-		if (in != null)
+		if (in != null) {
 			while (true) {
 				final IntegerPointer available = new IntegerPointer(
 						in.available());
-				if (available.isZero())
+				if (available.isZero()) {
 					break;
+				}
 				while (available.greaterZero()) {
 					final Integer idPrev = readInt(in, available);
 					final Integer id = readInt(in, available);
@@ -201,41 +212,11 @@ public final class Path implements Comparable<Path>, Externalizable {
 					map.put(id, p);
 				}
 			}
+		}
 		if (map.isEmpty()) {
 			map.put(-1, null);
 		}
 		return map;
-	}
-
-	private final static String readName(final InputStream in,
-			final IntegerPointer iPtr) throws IOException {
-		int length = 0;
-		while (true) {
-			final int byteRead = in.read();
-			iPtr.decrement();
-			length = (length << 7) | (byteRead & 0x7f);
-			if (byteRead < 0x80)
-				break;
-		}
-		final byte[] buffer = new byte[length];
-		in.read(buffer);
-		iPtr.decrement(length);
-		return new String(buffer, FileSystem.UTF8);
-	}
-
-	private final static Integer readInt(final InputStream in,
-			final IntegerPointer iPtr) throws IOException {
-		int ret = 0;
-		while (true) {
-			final int byteRead = in.read();
-			iPtr.decrement();
-			if (byteRead < 0)
-				throw new IOException("Unexpected end of file");
-			ret = (ret << 7) | (byteRead & 0x7f);
-			if (byteRead < 0x80)
-				break;
-		}
-		return Integer.valueOf(ret);
 	}
 
 	private final static Map<String, Path> buildRootMap() {
@@ -299,6 +280,40 @@ public final class Path implements Comparable<Path>, Externalizable {
 		return file.delete();
 	}
 
+	private final static Integer readInt(final InputStream in,
+			final IntegerPointer iPtr) throws IOException {
+		int ret = 0;
+		while (true) {
+			final int byteRead = in.read();
+			iPtr.decrement();
+			if (byteRead < 0) {
+				throw new IOException("Unexpected end of file");
+			}
+			ret = (ret << 7) | (byteRead & 0x7f);
+			if (byteRead < 0x80) {
+				break;
+			}
+		}
+		return Integer.valueOf(ret);
+	}
+
+	private final static String readName(final InputStream in,
+			final IntegerPointer iPtr) throws IOException {
+		int length = 0;
+		while (true) {
+			final int byteRead = in.read();
+			iPtr.decrement();
+			length = (length << 7) | (byteRead & 0x7f);
+			if (byteRead < 0x80) {
+				break;
+			}
+		}
+		final byte[] buffer = new byte[length];
+		in.read(buffer);
+		iPtr.decrement(length);
+		return new String(buffer, FileSystem.UTF8);
+	}
+
 	private final static boolean renameFilePath(final Path path,
 			final Path target) {
 		if (path.toFile().renameTo(target.toFile())) {
@@ -316,7 +331,9 @@ public final class Path implements Comparable<Path>, Externalizable {
 	private final String[] dirs;
 
 	private final int hash;
+
 	private final Map<String, PathReference> successors = new TreeMap<>();
+
 	private File file = null;
 
 	private final String filename;
@@ -327,71 +344,66 @@ public final class Path implements Comparable<Path>, Externalizable {
 
 	private final String pathStr;
 
-	private final static Object finalizerMonitor = new Object();
-
-	private final static StringBuilder relativizer = new StringBuilder();
-
-	private final static Path tmpRoot = getPath(System.getProperty(
-			"java.io.tmpdir").split("\\" + FileSystem.getFileSeparator()));
-
 	/**
 	 * creates new path with parent != root
 	 */
 	private Path(final Path parent, final String name) {
-		filename = name;
+		this.filename = name;
 		this.parent = parent;
 		if (parent.parent == null) {
-			str = parent.str + name;
-			pathStr = parent.pathStr + name;
+			this.str = parent.str + name;
+			this.pathStr = parent.pathStr + name;
 		} else {
-			str = parent.str + "/" + name;
-			pathStr = parent.pathStr + FileSystem.getFileSeparator() + name;
+			this.str = parent.str + "/" + name;
+			this.pathStr = parent.pathStr + FileSystem.getFileSeparator()
+					+ name;
 		}
 		final PathReference pWeak = new PathReference(this);
 		parent.successors.put(name, pWeak);
 		if (parent.dirs == null) {
-			dirs = new String[0];
+			this.dirs = new String[0];
 		} else {
-			dirs = new String[parent.dirs.length + 1];
-			dirs[parent.dirs.length] = parent.filename;
-			System.arraycopy(parent.dirs, 0, dirs, 0, parent.dirs.length);
+			this.dirs = new String[parent.dirs.length + 1];
+			this.dirs[parent.dirs.length] = parent.filename;
+			System.arraycopy(parent.dirs, 0, this.dirs, 0, parent.dirs.length);
 		}
 		if (Path.rootMap == null) {
-			hash = ++Path.nextHash;
+			this.hash = ++Path.nextHash;
 		} else if (!Path.reusableHashes.isEmpty()) {
-			hash = Path.reusableHashes.remove().intValue();
+			this.hash = Path.reusableHashes.remove().intValue();
 		} else {
-			hash = ++Path.nextHash;
+			this.hash = ++Path.nextHash;
 		}
 	}
 
 	private Path(final Path p, final String[] names, int offset) {
 		Path p0 = p;
-		for (int i = offset; i < names.length - 1; ++i) {
+		for (int i = offset; i < (names.length - 1); ++i) {
 			p0 = new Path(p0, names[i]);
 		}
 		if (p0.dirs == null) {
-			dirs = new String[0];
+			this.dirs = new String[0];
 		} else {
-			dirs = new String[p0.dirs.length + 1];
-			System.arraycopy(p0.dirs, 0, dirs, 0, p0.dirs.length);
-			dirs[dirs.length - 1] = p0.filename;
+			this.dirs = new String[p0.dirs.length + 1];
+			System.arraycopy(p0.dirs, 0, this.dirs, 0, p0.dirs.length);
+			this.dirs[this.dirs.length - 1] = p0.filename;
 		}
-		filename = names[names.length - 1];
-		parent = p0;
-		if (parent.parent == null) {
-			str = parent.str + filename;
-			pathStr = parent.pathStr + filename;
+		this.filename = names[names.length - 1];
+		this.parent = p0;
+		if (this.parent.parent == null) {
+			this.str = this.parent.str + this.filename;
+			this.pathStr = this.parent.pathStr + this.filename;
 		} else {
-			str = parent.str + "/" + filename;
-			pathStr = parent.pathStr + FileSystem.getFileSeparator() + filename;
+			this.str = this.parent.str + "/" + this.filename;
+			this.pathStr = this.parent.pathStr + FileSystem.getFileSeparator()
+					+ this.filename;
 		}
 		if (!Path.reusableHashes.isEmpty()) {
-			hash = Path.reusableHashes.remove().intValue();
+			this.hash = Path.reusableHashes.remove().intValue();
 		} else {
-			hash = ++Path.nextHash;
+			this.hash = ++Path.nextHash;
 		}
-		p0.successors.put(filename, new PathReference(this));
+		p0.successors.put(this.filename, new PathReference(this));
 	}
 
 	/**
@@ -400,18 +412,18 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @param name
 	 */
 	private Path(final String name) {
-		dirs = null;
-		filename = name;
-		parent = null;
+		this.dirs = null;
+		this.filename = name;
+		this.parent = null;
 		if (name.endsWith(FileSystem.getFileSeparator())) {
-			str = name.substring(0, name.length() - 1) + "/";
-			pathStr = name;
+			this.str = name.substring(0, name.length() - 1) + "/";
+			this.pathStr = name;
 		} else {
-			str = name + "/";
-			pathStr = name + FileSystem.getFileSeparator();
+			this.str = name + "/";
+			this.pathStr = name + FileSystem.getFileSeparator();
 		}
 
-		hash = ++Path.nextHash;
+		this.hash = ++Path.nextHash;
 	}
 
 	/** */
@@ -442,23 +454,23 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @return the name of renamed file
 	 */
 	public final String createBackup(final String suffix) {
-		if (parent == null) {
+		if (this.parent == null) {
 			throw new RuntimeException("Error renaming root");
 		}
 		final StringBuilder string = new StringBuilder();
 		final String base, end;
-		final int dot = filename.lastIndexOf('.');
+		final int dot = this.filename.lastIndexOf('.');
 		if (dot < 0) {
-			base = filename;
+			base = this.filename;
 			end = "";
 		} else {
-			base = filename.substring(0, dot);
-			end = filename.substring(dot);
+			base = this.filename.substring(0, dot);
+			end = this.filename.substring(dot);
 		}
 		string.appendLast(base);
 		string.appendLast(suffix);
 		while (true) {
-			final Path newPath = parent.resolve(string.toString() + end);
+			final Path newPath = this.parent.resolve(string.toString() + end);
 			if (!newPath.exists()) {
 				if (renameTo(newPath)) {
 					return string.appendLast(end).toString();
@@ -481,8 +493,8 @@ public final class Path implements Comparable<Path>, Externalizable {
 		if (Path.delete(toFile())) {
 			return true;
 		}
-		if (file.exists()) {
-			System.err.println("Failed to delete " + pathStr
+		if (this.file.exists()) {
+			System.err.println("Failed to delete " + this.pathStr
 					+ " - It will be deleted after terminating");
 		}
 		return false;
@@ -514,14 +526,14 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @return <i>null</i> if <i>this</i> is a base.
 	 */
 	public final String getBaseName() {
-		if (dirs == null) {
+		if (this.dirs == null) {
 			return null;
 		}
-		assert parent != null;
-		if (dirs.length == 0) {
-			return parent.str;
+		assert this.parent != null;
+		if (this.dirs.length == 0) {
+			return this.parent.str;
 		}
-		return dirs[0];
+		return this.dirs[0];
 	}
 
 	/**
@@ -529,10 +541,10 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @return the part of this path
 	 */
 	public final String getComponentAt(int layer) {
-		if (layer < dirs.length) {
-			return dirs[layer];
+		if (layer < this.dirs.length) {
+			return this.dirs[layer];
 		}
-		return filename;
+		return this.filename;
 	}
 
 	/**
@@ -542,7 +554,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @return the last part of <i>this</i> path.
 	 */
 	public final String getFilename() {
-		return filename;
+		return this.filename;
 	}
 
 	/**
@@ -552,7 +564,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @return the number of components of i>this</i> path
 	 */
 	public final int getNameCount() {
-		return filename == null ? 0 : dirs.length + 1;
+		return this.filename == null ? 0 : this.dirs.length + 1;
 	}
 
 	/**
@@ -562,14 +574,14 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @return the parent
 	 */
 	public final Path getParent() {
-		return parent;
+		return this.parent;
 	}
 
 	/**
 					 */
 	@Override
 	public final int hashCode() {
-		return hash;
+		return this.hash;
 	}
 
 	@Override
@@ -600,7 +612,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 				}
 				while (p != q) {
 					if (--same == 0) {
-						return str;
+						return this.str;
 					}
 					p = p.getParent();
 					q = q.getParent();
@@ -717,7 +729,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @return the absolute path
 	 */
 	public final java.nio.file.Path toAbsolutePath() {
-		return Paths.get(pathStr);
+		return Paths.get(this.pathStr);
 	}
 
 	/**
@@ -726,10 +738,10 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @return the referred file
 	 */
 	public final File toFile() {
-		if (file == null) {
-			file = new File(toAbsolutePath().toUri());
+		if (this.file == null) {
+			this.file = new File(toAbsolutePath().toUri());
 		}
-		return file;
+		return this.file;
 	}
 
 	/**
@@ -739,39 +751,39 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 */
 	@Override
 	public final String toString() {
-		assert str != null;
-		return str;
+		assert this.str != null;
+		return this.str;
 	}
 
 	@Override
 	public final void writeExternal(final ObjectOutput out) throws IOException {
-		final byte[] bytes = str.getBytes(FileSystem.UTF8);
+		final byte[] bytes = this.str.getBytes(FileSystem.UTF8);
 		encode(bytes.length, out);
 		out.write(bytes);
 	}
 
 	public final void writeExternals(final PathAwareObjectOutput out)
 			throws IOException {
-		if (parent != null) {
+		if (this.parent != null) {
 			int parentId;
 			try {
-				parentId = out.getId(parent);
+				parentId = out.getId(this.parent);
 			} catch (final InterruptedException e) {
 				return;
 			}
-			if (parent == null) {
-				out.registerId(null, filename);
+			if (this.parent == null) {
+				out.registerId(null, this.filename);
 			} else if (parentId == -1) {
-				parent.writeExternals(out);
+				this.parent.writeExternals(out);
 			}
 		}
-		out.registerId(parent, filename);
+		out.registerId(this.parent, this.filename);
 	}
 
 	private final void encode(int length, final ObjectOutput out)
 			throws IOException {
 		int lowByte = length & 0x7f;
-		int highBytes = length & ~0x7f;
+		final int highBytes = length & ~0x7f;
 		if (highBytes != 0) {
 			lowByte |= 0x80;
 			encode(length >> 7, out);
@@ -795,7 +807,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 					continue;
 				}
 			} else {
-				Path pTmp = rootMap.get(name);
+				final Path pTmp = rootMap.get(name);
 				if (pTmp != null) {
 					p = pTmp;
 					continue;
@@ -826,16 +838,20 @@ public final class Path implements Comparable<Path>, Externalizable {
 	@Override
 	protected final void finalize() throws Throwable {
 		synchronized (Path.finalizerMonitor) {
-			final Set<PathReference> ss = new HashSet<>(successors.values());
+			final Set<PathReference> ss = new HashSet<>(
+					this.successors.values());
 			for (final WeakReference<Path> s : ss) {
-				if (!s.isEnqueued())
+				if (!s.isEnqueued()) {
 					s.get().finalize();
+				}
 			}
-			if (parent != null) {
-				if (parent.successors.remove(filename) != null)
-					Path.reusableHashes.push(Integer.valueOf(hash));
-			} else
-				Path.reusableHashes.push(Integer.valueOf(hash));
+			if (this.parent != null) {
+				if (this.parent.successors.remove(this.filename) != null) {
+					Path.reusableHashes.push(Integer.valueOf(this.hash));
+				}
+			} else {
+				Path.reusableHashes.push(Integer.valueOf(this.hash));
+			}
 		}
 	}
 }

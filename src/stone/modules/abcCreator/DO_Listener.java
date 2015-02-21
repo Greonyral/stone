@@ -28,22 +28,20 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 
 	DO_Listener(final DragObject<C, D, T> object,
 			final DragAndDropPlugin<C, D, T>.State state,
-			final BruteParams<?>[] params,
-			final DndPluginCaller<C, D, T> caller) {
+			final BruteParams<?>[] params, final DndPluginCaller<C, D, T> caller) {
 		super(state);
 		this.object = object;
 		this.caller = caller;
 		this.params = params;
-		object.getDisplayableComponent().setBackground(
-				DNDListener.C_INACTIVE);
+		object.getDisplayableComponent().setBackground(DNDListener.C_INACTIVE);
 	}
 
 	private final void displayParamMenu() {
-		if (object.getTargetContainer() != state.emptyTarget
+		if (this.object.getTargetContainer() != this.state.emptyTarget
 				.getContainer()) {
-			panelOption = new JPanel();
-			panelOption.setLayout(new GridLayout(0, 2));
-			for (final BruteParams<?> ps : params) {
+			this.panelOption = new JPanel();
+			this.panelOption.setLayout(new GridLayout(0, 2));
+			for (final BruteParams<?> ps : this.params) {
 				if (ps == null) {
 					continue;
 				}
@@ -78,50 +76,45 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 
 					@Override
 					public final void mouseReleased(final MouseEvent e) {
-						param = ps;
+						DO_Listener.this.param = ps;
 						e.consume();
 						displayParam();
 					}
 				});
-				panelOption.add(optionPanel);
+				this.panelOption.add(optionPanel);
 			}
-			object.getDisplayableComponent().add(panelOption,
+			this.object.getDisplayableComponent().add(this.panelOption,
 					BorderLayout.SOUTH);
-			state.plugin.repack();
+			this.state.plugin.repack();
 		}
 
 	}
 
 	private final void mark(boolean active) {
-		if (!active || (state.dragging == null)) {
+		if (!active || (this.state.dragging == null)) {
 			final Set<DropTarget<?, ?, ?>> targets = new HashSet<>();
 			final Set<DropTarget<?, ?, ?>> targetsCloned = new HashSet<>();
-			final Set<DropTarget<?, ?, ?>> targetsIndirect =
-					new HashSet<>();
+			final Set<DropTarget<?, ?, ?>> targetsIndirect = new HashSet<>();
 
 			final Set<DragObject<?, ?, ?>> objectsCloned = new HashSet<>();
-			final Set<DragObject<?, ?, ?>> objectsIndirect =
-					new HashSet<>();
+			final Set<DragObject<?, ?, ?>> objectsIndirect = new HashSet<>();
 
-			final Color ct0 =
-					active ? DNDListener.C_SELECTED0
-							: DNDListener.C_INACTIVE_TARGET;
-			final Color ct1 =
-					active ? Color.CYAN : DNDListener.C_INACTIVE_TARGET;
-			final Color ct2 =
-					active ? DNDListener.C_SELECTED1
-							: DNDListener.C_INACTIVE_TARGET;
+			final Color ct0 = active ? DNDListener.C_SELECTED0
+					: DNDListener.C_INACTIVE_TARGET;
+			final Color ct1 = active ? Color.CYAN
+					: DNDListener.C_INACTIVE_TARGET;
+			final Color ct2 = active ? DNDListener.C_SELECTED1
+					: DNDListener.C_INACTIVE_TARGET;
 
 
-			final Color co0 =
-					active ? DNDListener.C_ACTIVE : DNDListener.C_INACTIVE;
-			final Color co1 =
-					active ? DNDListener.C_CLONE : DNDListener.C_INACTIVE;
-			final Color co2 =
-					active ? DNDListener.C_SELECTED1
-							: DNDListener.C_INACTIVE;
+			final Color co0 = active ? DNDListener.C_ACTIVE
+					: DNDListener.C_INACTIVE;
+			final Color co1 = active ? DNDListener.C_CLONE
+					: DNDListener.C_INACTIVE;
+			final Color co2 = active ? DNDListener.C_SELECTED1
+					: DNDListener.C_INACTIVE;
 
-			for (final DropTarget<?, ?, ?> t : object) {
+			for (final DropTarget<?, ?, ?> t : this.object) {
 				targets.add(t);
 				for (final DragObject<?, ?, ?> o : t) {
 					objectsIndirect.add(o);
@@ -130,21 +123,21 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 					}
 				}
 			}
-			object.getDisplayableComponent().setBackground(co0);
-			object.getTargetContainer().getDisplayableComponent()
+			this.object.getDisplayableComponent().setBackground(co0);
+			this.object.getTargetContainer().getDisplayableComponent()
 					.setBackground(ct0);
-			for (final DropTarget<?, ?, ?> t : object.getTargetContainer()) {
+			for (final DropTarget<?, ?, ?> t : this.object.getTargetContainer()) {
 				targetsIndirect.add(t);
 			}
-			if (object.isAlias()) {
-				for (final DropTarget<?, ?, ?> t : object) {
+			if (this.object.isAlias()) {
+				for (final DropTarget<?, ?, ?> t : this.object) {
 					targetsCloned.add(t);
 				}
 			}
-			for (final DragObject<?, ?, ?> alias0 : object.getAliases()) {
+			for (final DragObject<?, ?, ?> alias0 : this.object.getAliases()) {
 				final DragObject<?, ?, ?> alias1;
-				if (alias0 == object) {
-					alias1 = object.getOriginal();
+				if (alias0 == this.object) {
+					alias1 = this.object.getOriginal();
 				} else {
 					alias1 = alias0;
 				}
@@ -153,11 +146,11 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 				}
 				objectsCloned.add(alias1);
 			}
-			targets.remove(state.emptyTarget);
-			targetsCloned.remove(state.emptyTarget);
-			targetsIndirect.remove(state.emptyTarget);
-			objectsCloned.remove(object);
-			objectsIndirect.remove(object);
+			targets.remove(this.state.emptyTarget);
+			targetsCloned.remove(this.state.emptyTarget);
+			targetsIndirect.remove(this.state.emptyTarget);
+			objectsCloned.remove(this.object);
+			objectsIndirect.remove(this.object);
 
 			// know we know the distribution of the colors, apply them ...
 
@@ -185,37 +178,36 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 	}
 
 	private final void wipeTargetsAndLink() {
-		synchronized (state) {
-			if (state.upToDate) {
-				state.upToDate = false;
-				state.io.endProgress();
+		synchronized (this.state) {
+			if (this.state.upToDate) {
+				this.state.upToDate = false;
+				this.state.io.endProgress();
 			}
 		}
-		object.getTargetContainer().removeAllLinks(object);
-		final Iterator<DropTarget<C, D, T>> tIter = object.clearTargets();
+		this.object.getTargetContainer().removeAllLinks(this.object);
+		final Iterator<DropTarget<C, D, T>> tIter = this.object.clearTargets();
 		while (tIter.hasNext()) {
 			final DropTarget<C, D, T> target = tIter.next();
-			if (target == state.emptyTarget) {
+			if (target == this.state.emptyTarget) {
 				continue;
 			}
-			if (caller.unlink(object, target)) {
-				if (target != state.target) {
-					final Container panel =
-							target.getDisplayableComponent();
+			if (this.caller.unlink(this.object, target)) {
+				if (target != this.state.target) {
+					final Container panel = target.getDisplayableComponent();
 					final Container parent = panel.getParent();
 					parent.remove(panel);
 					if (parent.getComponentCount() == 0) {
-						state.plugin.emptyCenter();
+						this.state.plugin.emptyCenter();
 					} else {
 						parent.validate();
 					}
 				}
 			}
 		}
-		object.addTarget(state.target);
-		state.target.link(object);
-		if (state.target != state.emptyTarget) {
-			caller.link(object, state.target);
+		this.object.addTarget(this.state.target);
+		this.state.target.link(this.object);
+		if (this.state.target != this.state.emptyTarget) {
+			this.caller.link(this.object, this.state.target);
 		}
 
 	}
@@ -223,13 +215,14 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 	@Override
 	protected final void enter(boolean enter) {
 		if (enter) {
-			state.object = object;
-			if (object != state.dragging) {
+			this.state.object = this.object;
+			if (this.object != this.state.dragging) {
 				mark(enter);
 			}
 		} else {
-			state.object = null;
-			if ((state.dragging == null) || (state.dragging != object)) {
+			this.state.object = null;
+			if ((this.state.dragging == null)
+					|| (this.state.dragging != this.object)) {
 				mark(false);
 			}
 		}
@@ -240,45 +233,45 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 	protected final void trigger(boolean released, int button) {
 		if (!released) {
 			mark(false);
-			state.dragging = object;
-			object.getDisplayableComponent().setBackground(
+			this.state.dragging = this.object;
+			this.object.getDisplayableComponent().setBackground(
 					DNDListener.C_DRAGGING);
 		} else {
-			state.dragging.getDisplayableComponent().setBackground(
+			this.state.dragging.getDisplayableComponent().setBackground(
 					DNDListener.C_INACTIVE);
-			state.dragging = null;
-			synchronized (state) {
-				if (state.loadingMap) {
+			this.state.dragging = null;
+			synchronized (this.state) {
+				if (this.state.loadingMap) {
 					mark(false);
 					return;
 				}
-				state.upToDate = false;
-				state.label.setText("");
+				this.state.upToDate = false;
+				this.state.label.setText("");
 			}
-			if (state.object != null) {
+			if (this.state.object != null) {
 				mark(true);
 				if (button == MouseEvent.BUTTON1) {
-					if (panelOption == null) {
+					if (this.panelOption == null) {
 						displayParamMenu();
 					} else {
-						object.getDisplayableComponent().remove(
-								panelOption);
-						object.getDisplayableComponent().revalidate();
-						panelOption = null;
+						this.object.getDisplayableComponent().remove(
+								this.panelOption);
+						this.object.getDisplayableComponent().revalidate();
+						this.panelOption = null;
 					}
 					return;
 				} else if (button == MouseEvent.BUTTON3) {
-					final DragObject<C, D, T> clone = object.clone();
-					state.plugin.initObject(clone);
-					clone.addTarget(state.emptyTarget);
-					state.emptyTarget.link(clone);
+					final DragObject<C, D, T> clone = this.object.clone();
+					this.state.plugin.initObject(clone);
+					clone.addTarget(this.state.emptyTarget);
+					this.state.emptyTarget.link(clone);
 				}
-			} else if (state.target != null) {
-				if (state.split) {
-					if (object.getTargetContainer() == state.target
+			} else if (this.state.target != null) {
+				if (this.state.split) {
+					if (this.object.getTargetContainer() == this.state.target
 							.getContainer()) {
-						if (!object.addTarget(state.target)) {
-							caller.printError("To large split");
+						if (!this.object.addTarget(this.state.target)) {
+							this.caller.printError("To large split");
 						}
 					} else {
 						wipeTargetsAndLink();
@@ -286,43 +279,42 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 				} else {
 					wipeTargetsAndLink();
 				}
-			} else if (state.targetC != null) {
-				if (state.emptyTarget.getContainer() == state.targetC) {
-					state.target = state.emptyTarget;
+			} else if (this.state.targetC != null) {
+				if (this.state.emptyTarget.getContainer() == this.state.targetC) {
+					this.state.target = this.state.emptyTarget;
 				} else {
-					state.target = state.targetC.createNewTarget();
-					state.plugin.initTarget(state.target);
-					state.plugin.addToCenter(state.target);
+					this.state.target = this.state.targetC.createNewTarget();
+					this.state.plugin.initTarget(this.state.target);
+					this.state.plugin.addToCenter(this.state.target);
 				}
-				if (state.split) {
-					if (state.targetC == object.getTargetContainer()) {
-						if (!object.addTarget(state.target)) {
-							state.targetC.delete(state.target);
-							final Container c =
-									state.target.getDisplayableComponent()
-											.getParent();
-							c.remove(state.target
+				if (this.state.split) {
+					if (this.state.targetC == this.object.getTargetContainer()) {
+						if (!this.object.addTarget(this.state.target)) {
+							this.state.targetC.delete(this.state.target);
+							final Container c = this.state.target
+									.getDisplayableComponent().getParent();
+							c.remove(this.state.target
 									.getDisplayableComponent());
 							c.revalidate();
-							caller.printError("To large split");
+							this.caller.printError("To large split");
 						}
-						state.target.link(object);
+						this.state.target.link(this.object);
 					} else {
 						wipeTargetsAndLink();
 					}
 				} else {
 					wipeTargetsAndLink();
 				}
-				state.target = null;
-				if (object.isAlias()
-						&& (state.targetC == state.emptyTarget
+				this.state.target = null;
+				if (this.object.isAlias()
+						&& (this.state.targetC == this.state.emptyTarget
 								.getContainer())) {
-					object.forgetAlias();
-					state.emptyTarget.getContainer()
-							.removeAllLinks(object);
-					final Container parent =
-							object.getDisplayableComponent().getParent();
-					parent.remove(object.getDisplayableComponent());
+					this.object.forgetAlias();
+					this.state.emptyTarget.getContainer().removeAllLinks(
+							this.object);
+					final Container parent = this.object
+							.getDisplayableComponent().getParent();
+					parent.remove(this.object.getDisplayableComponent());
 					parent.revalidate();
 					mark(false);
 					return;
@@ -331,19 +323,19 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 				return;
 			}
 			mark(true);
-			if (panelOption != null) {
-				object.getDisplayableComponent().remove(panelOption);
-				panelOption = null;
+			if (this.panelOption != null) {
+				this.object.getDisplayableComponent().remove(this.panelOption);
+				this.panelOption = null;
 			}
-			object.getDisplayableComponent().revalidate();
+			this.object.getDisplayableComponent().revalidate();
 		}
 	}
 
 	final void displayParam() {
-		panelOption.removeAll();
-		final Iterator<DropTarget<C, D, T>> targets = object.iterator();
-		param.display(panelOption, object, targets);
-		panelOption.revalidate();
+		this.panelOption.removeAll();
+		final Iterator<DropTarget<C, D, T>> targets = this.object.iterator();
+		this.param.display(this.panelOption, this.object, targets);
+		this.panelOption.revalidate();
 	}
 
 }

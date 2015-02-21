@@ -39,8 +39,7 @@ public abstract class Option {
 	/** gui used to display */
 	protected stone.io.GUIInterface gui;
 
-	private final Map<JTextArea, ColorEntry> colorsTextArea =
-			new HashMap<>();
+	private final Map<JTextArea, ColorEntry> colorsTextArea = new HashMap<>();
 	private final OptionContainer optionContainer;
 	private String value;
 
@@ -66,9 +65,8 @@ public abstract class Option {
 	 *            boolean, Option)
 	 * @param argExpected
 	 */
-	protected Option(final OptionContainer optionContainer,
-			final String name, final String toolTip,
-			final String guiDescription, char shortFlag,
+	protected Option(final OptionContainer optionContainer, final String name,
+			final String toolTip, final String guiDescription, char shortFlag,
 			final String longFlag, boolean argExpected) {
 		this(optionContainer, name, toolTip, guiDescription, shortFlag,
 				longFlag, argExpected, null, null, null);
@@ -109,13 +107,11 @@ public abstract class Option {
 	 *            * @see stone.util.OptionContainer#addOption(String, String,
 	 *            char, String, boolean, Option)
 	 */
-	protected Option(final OptionContainer optionContainer,
-			final String name, final String toolTip,
-			final String guiDescription, char shortFlag,
-			final String longFlag, boolean argExpected,
-			final String section, final String key,
-			final String defaultValue) {
-		desc = guiDescription;
+	protected Option(final OptionContainer optionContainer, final String name,
+			final String toolTip, final String guiDescription, char shortFlag,
+			final String longFlag, boolean argExpected, final String section,
+			final String key, final String defaultValue) {
+		this.desc = guiDescription;
 		this.name = name;
 		this.toolTip = toolTip;
 		this.key = key;
@@ -136,8 +132,8 @@ public abstract class Option {
 	 */
 	public final void displayWithGUI(final JPanel rootPanel,
 			final stone.io.GUIInterface activeGui) {
-		panel = rootPanel;
-		gui = activeGui;
+		this.panel = rootPanel;
+		this.gui = activeGui;
 		display(rootPanel);
 	}
 
@@ -147,7 +143,7 @@ public abstract class Option {
 	 * @param active
 	 */
 	public final void enableOnGUI(boolean active) {
-		GUI.setEnabled(panel, active);
+		GUI.setEnabled(this.panel, active);
 	}
 
 	/**
@@ -155,15 +151,15 @@ public abstract class Option {
 	 * {@link #displayWithGUI(JPanel, stone.io.GUIInterface)}
 	 */
 	public void endDisplay() {
-		panel = null;
-		colorsTextArea.clear();
+		this.panel = null;
+		this.colorsTextArea.clear();
 	}
 
 	/**
 	 * @return a short string usable to label <i>this</i> option
 	 */
 	public final String getDescription() {
-		return desc;
+		return this.desc;
 	}
 
 	/**
@@ -171,7 +167,7 @@ public abstract class Option {
 	 *         tool-tip in any GUIs
 	 */
 	public final String getTooltip() {
-		return toolTip;
+		return this.toolTip;
 	}
 
 	/**
@@ -208,17 +204,18 @@ public abstract class Option {
 	 *      boolean, String, String, String)
 	 */
 	public final String name() {
-		return name;
+		return this.name;
 	}
 
 	/**
 	 * @return a string representing the value of <i>this</i> option
 	 */
 	public String value() {
-		if (optionContainer == null) {
-			return value;
+		if (this.optionContainer == null) {
+			return this.value;
 		}
-		return optionContainer.getConfigValue(section, key, defaultValue);
+		return this.optionContainer.getConfigValue(this.section, this.key,
+				this.defaultValue);
 	}
 
 	/**
@@ -228,10 +225,10 @@ public abstract class Option {
 	 *            new value
 	 */
 	public void value(final String value) {
-		if (optionContainer == null) {
+		if (this.optionContainer == null) {
 			this.value = value;
 		} else {
-			optionContainer.setConfigValue(section, key, value);
+			this.optionContainer.setConfigValue(this.section, this.key, value);
 		}
 	}
 

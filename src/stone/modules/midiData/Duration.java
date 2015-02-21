@@ -13,52 +13,51 @@ final class Duration {
 	int tmp;
 
 	private TempoChangeState last;
-	private final TreeMap<Integer, TempoChangeState> tempoIntervals =
-			new TreeMap<>();
+	private final TreeMap<Integer, TempoChangeState> tempoIntervals = new TreeMap<>();
 
 	Entry<Integer, TempoChangeState> lastChange;
 
 	Duration(MidiParserImpl midiParserImpl) {
-		midiParser = midiParserImpl;
+		this.midiParser = midiParserImpl;
 	}
 
 	@Override
 	public final String toString() {
-		return tempoIntervals.toString();
+		return this.tempoIntervals.toString();
 	}
 
 	final void addTempoChange(final TempoChange event) {
-		last = new TempoChangeState(midiParser, event, last);
-		tempoIntervals.put(tmp, last);
+		this.last = new TempoChangeState(this.midiParser, event, this.last);
+		this.tempoIntervals.put(this.tmp, this.last);
 	}
 
 	final double getMinutes(int delta) {
-		lastChange = tempoIntervals.floorEntry(delta);
-		if (lastChange == null) {
+		this.lastChange = this.tempoIntervals.floorEntry(delta);
+		if (this.lastChange == null) {
 			// createDefault and retry
-			final TempoChangeState last1 = last;
-			final int tmp1 = tmp;
-			tmp = 0;
-			last = null;
+			final TempoChangeState last1 = this.last;
+			final int tmp1 = this.tmp;
+			this.tmp = 0;
+			this.last = null;
 			addTempoChange(new TempoChange(0x7a120, 0));
-			tmp = tmp1;
+			this.tmp = tmp1;
 			if (last1 != null) {
-				last = last1;
+				this.last = last1;
 			}
 			return getMinutes(delta);
 		}
-		return lastChange.getValue().minutes
-				+ lastChange.getValue().getMinutes(
-						delta - lastChange.getKey().intValue());
+		return this.lastChange.getValue().minutes
+				+ this.lastChange.getValue().getMinutes(
+						delta - this.lastChange.getKey().intValue());
 	}
 
 	final void progress(final MidiEvent event) {
-		tmp += event.delta;
+		this.tmp += event.delta;
 	}
 
 	final void reset() {
-		tmp = 0;
-		last = null;
-		tempoIntervals.clear();
+		this.tmp = 0;
+		this.last = null;
+		this.tempoIntervals.clear();
 	}
 }

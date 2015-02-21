@@ -48,12 +48,11 @@ public final class BooleanOption extends Option {
 	 */
 	public BooleanOption(final OptionContainer optionContainer,
 			final String name, final String toolTip,
-			final String guiDescription, char shortFlag,
-			final String longFlag, final String section, final String key,
-			boolean defaultValue) {
+			final String guiDescription, char shortFlag, final String longFlag,
+			final String section, final String key, boolean defaultValue) {
 		super(optionContainer, name, toolTip, guiDescription, shortFlag,
-				longFlag, false, section, key, Boolean.valueOf(
-						defaultValue).toString());
+				longFlag, false, section, key, Boolean.valueOf(defaultValue)
+						.toString());
 	}
 
 	/**
@@ -117,8 +116,8 @@ public final class BooleanOption extends Option {
 	/** */
 	@Override
 	public final String value() {
-		if (key == null) {
-			return value;
+		if (this.key == null) {
+			return this.value;
 		}
 		return super.value();
 	}
@@ -126,14 +125,19 @@ public final class BooleanOption extends Option {
 	/** */
 	@Override
 	public final void value(final String value) {
-		if (key == null) {
+		if (this.key == null) {
 			this.value = value;
 		} else {
 			super.value(value);
 		}
-		if (listener != null) {
-			listener.newValue(getValue());
+		if (this.listener != null) {
+			this.listener.newValue(getValue());
 		}
+	}
+
+	@Override
+	protected final void setByFlagValue(final String value) {
+		setValue(true);
 	}
 
 	@Override

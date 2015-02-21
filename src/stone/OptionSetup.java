@@ -22,7 +22,7 @@ public class OptionSetup {
 
 	OptionSetup() {
 		try {
-			io = new IOHandler("Nelphi's Tool");
+			this.io = new IOHandler("Nelphi's Tool");
 		} catch (final InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -32,14 +32,14 @@ public class OptionSetup {
 	 * @return the IO-handler
 	 */
 	public final IOHandler getIO() {
-		return io;
+		return this.io;
 	}
 
 	/**
 	 * @return the master thread
 	 */
 	public final MasterThread getMaster() {
-		return master;
+		return this.master;
 	}
 
 	/**
@@ -47,7 +47,7 @@ public class OptionSetup {
 	 *         them
 	 */
 	public final Path getWorkingDir() {
-		return workingDirectory;
+		return this.workingDirectory;
 	}
 
 	/**
@@ -55,6 +55,6 @@ public class OptionSetup {
 	 *         jar-archive, false otherwise
 	 */
 	public final boolean wdIsJarArchive() {
-		return jar;
+		return this.jar;
 	}
 }

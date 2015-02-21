@@ -33,7 +33,7 @@ public final class EditorPlugin extends GUIPlugin {
 	 * @return the entered content
 	 */
 	public final String get() {
-		return content;
+		return this.content;
 	}
 
 	/** */
@@ -41,11 +41,10 @@ public final class EditorPlugin extends GUIPlugin {
 	protected final boolean display(final JPanel panel) {
 		final JPanel panelButton = new JPanel();
 		panel.setLayout(new BorderLayout());
-		panel.add(new JScrollPane(new JTextArea(content)));
+		panel.add(new JScrollPane(new JTextArea(this.content)));
 		panel.add(panelButton, BorderLayout.SOUTH);
 
-		panelButton.add(GUIInterface.Button.OK.getButton(),
-				BorderLayout.EAST);
+		panelButton.add(GUIInterface.Button.OK.getButton(), BorderLayout.EAST);
 		panelButton.add(GUIInterface.Button.ABORT.getButton(),
 				BorderLayout.WEST);
 		return false;
@@ -54,7 +53,7 @@ public final class EditorPlugin extends GUIPlugin {
 	/** */
 	@Override
 	protected final String getTitle() {
-		return title;
+		return this.title;
 	}
 
 }

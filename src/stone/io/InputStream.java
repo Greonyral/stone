@@ -42,8 +42,8 @@ public class InputStream extends AbstractInputStream {
 	 */
 	public InputStream() {
 		super(null);
-		cs = null;
-		file = null;
+		this.cs = null;
+		this.file = null;
 	}
 
 	/**
@@ -61,6 +61,16 @@ public class InputStream extends AbstractInputStream {
 	}
 
 
+	@Override
+	public final int available() throws IOException {
+		if (EOFreached()) {
+			return 0;
+		}
+		return (this.stream.available() + this._length) - this._offset;
+
+	}
+
+
 	/**
 	 * Closes this stream and deletes the associated file
 	 * 
@@ -71,7 +81,7 @@ public class InputStream extends AbstractInputStream {
 	 */
 	public final boolean deleteFile() throws IOException {
 		close();
-		return file.delete();
+		return this.file.delete();
 	}
 
 
@@ -86,9 +96,8 @@ public class InputStream extends AbstractInputStream {
 	 * @see #readTo(byte, byte)
 	 */
 	public final int getMarkedLoc() throws NoSuchElementException {
-		return marked.pop();
+		return this.marked.pop();
 	}
-
 
 	/**
 	 * Reads all remaining bytes and returns them in a byte array.
@@ -99,7 +108,7 @@ public class InputStream extends AbstractInputStream {
 	 */
 	public final byte[] readFully() throws IOException {
 		reset();
-		final int len = (int) file.length();
+		final int len = (int) this.file.length();
 		final byte[] ret = new byte[len];
 		read(ret);
 		return ret;
@@ -120,9 +129,9 @@ public class InputStream extends AbstractInputStream {
 		}
 		line = readTo((byte) 10);
 		if ((line.length != 0) && (line[line.length - 1] == '\r')) {
-			return new String(line, 0, line.length - 1, cs);
+			return new String(line, 0, line.length - 1, this.cs);
 		}
-		return new String(line, cs);
+		return new String(line, this.cs);
 	}
 
 	/**
@@ -155,13 +164,6 @@ public class InputStream extends AbstractInputStream {
 		return readTo(terminal, 0xff & mark);
 	}
 
-	public final int available() throws IOException {
-		if (EOFreached())
-			return 0;
-		return stream.available() + _length - _offset;
-
-	}
-
 	/**
 	 * Registers an IO-Handler for managing a ProgressMonitor for
 	 * {@link #read()}
@@ -170,7 +172,7 @@ public class InputStream extends AbstractInputStream {
 	 */
 	public final void registerProgressMonitor(final IOHandler io) {
 		this.io = io;
-		io.startProgress("Reading file", (int) file.length());
+		io.startProgress("Reading file", (int) this.file.length());
 	}
 
 	/**
@@ -178,7 +180,7 @@ public class InputStream extends AbstractInputStream {
 	 */
 	@Override
 	public final void reset() {
-		stream = null;
+		this.stream = null;
 	}
 
 	/**
@@ -193,67 +195,68 @@ public class InputStream extends AbstractInputStream {
 		throw new UnsupportedOperationException();
 	}
 
-	protected final void fillBuff() throws IOException {
-		if (stream == null) {
-			if (!file.exists()) {
-				_length = 0;
-				return;
-			}
-			stream = new FileInputStream(file);
-			fillBuff();
-			// remove byte order mark
-			if (cs.toString().equals("UTF-16")) {
-				// FF FE
-				if ((_buffer[0] == -1) && (_buffer[1] == -2)) {
-					_offset += 2;
-				}
-			} else if (cs.toString().equals("UTF-8")) {
-				// EF BB BF
-				if ((_buffer[0] == -17) && (_buffer[1] == -69)
-						&& (_buffer[2] == -65)) {
-					_offset += 3;
-				}
-			}
-			return;
-		}
-		super.fillBuffByStream(stream);
-	}
-
 	private final int addToStack(final Queue<byte[]> stack, int start) {
-		final int len = _offset - start;
+		final int len = this._offset - start;
 		final byte[] part = new byte[len];
 		stack.add(part);
-		System.arraycopy(_buffer, start, part, 0, len);
-		if (io != null) {
-			io.updateProgress(len);
+		System.arraycopy(this._buffer, start, part, 0, len);
+		if (this.io != null) {
+			this.io.updateProgress(len);
 		}
 		return len;
 	}
 
 	private final byte[] readTo(byte terminal, int mark) throws IOException {
-		marked.clear();
+		this.marked.clear();
 		if (EOFreached()) {
 			return null;
 		}
 		final Queue<byte[]> stack = new ArrayDeque<>();
-		int start = _offset, length = 0;
+		int start = this._offset, length = 0;
 		while (true) {
-			if (_buffer[_offset] == mark) {
-				marked.add(_offset);
-			} else if (_buffer[_offset] == terminal) {
+			if (this._buffer[this._offset] == mark) {
+				this.marked.add(this._offset);
+			} else if (this._buffer[this._offset] == terminal) {
 				length += addToStack(stack, start);
 				break;
 			}
-			if (++_offset == _length) {
+			if (++this._offset == this._length) {
 				length += addToStack(stack, start);
 				fillBuff();
 				start = 0;
-				if (_length == 0) {
+				if (this._length == 0) {
 					break;
 				}
 			}
 		}
-		++_offset;
+		++this._offset;
 		return InputStream.merge(stack, length);
+	}
+
+	@Override
+	protected final void fillBuff() throws IOException {
+		if (this.stream == null) {
+			if (!this.file.exists()) {
+				this._length = 0;
+				return;
+			}
+			this.stream = new FileInputStream(this.file);
+			fillBuff();
+			// remove byte order mark
+			if (this.cs.toString().equals("UTF-16")) {
+				// FF FE
+				if ((this._buffer[0] == -1) && (this._buffer[1] == -2)) {
+					this._offset += 2;
+				}
+			} else if (this.cs.toString().equals("UTF-8")) {
+				// EF BB BF
+				if ((this._buffer[0] == -17) && (this._buffer[1] == -69)
+						&& (this._buffer[2] == -65)) {
+					this._offset += 3;
+				}
+			}
+			return;
+		}
+		super.fillBuffByStream(this.stream);
 	}
 }

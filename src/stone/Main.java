@@ -31,38 +31,36 @@ public class Main {
 	 * @throws SecurityException
 	 * @throws InstantiationException
 	 * @throws ClassNotFoundException
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public final static void main(final String[] args)
 			throws IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException,
-			SecurityException, InstantiationException,
-			ClassNotFoundException, IOException {
+			SecurityException, InstantiationException, ClassNotFoundException,
+			IOException {
 		final ModuleLoader loader = ModuleLoader.createLoader();
-		final Class<?> scClass =
-				loader.loadClass("stone.StartupContainer");
+		final Class<?> scClass = loader.loadClass("stone.StartupContainer");
 		final Class<?> mainClass = loader.loadClass("stone.modules.Main");
 		final Class<?> flagClass = loader.loadClass("stone.util.Flag");
 		final Object sc = scClass.getMethod("createInstance").invoke(null);
 		final Object main = mainClass.newInstance();
-		final Object flags =
-				flagClass.getMethod("getInstance").invoke(null);
+		final Object flags = flagClass.getMethod("getInstance").invoke(null);
 		// final String flagId, final String tooltip,
 		// char shortFlag, final String longFlag, boolean argExpected
-		final Method registerOption =
-				flagClass.getMethod("registerOption", String.class,
-						String.class, char.class, String.class,
-						boolean.class);
-		registerOption.invoke(flags, Main.HELP_ID, "prints this help",
+		final Method registerOption = flagClass.getMethod("registerOption",
+				String.class, String.class, char.class, String.class,
+				boolean.class);
+		registerOption.invoke(flags, Main.HELP_ID, "Prints this help and exit",
 				'h', "help", false);
 		registerOption.invoke(flags, Main.DEBUG_ID,
-				"enables more output for debugging", 'd', "debug", false);
+				"Enables more output for debugging", 'd', "debug", false);
+
+		// pass args to the flags
 		flagClass.getMethod("parse", String[].class).invoke(flags,
 				(Object) args);
 
 		scClass.getMethod("setMain", mainClass).invoke(sc, main);
-		mainClass.getMethod("run", scClass, flagClass).invoke(main, sc,
-				flags);
+		mainClass.getMethod("run", scClass, flagClass).invoke(main, sc, flags);
 		// will return after terminating
 	}
 }

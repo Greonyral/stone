@@ -30,14 +30,14 @@ public abstract class ReleaseListener implements MouseListener {
 
 	protected ReleaseListener(final ReleaseMouseListenerParams params) {
 		this.params = params;
-		abcMapPlugin = params.plugin();
-		panel = params.panel();
-		panelCenter = params.panelCenter();
-		globalMenu = params.globalMenu();
-		globalParamsButton = params.globalParamsButton();
-		splitButton = params.splitButton();
-		testButton = params.testButton();
-		loadButton = params.loadButton();
+		this.abcMapPlugin = params.plugin();
+		this.panel = params.panel();
+		this.panelCenter = params.panelCenter();
+		this.globalMenu = params.globalMenu();
+		this.globalParamsButton = params.globalParamsButton();
+		this.splitButton = params.splitButton();
+		this.testButton = params.testButton();
+		this.loadButton = params.loadButton();
 	}
 
 	/** Ignores the event */

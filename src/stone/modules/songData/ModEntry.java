@@ -21,12 +21,12 @@ public class ModEntry implements Entry<Path, Long> {
 	 */
 	public ModEntry(final Path path) {
 		this.path = path;
-		mod = path.toFile().lastModified();
+		this.mod = path.toFile().lastModified();
 	}
 
 	private ModEntry() {
-		path = null;
-		mod = 0;
+		this.path = null;
+		this.mod = 0;
 	}
 
 	/**
@@ -34,7 +34,7 @@ public class ModEntry implements Entry<Path, Long> {
 	 */
 	@Override
 	public final Path getKey() {
-		return path;
+		return this.path;
 	}
 
 	/**
@@ -42,7 +42,7 @@ public class ModEntry implements Entry<Path, Long> {
 	 */
 	@Override
 	public final Long getValue() {
-		return mod;
+		return this.mod;
 	}
 
 	/**

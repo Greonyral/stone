@@ -42,12 +42,12 @@ public final class SongbookUpdater implements Module {
 	 * Constructor for building versionInfo
 	 */
 	public SongbookUpdater() {
-		io = null;
-		master = null;
-		main = null;
-		pluginDataPath = null;
-		songbookPlugindataPath = null;
-		container = null;
+		this.io = null;
+		this.master = null;
+		this.main = null;
+		this.pluginDataPath = null;
+		this.songbookPlugindataPath = null;
+		this.container = null;
 	}
 
 	/**
@@ -58,12 +58,12 @@ public final class SongbookUpdater implements Module {
 	 */
 	public SongbookUpdater(final StartupContainer sc)
 			throws InterruptedException {
-		io = null;
-		master = null;
-		pluginDataPath = null;
-		songbookPlugindataPath = null;
-		main = sc.getMain();
-		container = null;
+		this.io = null;
+		this.master = null;
+		this.pluginDataPath = null;
+		this.songbookPlugindataPath = null;
+		this.main = sc.getMain();
+		this.container = null;
 	}
 
 	/**
@@ -72,22 +72,18 @@ public final class SongbookUpdater implements Module {
 	 * @param sc
 	 * @param old
 	 */
-	private SongbookUpdater(final StartupContainer sc,
-			final SongbookUpdater old) {
-		io = sc.getIO();
-		main = old.main;
-		final String home =
-				sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
-						Main.PATH_KEY, null);
+	private SongbookUpdater(final StartupContainer sc, final SongbookUpdater old) {
+		this.io = sc.getIO();
+		this.main = old.main;
+		final String home = sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
+				Main.PATH_KEY, null);
 		final Path basePath = Path.getPath(home.split("/"));
-		pluginDataPath = basePath.resolve("PluginData");
-		songbookPlugindataPath =
-				pluginDataPath.resolve("SongbookUpdateData");
-		master = sc.getMaster();
-		container =
-				(SongDataContainer) sc
-						.getContainer(SongDataContainer.class
-								.getCanonicalName());
+		this.pluginDataPath = basePath.resolve("PluginData");
+		this.songbookPlugindataPath = this.pluginDataPath
+				.resolve("SongbookUpdateData");
+		this.master = sc.getMaster();
+		this.container = (SongDataContainer) sc
+				.getContainer(SongDataContainer.class.getCanonicalName());
 	}
 
 	/** */
@@ -110,21 +106,18 @@ public final class SongbookUpdater implements Module {
 
 	@Override
 	public final void repair() {
-		final String home =
-				main.getConfigValue(Main.GLOBAL_SECTION, Main.PATH_KEY,
-						null);
+		final String home = this.main.getConfigValue(Main.GLOBAL_SECTION,
+				Main.PATH_KEY, null);
 		if (home == null) {
 			System.out
 					.printf("Unable to determine home - SongbookUpdateData could not been deleted");
 			return;
 		}
 		final Path basePath = Path.getPath(home.split("/"));
-		final Path updateDataPath =
-				basePath.resolve("PluginData").resolve(
-						"SongbookUpdateData");
-		final Path updateDataPathZip =
-				basePath.resolve("PluginData").resolve(
-						"SongbookUpdateData.zip");
+		final Path updateDataPath = basePath.resolve("PluginData").resolve(
+				"SongbookUpdateData");
+		final Path updateDataPathZip = basePath.resolve("PluginData").resolve(
+				"SongbookUpdateData.zip");
 		if (updateDataPath.exists()) {
 			final boolean success = updateDataPath.delete();
 			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
@@ -132,10 +125,8 @@ public final class SongbookUpdater implements Module {
 		}
 		if (updateDataPathZip.exists()) {
 			final boolean success = updateDataPathZip.delete();
-			System.out
-					.printf("Delet%s %s%s\n", success ? "ed" : "ing",
-							updateDataPathZip.toString(), success ? ""
-									: " failed");
+			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
+					updateDataPathZip.toString(), success ? "" : " failed");
 		}
 	}
 
@@ -145,7 +136,7 @@ public final class SongbookUpdater implements Module {
 	 */
 	@Override
 	public final void run() {
-		if (master.isInterrupted()) {
+		if (this.master.isInterrupted()) {
 			return;
 		}
 		updateSongbookData();
@@ -158,31 +149,30 @@ public final class SongbookUpdater implements Module {
 		final long start = System.currentTimeMillis();
 		final Set<String> profiles = new HashSet<>();
 
-		if (!pluginDataPath.exists()) {
-			if (!pluginDataPath.toFile().mkdir()) {
-				io.printMessage(
-						null,
+		if (!this.pluginDataPath.exists()) {
+			if (!this.pluginDataPath.toFile().mkdir()) {
+				this.io.printMessage(null,
 						"Missing PluginData directory could not be created",
 						true);
 			}
 			return;
 		}
-		final File userIni =
-				pluginDataPath.getParent().resolve(SongbookUpdater.USER)
-						.toFile();
+		final File userIni = this.pluginDataPath.getParent()
+				.resolve(SongbookUpdater.USER).toFile();
 		if (!userIni.exists()) {
-			io.printMessage(
+			this.io.printMessage(
 					"UserPreferences.ini not found",
 					"\""
-							+ Main.formatMaxLength(pluginDataPath
-									.getParent(), SongbookUpdater.USER)
+							+ Main.formatMaxLength(
+									this.pluginDataPath.getParent(),
+									SongbookUpdater.USER)
 							+ "\"\n"
 							+ "not found. Check if the path is correct or start LoTRO and login to create it.\n"
 							+ "The tool is using the file to get your account names.\n"
 							+ "\nScan aborted.", true);
 			return;
 		}
-		final InputStream in = io.openIn(userIni);
+		final InputStream in = this.io.openIn(userIni);
 		if (userIni.length() != 0) {
 			do {
 				try {
@@ -201,25 +191,26 @@ public final class SongbookUpdater implements Module {
 						} while (true);
 					}
 				} catch (final IOException e) {
-					io.handleException(ExceptionHandle.CONTINUE, e);
+					this.io.handleException(ExceptionHandle.CONTINUE, e);
 					break;
 				}
 			} while (true);
 		}
-		io.close(in);
-		container.fill();
-		if (master.isInterrupted())
+		this.io.close(in);
+		this.container.fill();
+		if (this.master.isInterrupted()) {
 			return;
-		
-		final File masterPluginData = songbookPlugindataPath.toFile();
+		}
+
+		final File masterPluginData = this.songbookPlugindataPath.toFile();
 		masterPluginData.deleteOnExit();
 
 		// write master plugindata and updateFileNew
-		io.startProgress("Writing " + masterPluginData.getName(),
-				container.size());
-		container.writeNewSongbookData(masterPluginData);
+		this.io.startProgress("Writing " + masterPluginData.getName(),
+				this.container.size());
+		this.container.writeNewSongbookData(masterPluginData);
 
-		io.startProgress("", profiles.size());
+		this.io.startProgress("", profiles.size());
 		Debug.print("%2d profiles found:\n", profiles.size());
 		for (final String profile : profiles) {
 			Debug.print("- %s\n", profile);
@@ -229,32 +220,32 @@ public final class SongbookUpdater implements Module {
 		final Iterator<String> profilesIter = profiles.iterator();
 		while (profilesIter.hasNext()) {
 			final String profile = profilesIter.next();
-			io.setProgressTitle("Writing Songbook.plugindata " + profile);
-			final File target =
-					pluginDataPath.resolve(profile).resolve("AllServers")
-							.resolve("SongbookData.plugindata").toFile();
+			this.io.setProgressTitle("Writing Songbook.plugindata " + profile);
+			final File target = this.pluginDataPath.resolve(profile)
+					.resolve("AllServers").resolve("SongbookData.plugindata")
+					.toFile();
 			if (!target.exists()) {
 				try {
 					target.getParentFile().mkdirs();
 					target.createNewFile();
 				} catch (final IOException e) {
-					io.handleException(ExceptionHandle.SUPPRESS, e);
-					io.updateProgress();
+					this.io.handleException(ExceptionHandle.SUPPRESS, e);
+					this.io.updateProgress();
 					continue;
 				}
 			}
-			final OutputStream out = io.openOut(target);
-			io.write(io.openIn(masterPluginData), out);
-			io.close(out);
-			io.updateProgress();
+			final OutputStream out = this.io.openOut(target);
+			this.io.write(this.io.openIn(masterPluginData), out);
+			this.io.close(out);
+			this.io.updateProgress();
 		}
 		masterPluginData.delete();
-		io.endProgress();
+		this.io.endProgress();
 		final long end = System.currentTimeMillis();
 		Debug.print("needed %s for updating songbook with %d song(s)",
-				stone.util.Time.delta(end - start), container.size());
-		io.printMessage(null,
+				stone.util.Time.delta(end - start), this.container.size());
+		this.io.printMessage(null,
 				"Update of your songbook is complete.\nAvailable songs: "
-						+ container.size(), true);
+						+ this.container.size(), true);
 	}
 }

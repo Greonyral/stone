@@ -10,25 +10,26 @@ class Crawler implements Runnable {
 	private final ArrayDeque<Path> wl = new ArrayDeque<>();
 	private final Deserializer sdd;
 
-	private boolean terminated = false;
+	private final boolean terminated = false;
 
 	private final java.util.concurrent.atomic.AtomicInteger threads = new java.util.concurrent.atomic.AtomicInteger();
 
 	public Crawler(final Deserializer sdd) {
-		wl.add(sdd.getRoot());
+		this.wl.add(sdd.getRoot());
 		this.sdd = sdd;
 	}
 
 	@Override
 	public final void run() {
 		try {
-			while (crawl())
+			while (crawl()) {
 				;
+			}
 		} catch (final Exception e) {
 			e.printStackTrace();
-			threads.set(-1);
-			synchronized (wl) {
-				wl.notifyAll();
+			this.threads.set(-1);
+			synchronized (this.wl) {
+				this.wl.notifyAll();
 			}
 			return;
 		} finally {
@@ -36,29 +37,34 @@ class Crawler implements Runnable {
 		}
 	}
 
+	public final synchronized boolean terminated() {
+		return this.terminated;
+	}
+
 	private final boolean crawl() throws InterruptedException {
 		final Path path;
-		synchronized (wl) {
-			if (wl.isEmpty()) {
-				if (threads.get() <= 0) {
-					synchronized (sdd) {
-						sdd.crawlDone();
+		synchronized (this.wl) {
+			if (this.wl.isEmpty()) {
+				if (this.threads.get() <= 0) {
+					synchronized (this.sdd) {
+						this.sdd.crawlDone();
 					}
-					wl.notifyAll();
+					this.wl.notifyAll();
 					return false;
 				}
-				while (wl.isEmpty()) {
-					wl.wait();
-					if (threads.get() == 0)
+				while (this.wl.isEmpty()) {
+					this.wl.wait();
+					if (this.threads.get() == 0) {
 						return false;
+					}
 				}
 				return true;
 			}
-			path = wl.remove();
-			threads.incrementAndGet();
+			path = this.wl.remove();
+			this.threads.incrementAndGet();
 		}
 		if (!path.exists()) {
-			threads.decrementAndGet();
+			this.threads.decrementAndGet();
 			return true;
 		}
 		if (path.toFile().isDirectory()) {
@@ -66,24 +72,20 @@ class Crawler implements Runnable {
 				if (name.startsWith(".")) {
 					continue;
 				}
-				synchronized (wl) {
-					wl.add(path.resolve(name));
-					wl.notifyAll();
+				synchronized (this.wl) {
+					this.wl.add(path.resolve(name));
+					this.wl.notifyAll();
 				}
 			}
 		} else if (path.toFile().isFile()
 				&& path.getFilename().endsWith(".abc")) {
 			Debug.print("found %s\n", path);
-			synchronized (sdd) {
-				sdd.addToQueue(new ModEntry(path));
-				sdd.notifyAll();
+			synchronized (this.sdd) {
+				this.sdd.addToQueue(new ModEntry(path));
+				this.sdd.notifyAll();
 			}
 		}
-		threads.decrementAndGet();
+		this.threads.decrementAndGet();
 		return true;
-	}
-
-	public final synchronized boolean terminated() {
-		return terminated;
 	}
 }

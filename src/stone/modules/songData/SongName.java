@@ -27,8 +27,8 @@ public class SongName implements Map<Integer, String> {
 		Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec;
 	}
 
-	private static final int findEnd(final StringBuilder sb,
-			final String line, int pos) {
+	private static final int findEnd(final StringBuilder sb, final String line,
+			int pos) {
 		while (true) {
 			if (line.length() == pos) {
 				return pos;
@@ -36,56 +36,56 @@ public class SongName implements Map<Integer, String> {
 			int i = pos;
 			final char c = line.charAt(i++);
 			switch (c) {
-				case '/':
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-					sb.append(c);
-					break;
+			case '/':
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				sb.append(c);
+				break;
 
-				case 'A':
-				case 'B':
-				case 'C':
-				case 'D':
-				case 'E':
-				case 'F':
-				case 'G':
-				case 'Z':
-				case 'a':
-				case 'b':
-				case 'c':
-				case 'd':
-				case 'e':
-				case 'f':
-				case 'g':
-				case 'z':
-				case '[':
-				case ']':
-					return i - 1;
+			case 'A':
+			case 'B':
+			case 'C':
+			case 'D':
+			case 'E':
+			case 'F':
+			case 'G':
+			case 'Z':
+			case 'a':
+			case 'b':
+			case 'c':
+			case 'd':
+			case 'e':
+			case 'f':
+			case 'g':
+			case 'z':
+			case '[':
+			case ']':
+				return i - 1;
 
-				case ' ':
-					return i;
+			case ' ':
+				return i;
 
-				case '+':
-					return line.indexOf('+', i) + 1;
+			case '+':
+				return line.indexOf('+', i) + 1;
 
-				case '\'':
-				case ',':
-					break;
+			case '\'':
+			case ',':
+				break;
 
-				case '-':
-				case '^':
-					return i;
+			case '-':
+			case '^':
+				return i;
 
-				default:
-					return i;
+			default:
+				return i;
 			}
 		}
 	}
@@ -103,7 +103,7 @@ public class SongName implements Map<Integer, String> {
 	private final Map<Integer, String> partsName = new HashMap<>();
 
 	SongName(final Path base) {
-		basePath = base;
+		this.basePath = base;
 	}
 
 	/**
@@ -114,10 +114,10 @@ public class SongName implements Map<Integer, String> {
 	 * @param instrument
 	 * @param xIdx
 	 */
-	public final void addPart(final Integer[] idx,
-			final String instrument, int xIdx) {
-		partsIndices.put(xIdx, idx);
-		partsName.put(xIdx, instrument);
+	public final void addPart(final Integer[] idx, final String instrument,
+			int xIdx) {
+		this.partsIndices.put(xIdx, idx);
+		this.partsName.put(xIdx, instrument);
 
 	}
 
@@ -162,18 +162,17 @@ public class SongName implements Map<Integer, String> {
 	 * @return the title for given song part
 	 */
 	public final String getTitle(int xIdx, final IOHandler io) {
-		if (!init) {
+		if (!this.init) {
 			align();
-			if (duration == null) {
+			if (this.duration == null) {
 				calculateDuration(io);
 			}
-			if (title == null) {
-				title =
-						path.getFilename().substring(0,
-								path.getFilename().length() - 4);
+			if (this.title == null) {
+				this.title = this.path.getFilename().substring(0,
+						this.path.getFilename().length() - 4);
 			}
 		}
-		final Integer x = renumberMap.get(xIdx);
+		final Integer x = this.renumberMap.get(xIdx);
 		if (x != null) {
 			return getTitle(x.intValue(), io);
 		}
@@ -182,14 +181,14 @@ public class SongName implements Map<Integer, String> {
 		sb.append(xIdx);
 		sb.append("\r\n");
 		sb.append("T: ");
-		sb.append(title);
+		sb.append(this.title);
 
-		if (n == 1) {
+		if (this.n == 1) {
 			/*
 			 * name schema?
 			 */
 		} else {
-			final Integer[] idx = partsIndices.get(Integer.valueOf(xIdx));
+			final Integer[] idx = this.partsIndices.get(Integer.valueOf(xIdx));
 			sb.append(" ");
 			sb.append(idx[1]);
 			for (int i = 2; i < idx.length; i++) {
@@ -197,9 +196,9 @@ public class SongName implements Map<Integer, String> {
 				sb.append(idx[i]);
 			}
 			sb.append("/");
-			sb.append(n);
+			sb.append(this.n);
 		}
-		final String partsName_ = partsName.get(xIdx);
+		final String partsName_ = this.partsName.get(xIdx);
 		if (partsName_ != null) {
 			sb.append(" ");
 			sb.append(partsName_);
@@ -207,12 +206,12 @@ public class SongName implements Map<Integer, String> {
 
 		if (xIdx == 1) {
 			sb.append(" (");
-			sb.append(duration);
+			sb.append(this.duration);
 			sb.append(")");
 		} else if (xIdx == 2) {
 			sb.append(" ");
 			final Calendar calendar = Calendar.getInstance();
-			calendar.setTimeInMillis(path.toFile().lastModified());
+			calendar.setTimeInMillis(this.path.toFile().lastModified());
 			sb.append(Month.values()[calendar.get(Calendar.MONTH)]);
 			sb.append(" ");
 			sb.append(calendar.get(Calendar.DAY_OF_MONTH));
@@ -261,10 +260,10 @@ public class SongName implements Map<Integer, String> {
 	 */
 	public final void setTitle(final String name, final String duration,
 			final Integer n, final Path path) {
-		title = name;
+		this.title = name;
 		this.duration = duration;
 		if (n == null) {
-			this.n = partsName.size();
+			this.n = this.partsName.size();
 		} else {
 			this.n = n;
 		}
@@ -282,30 +281,30 @@ public class SongName implements Map<Integer, String> {
 	@Override
 	public final String toString() {
 		String ret;
-		if (title == null) {
+		if (this.title == null) {
 			ret = "<title>";
 		} else {
-			ret = title;
+			ret = this.title;
 		}
 		ret += " ";
-		if (duration == null) {
+		if (this.duration == null) {
 			ret += "<time>";
 		} else {
-			ret += duration;
+			ret += this.duration;
 		}
 		ret += " ";
-		if (n == null) {
+		if (this.n == null) {
 			ret += "?";
 		} else {
-			ret += n;
+			ret += this.n;
 		}
 		ret += " parts ";
-		if (path == null) {
+		if (this.path == null) {
 			ret += "<path>";
 		} else {
-			ret += path.relativize(basePath);
+			ret += this.path.relativize(this.basePath);
 		}
-		ret += " " + partsName;
+		ret += " " + this.partsName;
 		return ret;
 	}
 
@@ -316,11 +315,11 @@ public class SongName implements Map<Integer, String> {
 	}
 
 	private final void align() {
-		init = true;
+		this.init = true;
 		final Set<Integer> toRenumber = new TreeSet<>();
-		for (final Map.Entry<Integer, Integer[]> e : partsIndices
+		for (final Map.Entry<Integer, Integer[]> e : this.partsIndices
 				.entrySet()) {
-			if (e.getKey().intValue() > partsIndices.size()) {
+			if (e.getKey().intValue() > this.partsIndices.size()) {
 				toRenumber.add(e.getKey());
 			}
 		}
@@ -329,23 +328,23 @@ public class SongName implements Map<Integer, String> {
 		}
 		final Iterator<Integer> toRenumberIter = toRenumber.iterator();
 		for (int i = 1; toRenumberIter.hasNext()
-				&& (i <= partsIndices.size()); i++) {
-			if (partsIndices.get(i) == null) {
+				&& (i <= this.partsIndices.size()); i++) {
+			if (this.partsIndices.get(i) == null) {
 				final Integer old = toRenumberIter.next();
-				final Integer[] idx = partsIndices.remove(old);
+				final Integer[] idx = this.partsIndices.remove(old);
 				for (int j = 1; j < idx.length; j++) {
 					if (idx[j].intValue() == old.intValue()) {
 						idx[j] = i;
 					}
 				}
-				partsIndices.put(i, idx);
-				partsName.put(i, partsName.remove(old));
-				renumberMap.put(old, i);
-				for (final Integer j : partsIndices.keySet()) {
+				this.partsIndices.put(i, idx);
+				this.partsName.put(i, this.partsName.remove(old));
+				this.renumberMap.put(old, i);
+				for (final Integer j : this.partsIndices.keySet()) {
 					if (j.intValue() == i) {
 						continue;
 					}
-					final Integer[] idx_j = partsIndices.get(j);
+					final Integer[] idx_j = this.partsIndices.get(j);
 					for (int k = 1; k < idx_j.length; k++) {
 						if (idx_j[k].intValue() == old.intValue()) {
 							idx_j[k] = i;
@@ -354,7 +353,7 @@ public class SongName implements Map<Integer, String> {
 
 				}
 				for (int j = 1; j < i; j++) {
-					final Integer[] idx_j = partsIndices.get(j);
+					final Integer[] idx_j = this.partsIndices.get(j);
 					for (int k = 1; k < idx_j.length; k++) {
 						if ((idx_j[k] != null)
 								&& (idx_j[k].intValue() == old.intValue())) {
@@ -368,7 +367,7 @@ public class SongName implements Map<Integer, String> {
 	}
 
 	private final void calculateDuration(final IOHandler io) {
-		final InputStream in = io.openIn(path.toFile());
+		final InputStream in = io.openIn(this.path.toFile());
 		double max = 0;
 		double quantity = 1;
 		double base = 0.125;
@@ -399,36 +398,28 @@ public class SongName implements Map<Integer, String> {
 					breakDuration = 0;
 					continue;
 				} else if (line.startsWith("L:")) {
-					final String[] baseParts =
-							line.substring(2).trim().split("/");
-					base =
-							Double.parseDouble(baseParts[0].trim())
-									/ Double.parseDouble(baseParts[1]
-											.trim());
+					final String[] baseParts = line.substring(2).trim()
+							.split("/");
+					base = Double.parseDouble(baseParts[0].trim())
+							/ Double.parseDouble(baseParts[1].trim());
 					continue;
 				} else if (line.startsWith("M:")) {
 					// meter change within a tune body not allowed
-					final String[] meterParts =
-							line.substring(2).trim().split("/");
-					meter =
-							Double.parseDouble(meterParts[0].trim())
-									/ Double.parseDouble(meterParts[1]
-											.trim());
+					final String[] meterParts = line.substring(2).trim()
+							.split("/");
+					meter = Double.parseDouble(meterParts[0].trim())
+							/ Double.parseDouble(meterParts[1].trim());
 					continue;
 				} else if (line.startsWith("Q:")) {
 					if (line.contains("=")) {
 						final String[] lineParts = line.split("=");
-						final String[] baseParts =
-								lineParts[0].substring(2).trim()
-										.split("/");
-						base =
-								Double.parseDouble(baseParts[0].trim())
-										/ Double.parseDouble(baseParts[1]
-												.trim());
+						final String[] baseParts = lineParts[0].substring(2)
+								.trim().split("/");
+						base = Double.parseDouble(baseParts[0].trim())
+								/ Double.parseDouble(baseParts[1].trim());
 						quantity = Integer.parseInt(lineParts[1].trim());
 					} else {
-						quantity =
-								Integer.parseInt(line.substring(2).trim());
+						quantity = Integer.parseInt(line.substring(2).trim());
 					}
 					continue;
 				} else if ((line.length() >= 2) && (line.charAt(1) == ':')) {
@@ -438,8 +429,7 @@ public class SongName implements Map<Integer, String> {
 				double max_accord = 0;
 				boolean accord = false;
 				while (pos < line.length()) {
-					if ((line.charAt(pos) == '|')
-							|| (line.charAt(pos) == ' ')) {
+					if ((line.charAt(pos) == '|') || (line.charAt(pos) == ' ')) {
 						++pos;
 					} else if (line.charAt(pos) == '[') {
 						accord = true;
@@ -462,8 +452,7 @@ public class SongName implements Map<Integer, String> {
 						final StringBuilder sb = new StringBuilder();
 						pos = SongName.findEnd(sb, line, ++pos);
 
-						final String[] meterParts =
-								sb.toString().split("/");
+						final String[] meterParts = sb.toString().split("/");
 						if (meterParts.length == 0) {
 							d = Math.pow(2, -sb.length());
 						} else {
@@ -473,9 +462,8 @@ public class SongName implements Map<Integer, String> {
 							if (meterParts.length == 1) {
 								d = Double.parseDouble(meterParts[0]);
 							} else {
-								d =
-										Double.parseDouble(meterParts[0])
-												/ Double.parseDouble(meterParts[1]);
+								d = Double.parseDouble(meterParts[0])
+										/ Double.parseDouble(meterParts[1]);
 							}
 						}
 						breakDuration += d;
@@ -484,8 +472,7 @@ public class SongName implements Map<Integer, String> {
 						// find end of note
 						final StringBuilder sb = new StringBuilder();
 						pos = SongName.findEnd(sb, line, ++pos);
-						final String[] meterParts =
-								sb.toString().split("/");
+						final String[] meterParts = sb.toString().split("/");
 						if (meterParts.length == 0) {
 							d = Math.pow(2, -sb.length());
 						} else {
@@ -495,9 +482,8 @@ public class SongName implements Map<Integer, String> {
 							if (meterParts.length == 1) {
 								d = Double.parseDouble(meterParts[0]);
 							} else {
-								d =
-										Double.parseDouble(meterParts[0])
-												/ Double.parseDouble(meterParts[1]);
+								d = Double.parseDouble(meterParts[0])
+										/ Double.parseDouble(meterParts[1]);
 							}
 						}
 						if (breakDuration != 0) {
@@ -518,10 +504,10 @@ public class SongName implements Map<Integer, String> {
 			max *= base / 0.25;
 			final int minutes = (int) max;
 			final int seconds = (int) ((max - minutes) * 60);
-			duration = String.format("%01d:%02d", minutes, seconds);
+			this.duration = String.format("%01d:%02d", minutes, seconds);
 		} catch (final IOException e) {
 			io.handleException(ExceptionHandle.CONTINUE, e);
-			duration = "??:??";
+			this.duration = "??:??";
 		} finally {
 			io.close(in);
 		}

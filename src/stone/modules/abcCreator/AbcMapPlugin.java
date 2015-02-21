@@ -39,10 +39,8 @@ import stone.util.TaskPool;
 public final class AbcMapPlugin extends
 		DragAndDropPlugin<JPanel, JPanel, JPanel> {
 
-	final Map<MidiInstrumentDropTarget, Set<Integer>> instrumentToTrack =
-			new TreeMap<>();
-	final Map<Integer, DragObject<JPanel, JPanel, JPanel>> trackMap =
-			new HashMap<>();
+	final Map<MidiInstrumentDropTarget, Set<Integer>> instrumentToTrack = new TreeMap<>();
+	final Map<Integer, DragObject<JPanel, JPanel, JPanel>> trackMap = new HashMap<>();
 
 	private JScrollPane center;
 	private Container empty;
@@ -56,9 +54,7 @@ public final class AbcMapPlugin extends
 	 * @param targets
 	 * @param io
 	 */
-	public AbcMapPlugin(
-			final AbcCreator abcCreator,
-			final TaskPool taskPool,
+	public AbcMapPlugin(final AbcCreator abcCreator, final TaskPool taskPool,
 			final MidiParser parser,
 			final List<DropTargetContainer<JPanel, JPanel, JPanel>> targets,
 			final IOHandler io) {
@@ -75,16 +71,16 @@ public final class AbcMapPlugin extends
 			DropTarget<JPanel, JPanel, JPanel> target) {
 		final Track track;
 		final MidiInstrumentDropTarget i;
-		if (target == state.emptyTarget) {
+		if (target == this.state.emptyTarget) {
 			track = null;
 			i = null;
 		} else {
 			track = (Track) object;
 			i = (MidiInstrumentDropTarget) target;
-			final Set<Integer> set = instrumentToTrack.get(target);
+			final Set<Integer> set = this.instrumentToTrack.get(target);
 			if (set == null) {
 				final Set<Integer> setNew = new HashSet<>();
-				instrumentToTrack.put(i, setNew);
+				this.instrumentToTrack.put(i, setNew);
 				setNew.add(track.getId());
 				initTarget(target);
 			} else {
@@ -101,23 +97,23 @@ public final class AbcMapPlugin extends
 	 * @param string
 	 */
 	public final void printError(final String string) {
-		state.label.setText(string);
+		this.state.label.setText(string);
 	}
 
 	/**
 	 * Cleans internal structures to display another abc-file.
 	 */
 	public final void reset() {
-		taskPool.addTask(new Runnable() {
+		this.taskPool.addTask(new Runnable() {
 			@Override
 			final public void run() {
-				for (final DropTargetContainer<?, ?, ?> target : targets) {
+				for (final DropTargetContainer<?, ?, ?> target : AbcMapPlugin.this.targets) {
 					target.clearTargets();
 				}
 			}
 		});
-		trackMap.clear();
-		instrumentToTrack.clear();
+		this.trackMap.clear();
+		this.instrumentToTrack.clear();
 	}
 
 	/**
@@ -125,7 +121,7 @@ public final class AbcMapPlugin extends
 	 */
 	@Override
 	public final int size() {
-		return instrumentToTrack.size();
+		return this.instrumentToTrack.size();
 	}
 
 	/**
@@ -133,7 +129,7 @@ public final class AbcMapPlugin extends
 	 */
 	public final TreeSet<DropTarget<JPanel, JPanel, JPanel>> targets() {
 		return new TreeSet<DropTarget<JPanel, JPanel, JPanel>>(
-				instrumentToTrack.keySet());
+				this.instrumentToTrack.keySet());
 	}
 
 	/**
@@ -146,12 +142,11 @@ public final class AbcMapPlugin extends
 	public final boolean unlink(DragObject<?, ?, ?> object,
 			DropTarget<?, ?, ?> target) {
 		final Track t = (Track) object;
-		final MidiInstrumentDropTarget i =
-				(MidiInstrumentDropTarget) target;
-		final Set<Integer> set = instrumentToTrack.get(target);
+		final MidiInstrumentDropTarget i = (MidiInstrumentDropTarget) target;
+		final Set<Integer> set = this.instrumentToTrack.get(target);
 		set.remove(t.getId());
 		if (set.isEmpty()) {
-			instrumentToTrack.remove(i);
+			this.instrumentToTrack.remove(i);
 			return true;
 		}
 		return false;
@@ -161,24 +156,23 @@ public final class AbcMapPlugin extends
 	@Override
 	protected final void addToCenter(
 			final DropTarget<JPanel, JPanel, JPanel> target) {
-		final Container c =
-				(Container) ((Container) center.getComponent(0))
-						.getComponent(0);
-		if (empty != null) {
-			empty = null;
+		final Container c = (Container) ((Container) this.center
+				.getComponent(0)).getComponent(0);
+		if (this.empty != null) {
+			this.empty = null;
 			c.removeAll();
-			c.setBackground(emptyC);
+			c.setBackground(this.emptyC);
 		}
 		final Set<Integer> tracks = new HashSet<>();
 		for (final DragObject<JPanel, JPanel, JPanel> o : target) {
 			tracks.add(o.getId());
 		}
-		instrumentToTrack.put((MidiInstrumentDropTarget) target, tracks);
+		this.instrumentToTrack.put((MidiInstrumentDropTarget) target, tracks);
 		c.removeAll();
-		for (final MidiInstrumentDropTarget t : instrumentToTrack.keySet()) {
+		for (final MidiInstrumentDropTarget t : this.instrumentToTrack.keySet()) {
 			c.add(t.getDisplayableComponent());
 		}
-		center.revalidate();
+		this.center.revalidate();
 	}
 
 	/**
@@ -195,7 +189,7 @@ public final class AbcMapPlugin extends
 
 			@Override
 			public final void stateChanged(final ChangeEvent e) {
-				state.split ^= true;
+				AbcMapPlugin.this.state.split ^= true;
 			}
 		});
 
@@ -203,51 +197,50 @@ public final class AbcMapPlugin extends
 		final JButton globalParamsButton = new JButton("Settings");
 		final JButton loadButton = new JButton("Load");
 		final JPanel globalMenu = new JPanel();
-		final ReleaseMouseListenerParams params =
-				new ReleaseMouseListenerParams() {
+		final ReleaseMouseListenerParams params = new ReleaseMouseListenerParams() {
 
 
-					@Override
-					public JPanel globalMenu() {
-						return globalMenu;
-					}
+			@Override
+			public JPanel globalMenu() {
+				return globalMenu;
+			}
 
-					@Override
-					public JButton globalParamsButton() {
-						return globalParamsButton;
-					}
+			@Override
+			public JButton globalParamsButton() {
+				return globalParamsButton;
+			}
 
-					@Override
-					public JButton loadButton() {
-						return loadButton;
-					}
+			@Override
+			public JButton loadButton() {
+				return loadButton;
+			}
 
-					@Override
-					public JPanel panel() {
-						return panel;
-					}
+			@Override
+			public JPanel panel() {
+				return panel;
+			}
 
-					@Override
-					public JPanel panelCenter() {
-						return panelCenter;
-					}
+			@Override
+			public JPanel panelCenter() {
+				return AbcMapPlugin.this.panelCenter;
+			}
 
-					@Override
-					public AbcMapPlugin plugin() {
-						return AbcMapPlugin.this;
-					}
+			@Override
+			public AbcMapPlugin plugin() {
+				return AbcMapPlugin.this;
+			}
 
-					@Override
-					public JToggleButton splitButton() {
-						return splitButton;
-					}
+			@Override
+			public JToggleButton splitButton() {
+				return splitButton;
+			}
 
-					@Override
-					public JButton testButton() {
-						return testButton;
-					}
+			@Override
+			public JButton testButton() {
+				return testButton;
+			}
 
-				};
+		};
 
 		testButton.addMouseListener(new TestButtonMouseListener(params));
 
@@ -266,14 +259,14 @@ public final class AbcMapPlugin extends
 		loadButton
 				.setToolTipText("Loads a previously saved map - IN  DEVELOPMENT will currently clear the map and fail afterwards");
 
-		panelCenter.setLayout(new BorderLayout());
-		panelCenter.add(GUI.Button.OK.getButton());
-		panelCenter.add(splitButton, BorderLayout.EAST);
-		panelCenter.add(globalParamsButton, BorderLayout.SOUTH);
-		panelCenter.add(loadButton, BorderLayout.WEST);
+		this.panelCenter.setLayout(new BorderLayout());
+		this.panelCenter.add(GUI.Button.OK.getButton());
+		this.panelCenter.add(splitButton, BorderLayout.EAST);
+		this.panelCenter.add(globalParamsButton, BorderLayout.SOUTH);
+		this.panelCenter.add(loadButton, BorderLayout.WEST);
 
 		panel.setLayout(new BorderLayout());
-		panel.add(panelCenter);
+		panel.add(this.panelCenter);
 		panel.add(GUI.Button.ABORT.getButton(), BorderLayout.WEST);
 		panel.add(testButton, BorderLayout.EAST);
 		return panel;
@@ -282,20 +275,19 @@ public final class AbcMapPlugin extends
 	/** */
 	@Override
 	protected final void emptyCenter() {
-		if (empty != null) {
+		if (this.empty != null) {
 			return;
 		}
-		empty = center.getParent();
-		final Container c =
-				(Container) ((Container) center.getComponent(0))
-						.getComponent(0);
+		this.empty = this.center.getParent();
+		final Container c = (Container) ((Container) this.center
+				.getComponent(0)).getComponent(0);
 		final JLabel label = new JLabel("       - empty -       ");
 		label.setForeground(Color.WHITE);
 
 		c.add(label);
-		emptyC = c.getBackground();
+		this.emptyC = c.getBackground();
 		c.setBackground(Color.RED);
-		empty.validate();
+		this.empty.validate();
 	}
 
 	/**
@@ -303,17 +295,13 @@ public final class AbcMapPlugin extends
 	 * abc-file.
 	 */
 	@Override
-	protected final
-			JScrollPane
-			initCenter(
-					final Map<Integer, DragObject<JPanel, JPanel, JPanel>> trackList) {
+	protected final JScrollPane initCenter(
+			final Map<Integer, DragObject<JPanel, JPanel, JPanel>> trackList) {
 		final JPanel panel = new JPanel();
-		final TreeSet<DropTarget<JPanel, JPanel, JPanel>> set =
-				new TreeSet<>();
-		for (final DragObject<JPanel, JPanel, JPanel> o : trackList
-				.values()) {
+		final TreeSet<DropTarget<JPanel, JPanel, JPanel>> set = new TreeSet<>();
+		for (final DragObject<JPanel, JPanel, JPanel> o : trackList.values()) {
 			for (final DropTarget<JPanel, JPanel, JPanel> t : o) {
-				if (t != state.emptyTarget) {
+				if (t != this.state.emptyTarget) {
 					set.add(t);
 				}
 			}
@@ -324,15 +312,14 @@ public final class AbcMapPlugin extends
 			panel.add(t.getDisplayableComponent());
 
 		}
-		center = new JScrollPane(panel);
-		return center;
+		this.center = new JScrollPane(panel);
+		return this.center;
 	}
 
 	/** Creates a map, mapping the tracks. */
 	@Override
-	protected final Map<Integer, DragObject<JPanel, JPanel, JPanel>>
-			initInitListLeft() {
-		return trackMap;
+	protected final Map<Integer, DragObject<JPanel, JPanel, JPanel>> initInitListLeft() {
+		return this.trackMap;
 	}
 
 	/**
@@ -341,30 +328,28 @@ public final class AbcMapPlugin extends
 	@Override
 	protected final JScrollPane initLeft(
 			Map<Integer, DragObject<JPanel, JPanel, JPanel>> trackList) {
-		final Set<Integer> midiIds = parser.tracks();
-		final Map<Integer, String> titles = parser.titles();
-		final Map<Integer, MidiInstrument> instruments =
-				parser.instruments();
-		final Map<Integer, Integer> idBrute = parser.renumberMap();
+		final Set<Integer> midiIds = this.parser.tracks();
+		final Map<Integer, String> titles = this.parser.titles();
+		final Map<Integer, MidiInstrument> instruments = this.parser
+				.instruments();
+		final Map<Integer, Integer> idBrute = this.parser.renumberMap();
 		final JScrollPane scrollPane;
 
 		midiIds.remove(0);
-		panelLeft.removeAll();
-		panelLeft.setLayout(new GridLayout(0, 1));
+		this.panelLeft.removeAll();
+		this.panelLeft.setLayout(new GridLayout(0, 1));
 		for (final Integer id : midiIds) {
-			final Track track =
-					new Track(idBrute.get(id), id, titles.get(id));
+			final Track track = new Track(idBrute.get(id), id, titles.get(id));
 			trackList.put(id, track);
-			panelLeft.add(track.getDisplayableComponent());
-			track.getDisplayableComponent().add(
-					new JLabel(track.getName()));
+			this.panelLeft.add(track.getDisplayableComponent());
+			track.getDisplayableComponent().add(new JLabel(track.getName()));
 			track.getDisplayableComponent().addMouseListener(
-					new DO_Listener<>(track, state, Track.getParams(),
-							caller));
+					new DO_Listener<>(track, this.state, Track.getParams(),
+							this.caller));
 			final MidiInstrument instrument = instruments.get(id);
 			final DropTarget<JPanel, JPanel, JPanel> target;
 			if (instrument == null) {
-				target = state.emptyTarget;
+				target = this.state.emptyTarget;
 			} else {
 				target = instrument.createNewTarget();
 				track.addTarget(target);
@@ -372,7 +357,7 @@ public final class AbcMapPlugin extends
 			target.link(track);
 			link(track, target);
 		}
-		scrollPane = new JScrollPane(panelLeft);
+		scrollPane = new JScrollPane(this.panelLeft);
 		return scrollPane;
 	}
 
@@ -380,13 +365,12 @@ public final class AbcMapPlugin extends
 	@Override
 	protected final void initObject(
 			final DragObject<JPanel, JPanel, JPanel> object) {
-		panelLeft.add(object.getDisplayableComponent());
+		this.panelLeft.add(object.getDisplayableComponent());
 		object.getDisplayableComponent().add(new JLabel(object.getName()));
-		object.getDisplayableComponent()
-				.addMouseListener(
-						new DO_Listener<>(object, state,
-								Track.getParams(), caller));
-		panelLeft.revalidate();
+		object.getDisplayableComponent().addMouseListener(
+				new DO_Listener<>(object, this.state, Track.getParams(),
+						this.caller));
+		this.panelLeft.revalidate();
 	}
 
 
@@ -398,11 +382,11 @@ public final class AbcMapPlugin extends
 		final JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new GridLayout(0, 1));
 
-		for (final DropTargetContainer<JPanel, JPanel, JPanel> t : targets) {
+		for (final DropTargetContainer<JPanel, JPanel, JPanel> t : this.targets) {
 			final JLabel label = new JLabel(t.getName());
 			final JPanel panel = t.getDisplayableComponent();
 			panel.removeAll(); // needed in case of not first run
-			panel.addMouseListener(new TC_Listener<>(t, state));
+			panel.addMouseListener(new TC_Listener<>(t, this.state));
 			panel.setMinimumSize(new Dimension(120, 15));
 			panel.setPreferredSize(new Dimension(120, 33));
 			panel.add(label);
@@ -431,7 +415,7 @@ public final class AbcMapPlugin extends
 			final JPanel panelP0 = new JPanel();
 			final JPanel panelP1 = new JPanel();
 
-			target.displayParam(param, panelP1, panelP0, caller);
+			target.displayParam(param, panelP1, panelP0, this.caller);
 
 			labelP.setFont(font);
 
@@ -479,7 +463,7 @@ public final class AbcMapPlugin extends
 		panelNew.add(paramPanel, BorderLayout.SOUTH);
 
 		target.getDisplayableComponent().addMouseListener(
-				new DT_Listener<>(target, state));
+				new DT_Listener<>(target, this.state));
 	}
 
 }

@@ -71,7 +71,7 @@ public class IOHandler {
 	 *            relative to the workingDirectory
 	 */
 	public IOHandler(final StartupContainer sc) {
-		master = sc.getMaster();
+		this.master = sc.getMaster();
 
 		class GUIProxy extends Proxy {
 
@@ -85,32 +85,33 @@ public class IOHandler {
 			public GUIInterface getProxyInstance() {
 				return (GUIInterface) Proxy.newProxyInstance(getClass()
 						.getClassLoader(),
-						new Class<?>[] { GUIInterface.class }, h);
+						new Class<?>[] { GUIInterface.class }, this.h);
 			}
 
 		}
-		guiReal = new GUI((GUI) sc.getIO().gui, master);
+		this.guiReal = new GUI((GUI) sc.getIO().gui, this.master);
 		class GUIInvocationHandler implements InvocationHandler {
 
 			@Override
 			public Object invoke(final Object proxy, final Method method,
 					final Object[] args) throws Throwable {
-				if (master.isInterrupted()) {
-					if (Thread.currentThread() != master)
+				if (IOHandler.this.master.isInterrupted()) {
+					if (Thread.currentThread() != IOHandler.this.master) {
 						throw new InterruptedException();
+					}
 					return null;
 				}
-				return method.invoke(guiReal, args);
+				return method.invoke(IOHandler.this.guiReal, args);
 			}
 
 		}
 		final GUIProxy proxy = new GUIProxy(new GUIInvocationHandler());
 
-		gui = proxy.getProxyInstance();
+		this.gui = proxy.getProxyInstance();
 
-		progressMonitor = new ProgressMonitor(gui);
-		openStreams = new HashSet<>();
-		logStack = new ArrayDeque<>();
+		this.progressMonitor = new ProgressMonitor(this.gui);
+		this.openStreams = new HashSet<>();
+		this.logStack = new ArrayDeque<>();
 	}
 
 	/**
@@ -121,12 +122,12 @@ public class IOHandler {
 	 * @throws InterruptedException
 	 */
 	public IOHandler(final String name) throws InterruptedException {
-		gui = new GUI(name);
-		guiReal = null;
-		progressMonitor = null;
-		openStreams = null;
-		logStack = null;
-		master = null;
+		this.gui = new GUI(name);
+		this.guiReal = null;
+		this.progressMonitor = null;
+		this.openStreams = null;
+		this.logStack = null;
+		this.master = null;
 	}
 
 	/**
@@ -151,11 +152,11 @@ public class IOHandler {
 			try {
 				out = new OutputStream(fileToAppendTo, FileSystem.UTF8, true);
 				synchronized (this) {
-					openStreams.add(new WeakReference<Closeable>(out));
+					this.openStreams.add(new WeakReference<Closeable>(out));
 				}
 				in = new InputStream(content, FileSystem.UTF8);
 				synchronized (this) {
-					openStreams.add(new WeakReference<Closeable>(in));
+					this.openStreams.add(new WeakReference<Closeable>(in));
 				}
 			} catch (final FileNotFoundException e) {
 				handleException(ExceptionHandle.TERMINATE, e);
@@ -234,27 +235,28 @@ public class IOHandler {
 	 */
 	public final void close() {
 		synchronized (this) {
-			if (!closed) {
+			if (!this.closed) {
 				endProgress();
-				if (gui != null) {
-					gui.destroy();
+				if (this.gui != null) {
+					this.gui.destroy();
 				}
 			}
-			closed = true;
-			for (final WeakReference<Closeable> c : openStreams) {
+			this.closed = true;
+			for (final WeakReference<Closeable> c : this.openStreams) {
 				final Closeable cla = c.get();
-				if (cla != null)
+				if (cla != null) {
 					try {
 						cla.close();
 					} catch (final IOException e) {
 						handleException(ExceptionHandle.SUPPRESS, e);
 					}
+				}
 			}
-			openStreams.clear();
+			this.openStreams.clear();
 		}
-		if (!logStack.isEmpty()) {
+		if (!this.logStack.isEmpty()) {
 			final StringBuilder sb = new StringBuilder();
-			for (final Iterator<String> s = logStack.iterator(); true;) {
+			for (final Iterator<String> s = this.logStack.iterator(); true;) {
 				sb.append(s.next());
 				if (!s.hasNext()) {
 					break;
@@ -274,10 +276,10 @@ public class IOHandler {
 	 */
 	public final synchronized void close(final Closeable c) {
 		final Set<WeakReference<Closeable>> openStreamsDel = new HashSet<>();
-		for (final WeakReference<Closeable> w : openStreams) {
-			if (w.get() == null)
+		for (final WeakReference<Closeable> w : this.openStreams) {
+			if (w.get() == null) {
 				openStreamsDel.add(w);
-			else if (w.get() == c) {
+			} else if (w.get() == c) {
 				openStreamsDel.add(w);
 				try {
 					c.close();
@@ -286,7 +288,7 @@ public class IOHandler {
 				}
 			}
 		}
-		openStreams.removeAll(openStreamsDel);
+		this.openStreams.removeAll(openStreamsDel);
 	}
 
 	/**
@@ -308,15 +310,15 @@ public class IOHandler {
 	 * @see ProgressMonitor#beginTaskPreservingProgress(String, int)
 	 */
 	public final void continueProgress(final String message, int size) {
-		progressMonitor.beginTaskPreservingProgress(message, size);
+		this.progressMonitor.beginTaskPreservingProgress(message, size);
 	}
 
 	/**
 	 * Terminates currently displayed progress
 	 */
 	public final void endProgress() {
-		if (progressMonitor != null) {
-			progressMonitor.endProgress();
+		if (this.progressMonitor != null) {
+			this.progressMonitor.endProgress();
 		}
 	}
 
@@ -324,7 +326,11 @@ public class IOHandler {
 	 * @return the GUI used by this IO-Handler
 	 */
 	public final GUIInterface getGUI() {
-		return gui;
+		return this.gui;
+	}
+
+	public final Image getIcon() {
+		return this.guiReal.getIcon();
 	}
 
 	/**
@@ -334,7 +340,7 @@ public class IOHandler {
 	 * @param options
 	 */
 	public final void getOptions(final Collection<Option> options) {
-		gui.getOptions(options);
+		this.gui.getOptions(options);
 	}
 
 	/**
@@ -343,7 +349,7 @@ public class IOHandler {
 	 * @return the progress monitor
 	 */
 	public final ProgressMonitor getProgressMonitor() {
-		return progressMonitor;
+		return this.progressMonitor;
 	}
 
 	/**
@@ -355,10 +361,10 @@ public class IOHandler {
 	public final void handleException(final ExceptionHandle handle,
 			final Exception exception) {
 		if (!handle.suppress()) {
-			if (!closed) {
+			if (!this.closed) {
 				exception.printStackTrace();
-				gui.printErrorMessage(exception.toString().replaceAll(": ",
-						"\n"));
+				this.gui.printErrorMessage(exception.toString().replaceAll(
+						": ", "\n"));
 			}
 			if (handle.terminate()) {
 				close();
@@ -373,7 +379,7 @@ public class IOHandler {
 	 * @param plugin
 	 */
 	public final void handleGUIPlugin(final GUIPlugin plugin) {
-		gui.runPlugin(plugin);
+		this.gui.runPlugin(plugin);
 	}
 
 	/**
@@ -383,7 +389,7 @@ public class IOHandler {
 	 */
 	public final void handleThrowable(final Throwable throwable) {
 		throwable.printStackTrace();
-		gui.printErrorMessage(throwable.toString().replaceAll(": ", "\n"));
+		this.gui.printErrorMessage(throwable.toString().replaceAll(": ", "\n"));
 		System.exit(3);
 	}
 
@@ -409,8 +415,47 @@ public class IOHandler {
 	public final synchronized InputStream openIn(final File file,
 			final Charset cs) {
 		final InputStream stream = new InputStream(file, cs);
-		openStreams.add(new WeakReference<Closeable>(stream));
+		this.openStreams.add(new WeakReference<Closeable>(stream));
 		return stream;
+	}
+
+	public final Map<String, AbstractInputStream> openInZip(
+			final stone.util.Path zipFile) {
+		if (!zipFile.exists()) {
+			return null;
+		}
+		final ZipFile zip;
+		final Map<String, AbstractInputStream> map = new HashMap<>();
+		{
+			ZipFile zipTmp = null;
+			try {
+				zipTmp = new ZipFile(zipFile.toFile());
+			} catch (final Exception e) {
+			}
+			zip = zipTmp;
+			if (zip == null) {
+				return null;
+			}
+		}
+
+		final Enumeration<? extends ZipEntry> entries = zip.entries();
+		synchronized (this) {
+			while (entries.hasMoreElements()) {
+				final ZipEntry e = entries.nextElement();
+
+				try {
+					final AbstractInputStream in = new ZippedInputStream(zip, e);
+					this.openStreams.add(new WeakReference<Closeable>(in));
+					map.put(e.getName(), in);
+				} catch (final IOException ioe) {
+				}
+			}
+		}
+		try {
+			zip.close();
+		} catch (final IOException e) {
+		}
+		return map;
 	}
 
 	/**
@@ -423,7 +468,7 @@ public class IOHandler {
 	public final synchronized OutputStream openOut(final File file) {
 		try {
 			final OutputStream stream = new OutputStream(file, FileSystem.UTF8);
-			openStreams.add(new WeakReference<Closeable>(stream));
+			this.openStreams.add(new WeakReference<Closeable>(stream));
 			return stream;
 		} catch (final IOException e) {
 			handleException(ExceptionHandle.TERMINATE, e);
@@ -439,53 +484,16 @@ public class IOHandler {
 	 * @param cs
 	 * @return the opened stream or <i>null</i> if an error occurred
 	 */
-	public final  synchronized OutputStream openOut(final File file, final Charset cs) {
+	public final synchronized OutputStream openOut(final File file,
+			final Charset cs) {
 		try {
 			final OutputStream stream = new OutputStream(file, cs);
-			openStreams.add(new WeakReference<Closeable>(stream));
+			this.openStreams.add(new WeakReference<Closeable>(stream));
 			return stream;
 		} catch (final IOException e) {
 			handleException(ExceptionHandle.TERMINATE, e);
 		}
 		return null;
-	}
-
-	public final Map<String, AbstractInputStream> openInZip(
-			final stone.util.Path zipFile) {
-		if (!zipFile.exists()) {
-			return null;
-		}
-		final ZipFile zip;
-		final Map<String, AbstractInputStream> map = new HashMap<>();
-		{
-			ZipFile zipTmp = null;
-			try {
-				zipTmp = new ZipFile(zipFile.toFile());
-			} catch (Exception e) {
-			}
-			zip = zipTmp;
-			if (zip == null)
-				return null;
-		}
-
-		final Enumeration<? extends ZipEntry> entries = zip.entries();
-		synchronized (this) {
-			while (entries.hasMoreElements()) {
-				final ZipEntry e = entries.nextElement();
-
-				try {
-					final AbstractInputStream in = new ZippedInputStream(zip, e);
-					openStreams.add(new WeakReference<Closeable>(in));
-					map.put(e.getName(), in);
-				} catch (final IOException ioe) {
-				}
-			}
-		}
-		try {
-			zip.close();
-		} catch (final IOException e) {
-		}
-		return map;
 	}
 
 	/**
@@ -540,9 +548,9 @@ public class IOHandler {
 	 */
 	public final void printError(final String errorMsg, boolean stack) {
 		if (stack) {
-			logStack.add(errorMsg);
+			this.logStack.add(errorMsg);
 		} else {
-			gui.printErrorMessage(errorMsg);
+			this.gui.printErrorMessage(errorMsg);
 		}
 	}
 
@@ -559,7 +567,7 @@ public class IOHandler {
 	 */
 	public final void printMessage(final String title, final String message,
 			boolean bringGUItoFront) {
-		gui.printMessage(title, message, bringGUItoFront);
+		this.gui.printMessage(title, message, bringGUItoFront);
 	}
 
 	/**
@@ -584,14 +592,14 @@ public class IOHandler {
 	 */
 	public final List<String> selectModules(final List<String> modules)
 			throws InterruptedException {
-		return gui.selectModules(modules);
+		return this.gui.selectModules(modules);
 	}
 
 	/**
 	 * @param length
 	 */
 	public final void setProgressSize(int length) {
-		progressMonitor.setProgressSize(length);
+		this.progressMonitor.setProgressSize(length);
 	}
 
 	/**
@@ -601,7 +609,7 @@ public class IOHandler {
 	 *            message to be shown
 	 */
 	public final void setProgressTitle(final String title) {
-		progressMonitor.setProgressTitle(title);
+		this.progressMonitor.setProgressTitle(title);
 	}
 
 	/**
@@ -614,7 +622,7 @@ public class IOHandler {
 	 * @see ProgressMonitor#beginTask(String, int)
 	 */
 	public final void startProgress(final String message, int size) {
-		progressMonitor.beginTask(message, size);
+		this.progressMonitor.beginTask(message, size);
 	}
 
 	/**
@@ -623,7 +631,7 @@ public class IOHandler {
 	 * @see ProgressMonitor#update(int)
 	 */
 	public final void updateProgress() {
-		progressMonitor.update(1);
+		this.progressMonitor.update(1);
 	}
 
 	/**
@@ -634,7 +642,7 @@ public class IOHandler {
 	 *            units to add
 	 */
 	public final void updateProgress(int value) {
-		progressMonitor.update(value);
+		this.progressMonitor.update(value);
 	}
 
 	/**
@@ -775,9 +783,5 @@ public class IOHandler {
 				+ "Installed   : %2d Update %2d\n"
 				+ "Recommended : %2d Update %2d\n", versionInstalled[1],
 				versionInstalled[2], version[1], version[2]);
-	}
-
-	public final Image getIcon() {
-		return guiReal.getIcon();
 	}
 }

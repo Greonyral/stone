@@ -21,7 +21,7 @@ public class SongData {
 		}
 		return new SongData(song.getKey(), voicesMap, song.getValue());
 	}
-	
+
 
 	private final TreeMap<Integer, String> sortedVoices;
 	private final Path song;
@@ -32,10 +32,9 @@ public class SongData {
 		this(song, new TreeMap<>(voices), mod);
 	}
 
-	SongData(final Path song, final TreeMap<Integer, String> voices,
-			long mod) {
+	SongData(final Path song, final TreeMap<Integer, String> voices, long mod) {
 		this.song = song;
-		sortedVoices = voices;
+		this.sortedVoices = voices;
 		this.mod = mod;
 	}
 
@@ -44,32 +43,37 @@ public class SongData {
 	 *         milliseconds) of last modification
 	 */
 	public final long getLastModification() {
-		return mod;
+		return this.mod;
 	}
 
 	/**
 	 * @return the path denoting the file related to <i>this</i>
 	 */
 	public final Path getPath() {
-		return song;
+		return this.song;
+	}
+
+	public void serialize(final MTDeserializer sdd) throws IOException {
+		final SerializeConainer sc = sdd.createSerializeConainer();
+		sc.write(this.song, this.mod, this.sortedVoices);
 	}
 
 	/**
 	 * @return the voices of this song
 	 */
 	public final Map<Integer, String> voices() {
-		return sortedVoices;
+		return this.sortedVoices;
 	}
 
 	final void setLastModification(final Path file) {
-		mod = file.toFile().lastModified();
+		this.mod = file.toFile().lastModified();
 	}
 
 	final String toPluginData() {
 		int voiceIdx = 0;
 		final StringBuilder sb = new StringBuilder();
 		sb.append("\t\t\t{\r\n");
-		if (sortedVoices.isEmpty()) {
+		if (this.sortedVoices.isEmpty()) {
 			// no X:-line
 			sb.append("\t\t\t\t[");
 			sb.append(String.valueOf(++voiceIdx));
@@ -79,7 +83,7 @@ public class SongData {
 			sb.append("\",\r\n\t\t\t\t\t[\"Name\"] = \"");
 			sb.append("\"\r\n");
 		} else {
-			for (final Entry<Integer, String> voice : sortedVoices
+			for (final Entry<Integer, String> voice : this.sortedVoices
 					.entrySet()) {
 				if (voiceIdx > 0) {
 					sb.append("\t\t\t\t},\r\n");
@@ -97,10 +101,5 @@ public class SongData {
 		sb.append("\t\t\t\t}\r\n");
 		sb.append("\t\t\t}\r\n");
 		return sb.toString();
-	}
-
-	public void serialize(final MTDeserializer sdd) throws IOException {
-		final SerializeConainer sc = sdd.createSerializeConainer();
-		sc.write(song, mod, sortedVoices);
 	}
 }

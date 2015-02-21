@@ -16,7 +16,7 @@ final class ParamSet {
 			if (p == null) {
 				continue;
 			}
-			params.put(p, null);
+			this.params.put(p, null);
 		}
 	}
 
@@ -29,20 +29,18 @@ final class ParamSet {
 	}
 
 	public final boolean equals(final ParamSet o) {
-		for (final Map.Entry<BruteParams<?>, String> entry : params
+		for (final Map.Entry<BruteParams<?>, String> entry : this.params
 				.entrySet()) {
 			final String valueO = o.params.get(entry.getKey());
 			final String value = entry.getValue();
 			if ((value == null) && (valueO == null)) {
 				continue;
 			} else if (value == null) {
-				if (!entry.getKey().defaultValue().toString().equals(
-						valueO)) {
+				if (!entry.getKey().defaultValue().toString().equals(valueO)) {
 					return false;
 				}
 			} else if (valueO == null) {
-				if (!entry.getKey().defaultValue().toString()
-						.equals(value)) {
+				if (!entry.getKey().defaultValue().toString().equals(value)) {
 					return false;
 				}
 			} else if (!value.equals(valueO)) {
@@ -54,18 +52,17 @@ final class ParamSet {
 
 	@Override
 	public final String toString() {
-		return params.entrySet().toString();
+		return this.params.entrySet().toString();
 	}
 
 	final void adeptValues(final Track track,
 			final MidiInstrumentDropTarget instrument) {
-		for (final Entry<BruteParams<?>, String> entry : params.entrySet()) {
-			entry.getKey().setLocalValue(track, instrument,
-					entry.getValue());
+		for (final Entry<BruteParams<?>, String> entry : this.params.entrySet()) {
+			entry.getKey().setLocalValue(track, instrument, entry.getValue());
 		}
 	}
 
 	final void put(final BruteParams<?> param, final String string) {
-		params.put(param, string);
+		this.params.put(param, string);
 	}
 }

@@ -48,20 +48,20 @@ public class ModuleLoader extends ClassLoader {
 
 		if (url.getProtocol().equals("file")) {
 			final Path classPath = Path.getPath(url);
-			jar = false;
-			workingDirectory = classPath.getParent().getParent();
+			this.jar = false;
+			this.workingDirectory = classPath.getParent().getParent();
 		} else if (url.getProtocol().equals("jar")) {
-			jar = true;
-			workingDirectory = Path.getPath(url);
+			this.jar = true;
+			this.workingDirectory = Path.getPath(url);
 		} else {
-			jar = false;
-			workingDirectory = null;
+			this.jar = false;
+			this.workingDirectory = null;
 		}
 		final String[] cp = System.getProperty("java.class.path").split(
 				FileSystem.type == FileSystem.OSType.WINDOWS ? ";" : ":");
 		this.cp = new Path[Math.max(1, cp.length)];
 		if (cp.length == 0) {
-			this.cp[0] = workingDirectory;
+			this.cp[0] = this.workingDirectory;
 		} else {
 			final Path path = Path.getPath(System.getProperty("user.dir")
 					.split("\\" + FileSystem.getFileSeparator()));
@@ -74,11 +74,26 @@ public class ModuleLoader extends ClassLoader {
 	}
 
 	/** */
+	@Override
+	public final URL getResource(final String s) {
+		URL url;
+		try {
+			url = new URL((this.jar ? "jar:" : "") + "file:/"
+					+ this.workingDirectory.toString()
+					+ (this.jar ? "!/" + s : ""));
+			return url;
+		} catch (final MalformedURLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/** */
 	@SuppressWarnings("resource")
 	@Override
 	public final InputStream getResourceAsStream(final String s) {
 		final String[] names = s.split("/");
-		for (final Path p : cp) {
+		for (final Path p : this.cp) {
 			if (p.toFile().exists()) {
 				if (p.toFile().isFile()) {
 					try {
@@ -106,26 +121,12 @@ public class ModuleLoader extends ClassLoader {
 		return null;
 	}
 
-	/** */
-	@Override
-	public final URL getResource(final String s) {
-		URL url;
-		try {
-			url = new URL((jar ? "jar:" : "") + "file:/"
-					+ workingDirectory.toString() + (jar ? "!/" + s : ""));
-			return url;
-		} catch (final MalformedURLException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
 	/**
 	 * @return the dir, where the class files are or the jar-archive containing
 	 *         them
 	 */
 	public final Path getWorkingDir() {
-		return workingDirectory;
+		return this.workingDirectory;
 	}
 
 	/**
@@ -133,7 +134,7 @@ public class ModuleLoader extends ClassLoader {
 	 *         jar-archive, false otherwise
 	 */
 	public final boolean wdIsJarArchive() {
-		return jar;
+		return this.jar;
 	}
 
 	/** */
@@ -144,15 +145,15 @@ public class ModuleLoader extends ClassLoader {
 		Path path;
 		int i = 0;
 		int size = 0;
-		assert cp.length >= 1;
+		assert this.cp.length >= 1;
 		final String[] names = name.split("\\.");
 		names[names.length - 1] += ".class";
-		
-		for (; i <= cp.length; i++) {
-			if (i == cp.length) {
+
+		for (; i <= this.cp.length; i++) {
+			if (i == this.cp.length) {
 				return null;
 			}
-			path = cp[i];
+			path = this.cp[i];
 			if (!path.exists()) {
 				continue;
 			}
@@ -174,7 +175,7 @@ public class ModuleLoader extends ClassLoader {
 					return null;
 				}
 			}
-		
+
 			path = path.resolve(names);
 			if (!path.exists()) {
 				continue;
@@ -194,13 +195,13 @@ public class ModuleLoader extends ClassLoader {
 					"findClass got an null reference for InputStream");
 		}
 		assert in != null;
-		if (buffer.length < size) {
-			buffer = new byte[(size & 0xffff_ff00) + 0x100];
+		if (this.buffer.length < size) {
+			this.buffer = new byte[(size & 0xffff_ff00) + 0x100];
 		}
 		try {
-			int offset = in.read(buffer);
+			int offset = in.read(this.buffer);
 			while (offset < size) {
-				offset += in.read(buffer, offset, size - offset);
+				offset += in.read(this.buffer, offset, size - offset);
 			}
 		} catch (final IOException e) {
 			e.printStackTrace();
@@ -219,12 +220,12 @@ public class ModuleLoader extends ClassLoader {
 			}
 		}
 		if (i != 0) {
-			path = cp[i];
-			cp[i] = cp[0];
-			cp[0] = path;
+			path = this.cp[i];
+			this.cp[i] = this.cp[0];
+			this.cp[0] = path;
 		}
-		final Class<?> c = defineClass(name, buffer, 0, size);
-		map.put(name, c);
+		final Class<?> c = defineClass(name, this.buffer, 0, size);
+		this.map.put(name, c);
 		return c;
 
 	}

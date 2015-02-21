@@ -52,8 +52,8 @@ public final class StringOption extends Option {
 	 */
 	public StringOption(final OptionContainer optionContainer,
 			final String name, final String toolTip,
-			final String guiDescription, char shortFlag,
-			final String longFlag, final String section, final String key) {
+			final String guiDescription, char shortFlag, final String longFlag,
+			final String section, final String key) {
 		this(optionContainer, name, toolTip, guiDescription, shortFlag,
 				longFlag, section, key, null);
 	}
@@ -91,9 +91,8 @@ public final class StringOption extends Option {
 	 */
 	public StringOption(final OptionContainer optionContainer,
 			final String name, final String toolTip,
-			final String guiDescription, char shortFlag,
-			final String longFlag, final String section, final String key,
-			final String defaultValue) {
+			final String guiDescription, char shortFlag, final String longFlag,
+			final String section, final String key, final String defaultValue) {
 		super(optionContainer, name, toolTip, guiDescription, shortFlag,
 				longFlag, true, section, key, defaultValue);
 	}
@@ -101,21 +100,21 @@ public final class StringOption extends Option {
 	/** */
 	@Override
 	public final void display(final JPanel panel) {
-		textField = new JTextField();
-		final JScrollPane scrollPane = new JScrollPane(textField);
+		this.textField = new JTextField();
+		final JScrollPane scrollPane = new JScrollPane(this.textField);
 		final JPanel mainPanel = new JPanel();
 		final String value = value();
 
 		final StringBuilder sb = new StringBuilder(value);
 		if (value == null) {
 			value("");
-			textField.setForeground(Color.GRAY);
-			textField.setText(getTooltip());
+			this.textField.setForeground(Color.GRAY);
+			this.textField.setText(getTooltip());
 		} else {
-			textField.setForeground(Color.BLACK);
-			textField.setText(value);
+			this.textField.setForeground(Color.BLACK);
+			this.textField.setText(value);
 		}
-		textField.addKeyListener(new KeyListener() {
+		this.textField.addKeyListener(new KeyListener() {
 
 			final int[] cursor = new int[3];
 
@@ -126,25 +125,29 @@ public final class StringOption extends Option {
 
 			@Override
 			public final void keyReleased(final KeyEvent e) {
-				cursor[1] = textField.getSelectionStart();
-				cursor[2] = textField.getSelectionEnd();
-				if (cursor[1] == cursor[2]) {
-					cursor[0] = textField.getCaretPosition();
+				this.cursor[1] = StringOption.this.textField
+						.getSelectionStart();
+				this.cursor[2] = StringOption.this.textField.getSelectionEnd();
+				if (this.cursor[1] == this.cursor[2]) {
+					this.cursor[0] = StringOption.this.textField
+							.getCaretPosition();
 				}
-				sb.handleEvent(e, cursor);
+				sb.handleEvent(e, this.cursor);
 				if (sb.isEmpty()) {
-					cursor[0] = 0;
-					textField.setText(getTooltip());
-					textField.setForeground(Color.GRAY);
+					this.cursor[0] = 0;
+					StringOption.this.textField.setText(getTooltip());
+					StringOption.this.textField.setForeground(Color.GRAY);
 				} else {
-					textField.setText(sb.toString());
-					textField.setForeground(Color.BLACK);
+					StringOption.this.textField.setText(sb.toString());
+					StringOption.this.textField.setForeground(Color.BLACK);
 				}
-				if (cursor[1] != cursor[2]) {
-					textField.setSelectionStart(cursor[1]);
-					textField.setSelectionEnd(cursor[2]);
+				if (this.cursor[1] != this.cursor[2]) {
+					StringOption.this.textField
+							.setSelectionStart(this.cursor[1]);
+					StringOption.this.textField.setSelectionEnd(this.cursor[2]);
 				} else {
-					textField.setCaretPosition(cursor[0]);
+					StringOption.this.textField
+							.setCaretPosition(this.cursor[0]);
 				}
 				e.consume();
 			}
@@ -166,12 +169,12 @@ public final class StringOption extends Option {
 	@Override
 	public final void endDisplay() {
 		super.endDisplay();
-		if (textField.getForeground() == Color.BLACK) {
-			value(textField.getText());
+		if (this.textField.getForeground() == Color.BLACK) {
+			value(this.textField.getText());
 		} else {
 			value(null);
 		}
-		textField = null;
+		this.textField = null;
 	}
 
 	/**

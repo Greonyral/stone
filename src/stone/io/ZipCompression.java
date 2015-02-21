@@ -36,14 +36,13 @@ public class ZipCompression {
 				ioHandler.close(out);
 			}
 			final ZipFile zip = new ZipFile(zippedFile);
-			final ZipOutputStreams outs =
-					ZipCompression.openOut(zip, ioHandler);
+			final ZipOutputStreams outs = ZipCompression
+					.openOut(zip, ioHandler);
 			final ZipOutputStream out = outs.zipOutputStream;
-			final java.nio.file.Path zipPath =
-					zippedFile.toPath().getParent();
+			final java.nio.file.Path zipPath = zippedFile.toPath().getParent();
 			for (final File file : files) {
-				final String relName =
-						zipPath.relativize(file.toPath()).toString();
+				final String relName = zipPath.relativize(file.toPath())
+						.toString();
 				System.out.println(relName);
 				final ZipEntry entry = new ZipEntry(relName);
 				final InputStream in = ioHandler.openIn(file);
@@ -69,8 +68,8 @@ public class ZipCompression {
 
 	private static final ZipOutputStreams openOut(
 			final ZipFile zippedUpdateFile, final IOHandler ioHandler) {
-		final OutputStream out =
-				ioHandler.openOut(new File(zippedUpdateFile.getName()));
+		final OutputStream out = ioHandler.openOut(new File(zippedUpdateFile
+				.getName()));
 		return new ZipOutputStreams(out, new ZipOutputStream(out));
 	}
 }

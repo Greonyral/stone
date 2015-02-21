@@ -19,20 +19,20 @@ class Instrument {
 	}
 
 	public final String name() {
-		return type.name();
+		return this.type.name();
 	}
 
 	public final void print(final StringBuilder sb) {
-		sb.append(NameScheme.printInstrumentName(type));
-		NameScheme.printInstrumentNumbers(sb, numbers);
+		sb.append(NameScheme.printInstrumentName(this.type));
+		NameScheme.printInstrumentNumbers(sb, this.numbers);
 	}
 
 	@Override
 	public final String toString() {
-		final StringBuilder sb =
-				new StringBuilder(type.name().toLowerCase());
+		final StringBuilder sb = new StringBuilder(this.type.name()
+				.toLowerCase());
 		sb.setCharAt(0, (char) ((sb.charAt(0) + 'A') - 'a'));
-		for (final Integer number : numbers) {
+		for (final Integer number : this.numbers) {
 			sb.append(" ");
 			sb.append(number);
 		}
@@ -40,10 +40,10 @@ class Instrument {
 	}
 
 	final InstrumentType type() {
-		return type;
+		return this.type;
 	}
 
 	boolean uniqueIdx() {
-		return numbers.size() < 2;
+		return this.numbers.size() < 2;
 	}
 }

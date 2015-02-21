@@ -45,6 +45,8 @@ public interface DndPluginCaller<C extends Container, D extends Container, T ext
 
 	}
 
+	public void exec(final Runnable task);
+
 	/**
 	 * @return the file being displayed
 	 */
@@ -99,7 +101,5 @@ public interface DndPluginCaller<C extends Container, D extends Container, T ext
 	 * @return an array of all global DndPluginCallerParams
 	 */
 	DndPluginCallerParams<?>[] valuesGlobal();
-
-	public void exec(final Runnable task);
 
 }

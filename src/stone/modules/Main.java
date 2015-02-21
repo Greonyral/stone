@@ -26,8 +26,8 @@ public class Main implements Module {
 
 	private static final int MAX_LENGTH_INFO = 80;
 
-	
-	private static final int VERSION = 18;
+
+	private static final int VERSION = 19;
 
 	/**
 	 * The name to be used for naming the config-file and the title.
@@ -72,13 +72,11 @@ public class Main implements Module {
 	 * @param oc
 	 * @return the option for the name of user.
 	 */
-	public final static StringOption createNameOption(
-			final OptionContainer oc) {
+	public final static StringOption createNameOption(final OptionContainer oc) {
 		return new StringOption(oc, "Name",
 				"Should be your ingame name. Used as part of commit messages and as"
-						+ " meta-tag in created files.",
-				"Name for Commits", 'n', "name", Main.GLOBAL_SECTION,
-				Main.NAME_KEY);
+						+ " meta-tag in created files.", "Name for Commits",
+				'n', "name", Main.GLOBAL_SECTION, Main.NAME_KEY);
 	}
 
 	public final static String formatMaxLength(final Path base,
@@ -89,8 +87,8 @@ public class Main implements Module {
 	public final static String formatMaxLength(final Path base,
 			final String filename, final String a, final String b) {
 		if (filename == null) {
-			return formatMaxLength(base, "", a == null ? "" : a,
-					b == null ? "" : b);
+			return formatMaxLength(base, "", a == null ? "" : a, b == null ? ""
+					: b);
 		}
 		if ((a == null) || (b == null)) {
 			return formatMaxLength(base, filename, a == null ? "" : a,
@@ -150,8 +148,7 @@ public class Main implements Module {
 		boolean front = sb.length() != 0;
 		int l = lineLength;
 		for (final String part : parts) {
-			if ((l > 0)
-					&& ((l + part.length() + 1) >= Main.MAX_LENGTH_INFO)) {
+			if ((l > 0) && ((l + part.length() + 1) >= Main.MAX_LENGTH_INFO)) {
 				sb.append("\n");
 				l = 0;
 			} else if (!front) {
@@ -169,7 +166,7 @@ public class Main implements Module {
 	 * The users homeDir
 	 */
 	public final Path homeDir = FileSystem.getBase();
-	final Path homeSetting = homeDir.resolve(".SToNe");
+	final Path homeSetting = this.homeDir.resolve(".SToNe");
 
 	TaskPool taskPool;
 
@@ -187,15 +184,15 @@ public class Main implements Module {
 	 * Flushes the configuration
 	 */
 	public final void flushConfig() {
-		if (configNew.isEmpty()) {
+		if (this.configNew.isEmpty()) {
 			return;
 		}
 
 		final Runnable r = new MainConfigWriter(this);
-		if (taskPool == null) {
+		if (this.taskPool == null) {
 			r.run();
 		} else {
-			taskPool.addTask(r);
+			this.taskPool.addTask(r);
 		}
 	}
 
@@ -208,12 +205,12 @@ public class Main implements Module {
 	 * @return the value in the config, or defaultValue if the key in given
 	 *         section does not exist
 	 */
-	public final String getConfigValue(final String section,
-			final String key, final String defaultValue) {
-		synchronized (configOld) {
-			synchronized (configNew) {
-				final Map<String, String> map0 = configNew.get(section);
-				final Map<String, String> map1 = configOld.get(section);
+	public final String getConfigValue(final String section, final String key,
+			final String defaultValue) {
+		synchronized (this.configOld) {
+			synchronized (this.configNew) {
+				final Map<String, String> map0 = this.configNew.get(section);
+				final Map<String, String> map1 = this.configOld.get(section);
 				if (map0 != null) {
 					final String value0 = map0.get(key);
 					if (value0 != null) {
@@ -256,10 +253,10 @@ public class Main implements Module {
 	 */
 	@Override
 	public final void repair() {
-		if (homeSetting.exists()) {
-			final boolean success = homeSetting.delete();
+		if (this.homeSetting.exists()) {
+			final boolean success = this.homeSetting.delete();
 			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
-					homeSetting.toString(), success ? "" : " failed");
+					this.homeSetting.toString(), success ? "" : " failed");
 		}
 	}
 
@@ -281,22 +278,21 @@ public class Main implements Module {
 	 */
 	public final void run(final StartupContainer sc, final Flag flags) {
 		final IOHandler io;
-		taskPool = sc.createTaskPool();
+		this.taskPool = sc.createTaskPool();
 		createIO(sc);
 		io = sc.getIO();
 		if (io == null) {
 			return;
 		}
-		final Runnable workerRun = taskPool.runMaster();
-		taskPool.addTask(new Runnable() {
+		final Runnable workerRun = this.taskPool.runMaster();
+		this.taskPool.addTask(new Runnable() {
 
 			@Override
 			public void run() {
 				try {
 					sc.finishInit(flags); // sync barrier 1
-					final InputStream in =
-							io.openIn(homeSetting.toFile(),
-									FileSystem.UTF8);
+					final InputStream in = io.openIn(
+							Main.this.homeSetting.toFile(), FileSystem.UTF8);
 					final StringBuilder sb = new StringBuilder();
 					String section = null;
 					try {
@@ -326,13 +322,13 @@ public class Main implements Module {
 						sc.parseDone(); // sync barrier 2
 					}
 				} catch (final Exception e) {
-					homeSetting.delete();
-					taskPool.getMaster().interrupt();
+					Main.this.homeSetting.delete();
+					Main.this.taskPool.getMaster().interrupt();
 					io.close();
 					throw e;
 				}
 			}
-			
+
 		});
 		Thread.currentThread().setName("Worker-0");
 		workerRun.run();
@@ -345,28 +341,27 @@ public class Main implements Module {
 	 * @param key
 	 * @param value
 	 */
-	public final void setConfigValue(final String section,
-			final String key, final String value) {
-		synchronized (configOld) {
-			synchronized (configNew) {
+	public final void setConfigValue(final String section, final String key,
+			final String value) {
+		synchronized (this.configOld) {
+			synchronized (this.configNew) {
 				if (value == null) {
 					if (getConfigValue(section, key, null) != null) {
-						final Map<String, String> map0 =
-								configNew.get(section);
+						final Map<String, String> map0 = this.configNew
+								.get(section);
 						if (map0 == null) {
-							final Map<String, String> map1 =
-									new HashMap<>();
+							final Map<String, String> map1 = new HashMap<>();
 							map1.put(key, null);
-							configNew.put(section, map1);
+							this.configNew.put(section, map1);
 						} else {
 							map0.put(key, null);
 						}
 					}
 				} else {
-					final Map<String, String> mapOld =
-							configOld.get(section);
-					final Map<String, String> map0 =
-							configNew.get(section);
+					final Map<String, String> mapOld = this.configOld
+							.get(section);
+					final Map<String, String> map0 = this.configNew
+							.get(section);
 					if (mapOld != null) {
 						final String valueOld = mapOld.get(key);
 						if ((valueOld != null) && valueOld.equals(value)) {
@@ -375,7 +370,7 @@ public class Main implements Module {
 							}
 							map0.remove(key);
 							if (map0.isEmpty()) {
-								configNew.remove(section);
+								this.configNew.remove(section);
 							}
 							return;
 						}
@@ -385,15 +380,14 @@ public class Main implements Module {
 					} else {
 						final Map<String, String> map1 = new HashMap<>();
 						map1.put(key, value);
-						configNew.put(section, map1);
+						this.configNew.put(section, map1);
 					}
 				}
 			}
 		}
 	}
 
-	final String
-			parseConfig(final StringBuilder line, final String section) {
+	final String parseConfig(final StringBuilder line, final String section) {
 		int idx = 0;
 		if (line.length() == 0) {
 			return section;
@@ -408,11 +402,11 @@ public class Main implements Module {
 			// comment -> ignore
 			line.setLength(0);
 			return section;
-		}
-		else if (line.charAt(idx) == '[') {
+		} else if (line.charAt(idx) == '[') {
 			final int end = line.indexOf("]", idx) + 1;
-			final String currentSection = line.substring(idx, end).toLowerCase();
-			configOld.put(currentSection, new HashMap<String, String>());
+			final String currentSection = line.substring(idx, end)
+					.toLowerCase();
+			this.configOld.put(currentSection, new HashMap<String, String>());
 			idx = end;
 			while ((idx < line.length()) && (line.charAt(idx) == ' ')) {
 				if (++idx == line.length()) {
@@ -428,7 +422,7 @@ public class Main implements Module {
 		}
 		final String key = line.substring(start, idx).trim().toLowerCase();
 		final String value = line.substring(++idx, line.length()).trim();
-		configOld.get(section).put(key, value);
+		this.configOld.get(section).put(key, value);
 		line.setLength(0);
 		return section;
 

@@ -54,6 +54,5 @@ public interface DropTargetContainer<C extends Container, D extends Container, T
 	 * @param object
 	 * @return A Set of formerly linked DropTargets
 	 */
-	Set<DropTarget<C, D, T>> removeAllLinks(
-			final DragObject<C, D, T> object);
+	Set<DropTarget<C, D, T>> removeAllLinks(final DragObject<C, D, T> object);
 }

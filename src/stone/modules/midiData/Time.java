@@ -14,7 +14,7 @@ final class Time extends MidiEvent {
 
 	@Override
 	public final String toString() {
-		return delta + " time: " + n + "/" + d;
+		return this.delta + " time: " + this.n + "/" + this.d;
 	}
 
 	@Override

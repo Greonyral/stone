@@ -36,9 +36,9 @@ public class ProgressMonitor {
 	public final synchronized void beginTask(final String paramString,
 			int paramInt) {
 		if (paramInt < 0) {
-			progress = -1;
+			this.progress = -1;
 		} else {
-			progress = 0;
+			this.progress = 0;
 		}
 		beginTaskPreservingProgress(paramString, paramInt);
 	}
@@ -53,25 +53,25 @@ public class ProgressMonitor {
 	 */
 	public final synchronized void beginTaskPreservingProgress(
 			final String paramString, int paramInt) {
-		if (!init) {
+		if (!this.init) {
 			startSafe();
 		}
 		System.out.printf("\r%s\n", paramString);
-		gui.setProgressSize(paramInt, paramString);
-		gui.setProgress(progress);
-		max = paramInt;
-		
+		this.gui.setProgressSize(paramInt, paramString);
+		this.gui.setProgress(this.progress);
+		this.max = paramInt;
+
 	}
 
 	/**
 	 * Ends the task
 	 */
 	public final void endProgress() {
-		if (init) {
-			gui.endProgress();
+		if (this.init) {
+			this.gui.endProgress();
 			System.out.println();
 		}
-		init = false;
+		this.init = false;
 	}
 
 	/**
@@ -79,10 +79,10 @@ public class ProgressMonitor {
 	 *            the new maximum size
 	 */
 	public final synchronized void setProgressSize(int size) {
-		gui.setProgressSize(size);
-		progress = size < 0 ? -1 : progress < 0 ? 0 : progress;
-		gui.setProgress(progress);
-		max = size;
+		this.gui.setProgressSize(size);
+		this.progress = size < 0 ? -1 : this.progress < 0 ? 0 : this.progress;
+		this.gui.setProgress(this.progress);
+		this.max = size;
 	}
 
 	/**
@@ -92,7 +92,7 @@ public class ProgressMonitor {
 	 *            message to be shown
 	 */
 	public final void setProgressTitle(final String paramString) {
-		gui.setProgressTitle(paramString);
+		this.gui.setProgressTitle(paramString);
 		System.out.printf("\n%s\n", paramString);
 	}
 
@@ -103,28 +103,28 @@ public class ProgressMonitor {
 	 *            units to add
 	 */
 	public final synchronized void update(int paramInt) {
-		if (!init || (progress < 0)) {
+		if (!this.init || (this.progress < 0)) {
 			return;
 		}
 		if (paramInt < 0) {
-			max -= paramInt;
-			gui.setProgressSize(max);
+			this.max -= paramInt;
+			this.gui.setProgressSize(this.max);
 			update(-paramInt);
 			return;
 		}
-		gui.setProgress(progress += paramInt);
-		if (max > 0) {
-			final int digits = (int) Math.log10(max) + 1;
-			System.out.printf(String.format(
-					"\r%%%dd / %%%dd (%%6.2f%%%%)", digits, digits),
-					progress, max, (progress * 100.0) / max);
+		this.gui.setProgress(this.progress += paramInt);
+		if (this.max > 0) {
+			final int digits = (int) Math.log10(this.max) + 1;
+			System.out.printf(String.format("\r%%%dd / %%%dd (%%6.2f%%%%)",
+					digits, digits), this.progress, this.max,
+					(this.progress * 100.0) / this.max);
 		}
 	}
 
 	private final void startSafe() {
-		init = true;
-		progress = 0;
-		gui.initProgress();
+		this.init = true;
+		this.progress = 0;
+		this.gui.initProgress();
 	}
 
 }

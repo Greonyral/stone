@@ -61,8 +61,8 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 		State(final IOHandler io,
 				final List<DropTargetContainer<C, D, T>> targets) {
 			this.io = io;
-			emptyTarget =
-					targets.get(targets.size() - 1).createNewTarget();
+			this.emptyTarget = targets.get(targets.size() - 1)
+					.createNewTarget();
 		}
 
 	}
@@ -110,13 +110,12 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 	 */
 	protected DragAndDropPlugin(final DndPluginCaller<C, D, T> caller,
 			final TaskPool taskPool, final MidiParser parser,
-			final List<DropTargetContainer<C, D, T>> targets,
-			final IOHandler io) {
+			final List<DropTargetContainer<C, D, T>> targets, final IOHandler io) {
 		this.parser = parser;
 		this.targets = targets;
 		this.taskPool = taskPool;
 		this.caller = caller;
-		state = new State(io, targets);
+		this.state = new State(io, targets);
 	}
 
 	/**
@@ -148,7 +147,7 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 			@Override
 			public void run() {
 
-				final MidiMap map = parser.parse();
+				final MidiMap map = DragAndDropPlugin.this.parser.parse();
 				final JPanel mainPanel = new JPanel() {
 					/**
 					 * 
@@ -166,7 +165,7 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 
 				map.init(mainPanel);
 
-				frame.setIconImage(state.io.getIcon());
+				frame.setIconImage(DragAndDropPlugin.this.state.io.getIcon());
 				frame.addWindowListener(new WindowListener() {
 
 					@Override
@@ -185,14 +184,12 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 					}
 
 					@Override
-					public final void
-							windowDeactivated(final WindowEvent e) {
+					public final void windowDeactivated(final WindowEvent e) {
 						// nothing to do
 					}
 
 					@Override
-					public final void
-							windowDeiconified(final WindowEvent e) {
+					public final void windowDeiconified(final WindowEvent e) {
 						// nothing to do
 					}
 
@@ -209,28 +206,27 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 
 				frame.add(pane);
 				frame.pack();
-				frame.setTitle(parser.getMidi());
+				frame.setTitle(DragAndDropPlugin.this.parser.getMidi());
 				frame.setVisible(true);
 			}
 		};
 
-		taskPool.addTask(r);
+		this.taskPool.addTask(r);
 
 		final JPanel mainPanel;
-		final Map<Integer, DragObject<C, D, T>> initListLeft =
-				initInitListLeft();
-		state.label.setText("Drag the tracks from left to right");
-		state.running = false;
-		state.upToDate = false;
-		state.target = null;
-		state.targetC = null;
-		state.dragging = null;
-		state.object = null;
+		final Map<Integer, DragObject<C, D, T>> initListLeft = initInitListLeft();
+		this.state.label.setText("Drag the tracks from left to right");
+		this.state.running = false;
+		this.state.upToDate = false;
+		this.state.target = null;
+		this.state.targetC = null;
+		this.state.dragging = null;
+		this.state.object = null;
 
-		assert (panelCenter.getComponentCount() == 0)
-				&& (panelLeft.getComponentCount() == 0);
+		assert (this.panelCenter.getComponentCount() == 0)
+				&& (this.panelLeft.getComponentCount() == 0);
 		initListLeft.clear();
-		taskPool.waitForTasks();
+		this.taskPool.waitForTasks();
 
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new GridLayout(1, 3));
@@ -239,7 +235,7 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 		mainPanel.add(initRight());
 
 		panel.setLayout(new BorderLayout());
-		panel.add(state.label, BorderLayout.NORTH);
+		panel.add(this.state.label, BorderLayout.NORTH);
 		panel.add(mainPanel);
 		panel.add(createButtonPanel(), BorderLayout.SOUTH);
 		return false;
@@ -268,8 +264,7 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 	 * @return the map needed for {@link #initLeft(Map)} and
 	 *         {@link #initCenter(Map)}
 	 */
-	protected abstract Map<Integer, DragObject<C, D, T>>
-			initInitListLeft();
+	protected abstract Map<Integer, DragObject<C, D, T>> initInitListLeft();
 
 	/**
 	 * @param initListLeft

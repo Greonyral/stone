@@ -19,7 +19,7 @@ public final class SortingComparator implements Comparator<String> {
 	 *            the base path of the relative paths
 	 */
 	public SortingComparator(final Path base) {
-		band = base;
+		this.band = base;
 	}
 
 	/**
@@ -27,6 +27,6 @@ public final class SortingComparator implements Comparator<String> {
 	 */
 	@Override
 	public final int compare(final String o1, final String o2) {
-		return band.resolve(o1).compareTo(band.resolve(o2));
+		return this.band.resolve(o1).compareTo(this.band.resolve(o2));
 	}
 }

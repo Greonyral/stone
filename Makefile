@@ -87,24 +87,29 @@ modules/Main.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	echo "mainClass Main" >> config.txt
 	echo "modules" >> config.txt
 	echo "AbcCreator Simple GUI of BruTE" >> config.txt
+	echo "FileEditor Tools to edit abc-files" >> config.txt
 	echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
 	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) -C $(BIN_DIR) stone/io/Icon.png config.txt
 
 modules/Main_band.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	$(JAVAC) src/stone/MasterThread.java
 	echo "url https://github.com/Greonyral/stone/raw/master/" > config.txt
+	echo "url_https https://github.com/Greonyral/lotro-songs.git" >> config.txt
+
+	echo "url_ssh git@github.com:Greonyral/lotro-songs.git" >> config.txt
 	echo "mainClass Main_band" >> config.txt
 	echo "modules" >> config.txt
 	echo "AbcCreator Simple GUI of BruTE" >> config.txt
+	echo "FileEditor Tools to edit abc-files" >> config.txt
 	echo "VersionControl Simple git-GUI to synchronize songs" >> config.txt
 	echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
 	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) -C $(BIN_DIR) stone/io/Icon.png config.txt
 
 #targets
-hiddenVC: modules/Main.jar modules/AbcCreator.jar modules/SongbookUpdater.jar
+hiddenVC: modules/Main.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/FileEditor.jar
 	cp $< SToNe_hiddenVC.jar
 
-normal: modules/Main_band.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/VersionControl.jar 
+normal: modules/Main_band.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/VersionControl.jar modules/FileEditor.jar 
 	cp $< SToNe.jar
 
 moduleInfo: $(BIN_DIR)/stone/updater/CreateBuilds.class
@@ -135,7 +140,7 @@ $(BIN_DIR)/stone/modules/VersionControl.class: src/stone/modules/VersionControl.
 	$(JAVAC) $< src/stone/modules/versionControl/*.java
 
 $(BIN_DIR)/stone/modules/FileEditor.class:
-	$(info omitting FileEdtior)
+	$(JAVAC) $< src/stone/modules/fileEditor/*.java
 
 $(BIN_DIR)/stone/modules/AbcCreator.class: src/stone/modules/AbcCreator.java src/stone/modules/abcCreator/*.java src/stone/modules/midiData/*.java $(BIN_DIR)/stone/modules/Module.class
 	$(JAVAC) $< src/stone/modules/abcCreator/*.java src/stone/modules/midiData/*.java

@@ -42,9 +42,8 @@ public interface GUIInterface {
 		final JButton button;
 
 		Button() {
-			button =
-					new JButton(name().charAt(0)
-							+ name().substring(1).toUpperCase());
+			button = new JButton(name().charAt(0)
+					+ name().substring(1).toUpperCase());
 		}
 
 		/**
@@ -105,9 +104,7 @@ public interface GUIInterface {
 	 * @param bringGUItoFront
 	 *            user has have to confirm the message
 	 */
-	void
-			printMessage(String title, String message,
-					boolean bringGUItoFront);
+	void printMessage(String title, String message, boolean bringGUItoFront);
 
 	/**
 	 * Displays a no default GUI operation with given plugin.

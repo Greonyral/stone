@@ -96,22 +96,22 @@ public class AbcCreator implements Module,
 		Object state = InitState.INIT;
 
 		private String getMessage() {
-			if (state == InitState.DRUM_MAP) {
+			if (this.state == InitState.DRUM_MAP) {
 				return "Copying drum-maps to working dir";
 			}
-			if (state == InitState.UNPACK_JAR) {
+			if (this.state == InitState.UNPACK_JAR) {
 				return "Unpacking BruTE";
 			}
-			if (state == InitState.INIT) {
+			if (this.state == InitState.INIT) {
 				return "Init";
 			}
-			if (state == "INSTRUMENT_MAP") {
+			if (this.state == "INSTRUMENT_MAP") {
 				return "Parsing instrument-map";
 			}
-			if (state == "DRUM_MAP") {
+			if (this.state == "DRUM_MAP") {
 				return "Parsing drum-maps";
 			}
-			if (state == InitState.READ_JAR) {
+			if (this.state == InitState.READ_JAR) {
 				return "Reading BruTE-archive";
 			}
 			return "...";
@@ -119,59 +119,59 @@ public class AbcCreator implements Module,
 
 		synchronized final void drawState(final IOHandler io) {
 			this.io = io;
-			if (failed) {
+			if (this.failed) {
 				return;
 			}
-			io.startProgress(getMessage(), size);
-			io.updateProgress(progress);
+			io.startProgress(getMessage(), this.size);
+			io.updateProgress(this.progress);
 		}
 
 		synchronized final boolean failed() {
-			return failed;
+			return this.failed;
 		}
 
 		synchronized final void incrementSize(int value) {
-			size += value;
-			if (io != null) {
-				io.setProgressSize(size);
+			this.size += value;
+			if (this.io != null) {
+				this.io.setProgressSize(this.size);
 			}
 		}
 
 		synchronized final void progress() {
-			++progress;
-			if (io != null) {
-				io.updateProgress();
+			++this.progress;
+			if (this.io != null) {
+				this.io.updateProgress();
 			}
 		}
 
 		synchronized final void setFailed() {
-			failed = true;
+			this.failed = true;
 		}
 
 		synchronized final void setSize(final Object state, int size) {
 			if (this.state == state) {
 				this.size = size;
-				if (io != null) {
-					io.setProgressSize(size);
+				if (this.io != null) {
+					this.io.setProgressSize(size);
 				}
 			}
 		}
 
 		synchronized final void startPhase(final Object state) {
 			this.state = state;
-			progress = 0;
-			size = -1;
-			if (io != null) {
-				io.startProgress(getMessage(), size);
+			this.progress = 0;
+			this.size = -1;
+			if (this.io != null) {
+				this.io.startProgress(getMessage(), this.size);
 			}
 		}
 
 		synchronized final void startPhase(final Object state, int size) {
 			this.state = state;
-			progress = 0;
+			this.progress = 0;
 			this.size = size;
-			if (io != null) {
-				io.startProgress(getMessage(), size);
+			if (this.io != null) {
+				this.io.startProgress(getMessage(), size);
 			}
 		}
 	}
@@ -309,21 +309,21 @@ public class AbcCreator implements Module,
 	 * Constructor for building versionInfo
 	 */
 	public AbcCreator() {
-		ABC_PLAYER = null;
-		INSTRUMENT_MAP = null;
-		STYLE = null;
-		DRUM_MAPS = null;
-		TITLE = null;
-		wdDir = null;
-		io = null;
-		master = null;
-		targets = null;
-		parser = null;
-		taskPool = null;
-		bruteDir = null;
-		initState = null;
-		brutesMidi = brutesMap = brutesAbc = null;
-		main = null;
+		this.ABC_PLAYER = null;
+		this.INSTRUMENT_MAP = null;
+		this.STYLE = null;
+		this.DRUM_MAPS = null;
+		this.TITLE = null;
+		this.wdDir = null;
+		this.io = null;
+		this.master = null;
+		this.targets = null;
+		this.parser = null;
+		this.taskPool = null;
+		this.bruteDir = null;
+		this.initState = null;
+		this.brutesMidi = this.brutesMap = this.brutesAbc = null;
+		this.main = null;
 	}
 
 	/**
@@ -331,49 +331,49 @@ public class AbcCreator implements Module,
 	 * @throws InterruptedException
 	 */
 	public AbcCreator(final StartupContainer sc) throws InterruptedException {
-		ABC_PLAYER = AbcCreator.createPathToAbcPlayer(sc.getOptionContainer(),
+		this.ABC_PLAYER = AbcCreator.createPathToAbcPlayer(
+				sc.getOptionContainer(), sc.getTaskPool());
+		this.INSTRUMENT_MAP = AbcCreator.createInstrMap(
+				sc.getOptionContainer(), sc.getTaskPool());
+		this.STYLE = AbcCreator.createStyle(sc.getOptionContainer());
+		this.DRUM_MAPS = AbcCreator.createDrumMaps(sc.getOptionContainer(),
 				sc.getTaskPool());
-		INSTRUMENT_MAP = AbcCreator.createInstrMap(sc.getOptionContainer(),
-				sc.getTaskPool());
-		STYLE = AbcCreator.createStyle(sc.getOptionContainer());
-		DRUM_MAPS = AbcCreator.createDrumMaps(sc.getOptionContainer(),
-				sc.getTaskPool());
-		TITLE = null;
-		wdDir = sc.getWorkingDir();
-		io = sc.getIO();
-		master = sc.getMaster();
-		targets = null;
-		parser = null;
-		taskPool = sc.getTaskPool();
-		bruteDir = Path.getTmpDirOrFile("BruTE-GUI");
-		brutesMidi = brutesMap = brutesAbc = null;
-		initState = new InitState();
-		main = sc.getMain();
+		this.TITLE = null;
+		this.wdDir = sc.getWorkingDir();
+		this.io = sc.getIO();
+		this.master = sc.getMaster();
+		this.targets = null;
+		this.parser = null;
+		this.taskPool = sc.getTaskPool();
+		this.bruteDir = Path.getTmpDirOrFile("BruTE-GUI");
+		this.brutesMidi = this.brutesMap = this.brutesAbc = null;
+		this.initState = new InitState();
+		this.main = sc.getMain();
 	}
 
 	private AbcCreator(final AbcCreator abc, final StartupContainer sc) {
-		io = abc.io;
-		master = abc.master;
-		targets = MidiInstrument.createTargets();
-		parser = MidiParser.createInstance(sc);
+		this.io = abc.io;
+		this.master = abc.master;
+		this.targets = MidiInstrument.createTargets();
+		this.parser = MidiParser.createInstance(sc);
 
-		ABC_PLAYER = abc.ABC_PLAYER;
-		INSTRUMENT_MAP = abc.INSTRUMENT_MAP;
-		STYLE = abc.STYLE;
-		DRUM_MAPS = abc.DRUM_MAPS;
-		TITLE = new StringOption(null, null, "Title displayed in the abc",
+		this.ABC_PLAYER = abc.ABC_PLAYER;
+		this.INSTRUMENT_MAP = abc.INSTRUMENT_MAP;
+		this.STYLE = abc.STYLE;
+		this.DRUM_MAPS = abc.DRUM_MAPS;
+		this.TITLE = new StringOption(null, null, "Title displayed in the abc",
 				"Title", Flag.NoShortFlag, Flag.NoLongFlag, AbcCreator.SECTION,
 				"title", null);
-		wdDir = abc.wdDir;
-		taskPool = abc.taskPool;
-		bruteDir = abc.bruteDir;
-		brutesMidi = bruteDir.resolve("mid.mid");
-		brutesMap = bruteDir.resolve("out.config");
-		brutesAbc = bruteDir.resolve("new.abc");
-		dragAndDropPlugin = new AbcMapPlugin(this, taskPool, parser, targets,
-				io);
-		initState = abc.initState;
-		main = abc.main;
+		this.wdDir = abc.wdDir;
+		this.taskPool = abc.taskPool;
+		this.bruteDir = abc.bruteDir;
+		this.brutesMidi = this.bruteDir.resolve("mid.mid");
+		this.brutesMap = this.bruteDir.resolve("out.config");
+		this.brutesAbc = this.bruteDir.resolve("new.abc");
+		this.dragAndDropPlugin = new AbcMapPlugin(this, this.taskPool,
+				this.parser, this.targets, this.io);
+		this.initState = abc.initState;
+		this.main = abc.main;
 	}
 
 	/**
@@ -387,10 +387,10 @@ public class AbcCreator implements Module,
 	@Override
 	public final Object call_back(final Object name, final Object title,
 			int abcTracks) {
-		io.startProgress("Creating map", abcTracks + 1);
+		this.io.startProgress("Creating map", abcTracks + 1);
 		final Path map = generateMap(name == null ? "<insert your name here>"
-				: name, title == null ? abc.getFilename() : title);
-		io.endProgress();
+				: name, title == null ? this.abc.getFilename() : title);
+		this.io.endProgress();
 		if (map == null) {
 			// no abc-tracks
 			return new Object() {
@@ -402,75 +402,80 @@ public class AbcCreator implements Module,
 		}
 		System.out.println("generated map " + map);
 		try {
-			copy(map, brutesMap);
-			io.startProgress("Waiting for BruTE to finish", abcTracks + 1);
-			final int remap = call("remap.exe", bruteDir);
-			io.endProgress();
+			copy(map, this.brutesMap);
+			this.io.startProgress("Waiting for BruTE to finish", abcTracks + 1);
+			final int remap = call("remap.exe", this.bruteDir);
+			this.io.endProgress();
 			if (remap != 0) {
-				io.printError("Unable to execute BRuTE", false);
+				this.io.printError("Unable to execute BRuTE", false);
 				// will interrupt the process
 				return null;
 			}
 		} catch (final Exception e) {
-			io.handleException(ExceptionHandle.CONTINUE, e);
+			this.io.handleException(ExceptionHandle.CONTINUE, e);
 			return null;
 		}
-		abc.delete();
-		brutesAbc.renameTo(abc);
-		brutesMidi.delete();
-		brutesMap.delete();
-		if (master.isInterrupted()) {
+		this.abc.delete();
+		this.brutesAbc.renameTo(this.abc);
+		this.brutesMidi.delete();
+		this.brutesMap.delete();
+		if (this.master.isInterrupted()) {
 			return null;
 		}
 		if (name == null) {
 			// test
 			try {
-				final Path abcPlayer = ABC_PLAYER.getValue();
+				final Path abcPlayer = this.ABC_PLAYER.getValue();
 				if ((abcPlayer != null) && abcPlayer.exists()) {
-					io.startProgress("Starting AbcPlayer", -1);
+					this.io.startProgress("Starting AbcPlayer", -1);
 					call(abcPlayer, CallType.JAR, abcPlayer.getParent(),
-							abc.toString());
-					io.endProgress();
+							this.abc.toString());
+					this.io.endProgress();
 				}
 			} catch (final IOException | InterruptedException e) {
 				e.printStackTrace();
 				return null;
 			}
 		}
-		return callResultOut;
+		return this.callResultOut;
+	}
+
+	@Override
+	public void exec(final Runnable task) {
+		this.taskPool.addTask(task);
 	}
 
 	/** @return the path to the abc-file to create */
 	@Override
 	public final Path getFile() {
-		return abc;
+		return this.abc;
 	}
 
 	/**
 	 * @return a set of useable drum-maps
 	 */
 	public final Set<Integer> getMaps() {
-		return maps;
+		return this.maps;
 	}
 
 	/** */
 	@Override
 	public final List<Option> getOptions() {
 		final List<Option> list = new ArrayList<>();
-		list.add(ABC_PLAYER);
-		list.add(DRUM_MAPS);
-		list.add(INSTRUMENT_MAP);
-		list.add(STYLE);
-		taskPool.addTask(new Runnable() {
+		list.add(this.ABC_PLAYER);
+		list.add(this.DRUM_MAPS);
+		list.add(this.INSTRUMENT_MAP);
+		list.add(this.STYLE);
+		this.taskPool.addTask(new Runnable() {
 
 			@Override
 			public final void run() {
-				bruteDir.toFile().mkdir();
+				AbcCreator.this.bruteDir.toFile().mkdir();
 				try {
 					final boolean init = init();
 					if (!init) {
-						initState.setFailed();
-						bruteDir.delete();
+						AbcCreator.this.initState.setFailed();
+						AbcCreator.this.bruteDir.delete();
 					}
 				} catch (final IOException e) {
 					e.printStackTrace();
@@ -496,7 +501,7 @@ public class AbcCreator implements Module,
 	@Override
 	public final void link(final DragObject<JPanel, JPanel, JPanel> object,
 			final DropTarget<JPanel, JPanel, JPanel> target) {
-		dragAndDropPlugin.link(object, target);
+		this.dragAndDropPlugin.link(object, target);
 	}
 
 	/**
@@ -505,38 +510,41 @@ public class AbcCreator implements Module,
 	@Override
 	public final void loadMap(final File mapToLoad,
 			final DndPluginCaller.LoadedMapEntry c) {
-		final InputStream in = io.openIn(mapToLoad);
-		in.registerProgressMonitor(io);
+		final InputStream in = this.io.openIn(mapToLoad);
+		in.registerProgressMonitor(this.io);
 		class ParseState {
 			private int state;
 
 			final boolean comment() {
-				return state < 0;
+				return this.state < 0;
 			}
 
 			final void parseLine(final String line) {
-				switch (state) {
+				switch (this.state) {
 				case 0x7000_0000:
 					return;
 				case 0:
 					if (line.startsWith("Name: ")) {
-						TITLE.value(line.substring(6).trim());
+						AbcCreator.this.TITLE.value(line.substring(6).trim());
 					} else if (line.startsWith("Speedup: ")) {
-						BruteParams.SPEED.value(line.substring(8).trim(), io);
+						BruteParams.SPEED.value(line.substring(8).trim(),
+								AbcCreator.this.io);
 					} else if (line.startsWith("Pitch: ")) {
-						BruteParams.PITCH.value(line.substring(6).trim(), io);
+						BruteParams.PITCH.value(line.substring(6).trim(),
+								AbcCreator.this.io);
 					} else if (line.startsWith("Style: ")) {
-						STYLE.value(line.substring(7));
+						AbcCreator.this.STYLE.value(line.substring(7));
 					} else if (line.startsWith("Volume: ")) {
-						BruteParams.VOLUME.value(line.substring(7).trim(), io);
+						BruteParams.VOLUME.value(line.substring(7).trim(),
+								AbcCreator.this.io);
 					} else if (line.startsWith("Compress: ")) {
-						BruteParams.DYNAMIC
-								.value(line.substring(10).trim(), io);
+						BruteParams.DYNAMIC.value(line.substring(10).trim(),
+								AbcCreator.this.io);
 					} else if (line.startsWith("abctrack begin")) {
-						++state;
+						++this.state;
 					} else if (line.startsWith("fadeout length")) {
-						BruteParams.FADEOUT
-								.value(line.substring(14).trim(), io);
+						BruteParams.FADEOUT.value(line.substring(14).trim(),
+								AbcCreator.this.io);
 					} else {
 						return;
 					}
@@ -550,34 +558,34 @@ public class AbcCreator implements Module,
 						break;
 					} else {
 						if (line.startsWith("instrument ")) {
-							state = 2;
+							this.state = 2;
 							parseLine(line);
 						}
 						return;
 					}
 				case 2:
 					if (!line.startsWith("instrument ")) {
-						state = 0x7000_0000;
+						this.state = 0x7000_0000;
 						return;
 					}
 					final String s0 = line.substring(11).trim();
 
 					c.addPart(s0);
 
-					state = 3;
+					this.state = 3;
 					break;
 				case 3:
 					if (line.startsWith("miditrack")) {
 						c.addEntry(line.substring(10));
 					} else if (line.startsWith("abctrack end")) {
-						state = 7;
+						this.state = 7;
 					} else {
 						return;
 					}
 					break;
 				case 7:
 					if (line.startsWith("abctrack begin")) {
-						state = 1;
+						this.state = 1;
 					} else {
 						return;
 					}
@@ -591,7 +599,7 @@ public class AbcCreator implements Module,
 			}
 
 			final void toggleComment() {
-				state = ~state;
+				this.state = ~this.state;
 			}
 		}
 
@@ -624,8 +632,8 @@ public class AbcCreator implements Module,
 			c.setError();
 			e.printStackTrace();
 		} finally {
-			io.endProgress();
-			io.close(in);
+			this.io.endProgress();
+			this.io.close(in);
 		}
 		System.out.println("... completed");
 	}
@@ -635,7 +643,7 @@ public class AbcCreator implements Module,
 	 */
 	@Override
 	public final void printError(final String string) {
-		dragAndDropPlugin.printError(string);
+		this.dragAndDropPlugin.printError(string);
 	}
 
 	/** No effect */
@@ -650,30 +658,30 @@ public class AbcCreator implements Module,
 	@Override
 	public final void run() {
 		try {
-			initState.drawState(io);
-			taskPool.waitForTasks();
-			io.startProgress("Preparing launch", -1);
-			if (initState.failed() || master.isInterrupted()) {
+			this.initState.drawState(this.io);
+			this.taskPool.waitForTasks();
+			this.io.startProgress("Preparing launch", -1);
+			if (this.initState.failed() || this.master.isInterrupted()) {
 				return;
 			}
-			final Path instrumentMap = INSTRUMENT_MAP.getValue();
-			final Path drumMaps = DRUM_MAPS.getValue();
+			final Path instrumentMap = this.INSTRUMENT_MAP.getValue();
+			final Path drumMaps = this.DRUM_MAPS.getValue();
 			if (instrumentMap != null) {
-				initState.startPhase(InitState.INSTRUMENT_MAP,
+				this.initState.startPhase(InitState.INSTRUMENT_MAP,
 						(int) instrumentMap.toFile().length());
-				MidiInstrument.readMap(instrumentMap, io);
+				MidiInstrument.readMap(instrumentMap, this.io);
 			}
 			if (drumMaps != null) {
-				initState.startPhase(InitState.DRUM_MAP);
+				this.initState.startPhase(InitState.DRUM_MAP);
 				prepareMaps(drumMaps);
 			}
 			for (int i = 0; i < AbcCreator.DRUM_MAPS_COUNT; i++) {
-				maps.add(i);
+				this.maps.add(i);
 			}
-			io.endProgress();
+			this.io.endProgress();
 			runLoop();
 		} finally {
-			for (final Process p : processList) {
+			for (final Process p : this.processList) {
 				p.destroy();
 				final boolean interrupted = MasterThread.interrupted();
 				try {
@@ -682,17 +690,17 @@ public class AbcCreator implements Module,
 					e.printStackTrace();
 				}
 				if (interrupted) {
-					master.interrupt();
+					this.master.interrupt();
 				}
 			}
-			bruteDir.delete();
+			this.bruteDir.delete();
 		}
 	}
 
 	/** */
 	@Override
 	public final TreeSet<DropTarget<JPanel, JPanel, JPanel>> sortedTargets() {
-		return dragAndDropPlugin.targets();
+		return this.dragAndDropPlugin.targets();
 	}
 
 	/** */
@@ -700,7 +708,7 @@ public class AbcCreator implements Module,
 	public final boolean unlink(
 			final DragObject<JPanel, JPanel, JPanel> object,
 			final DropTarget<JPanel, JPanel, JPanel> target) {
-		return dragAndDropPlugin.unlink(object, target);
+		return this.dragAndDropPlugin.unlink(object, target);
 	}
 
 	/**
@@ -716,7 +724,7 @@ public class AbcCreator implements Module,
 	private final int call(final Path location, final CallType type,
 			final Path wd, final String... cmd) throws IOException,
 			InterruptedException {
-		if (master.isInterrupted()) {
+		if (this.master.isInterrupted()) {
 			return -127;
 		}
 		if (Thread.currentThread().isInterrupted()) {
@@ -776,7 +784,7 @@ public class AbcCreator implements Module,
 		final StringBuilder outErr = new StringBuilder();
 		final StringBuilder outStd = new StringBuilder();
 
-		processList.add(p);
+		this.processList.add(p);
 
 		final StreamPrinter pE = new StreamPrinter(es, outErr, true);
 		final StreamPrinter pS;
@@ -810,37 +818,38 @@ public class AbcCreator implements Module,
 
 			@Override
 			public final String toString() {
-				return lines[0];
+				return this.lines[0];
 			}
 
 			@Override
 			protected final void action() {
-				final String line = builder.toString();
+				final String line = this.builder.toString();
 				if (!line.isEmpty()) {
-					for (int i = lines.length - 2; i >= 0; i--) {
-						lines[i + 1] = lines[i];
+					for (int i = this.lines.length - 2; i >= 0; i--) {
+						this.lines[i + 1] = this.lines[i];
 					}
-					lines[0] = line.substring(0, line.length() - 2);
+					this.lines[0] = line.substring(0, line.length() - 2);
 				}
 				if (line.contains("/")) {
 					final String[] s = line.replaceFirst("\r\n", "").split("/");
 					final char start = s[1].charAt(0);
-					if (start < '0' || start >= '9')
+					if ((start < '0') || (start >= '9')) {
 						;
-					else if (first) {
-						first = false;
-						io.setProgressSize(Integer.parseInt(s[1]) + 1);
+					} else if (this.first) {
+						this.first = false;
+						AbcCreator.this.io.setProgressSize(Integer
+								.parseInt(s[1]) + 1);
 					}
-					io.updateProgress();
+					AbcCreator.this.io.updateProgress();
 				}
 				System.out.print(line);
 			}
 		};
-		callResultOut = pS;
-		taskPool.addTask(pE);
-		taskPool.addTask(pS);
+		this.callResultOut = pS;
+		this.taskPool.addTask(pE);
+		this.taskPool.addTask(pS);
 		final int exit = p.waitFor();
-		processList.remove(p);
+		this.processList.remove(p);
 		return exit;
 	}
 
@@ -856,11 +865,11 @@ public class AbcCreator implements Module,
 
 	private final void extract(final JarFile jarFile, final String string)
 			throws IOException {
-		initState.startPhase(InitState.READ_JAR);
+		this.initState.startPhase(InitState.READ_JAR);
 		final ZipEntry jarEntry = jarFile.getEntry(string);
-		initState.startPhase(InitState.UNPACK_JAR);
+		this.initState.startPhase(InitState.UNPACK_JAR);
 		unpack(jarFile, jarEntry);
-		final Path jar = bruteDir.resolve(string);
+		final Path jar = this.bruteDir.resolve(string);
 		extract(jar);
 	}
 
@@ -874,7 +883,7 @@ public class AbcCreator implements Module,
 				entries.add(je);
 			}
 		}
-		initState.setSize(InitState.UNPACK_JAR, entries.size());
+		this.initState.setSize(InitState.UNPACK_JAR, entries.size());
 		unpack(jarFile1, entries.toArray(new JarEntry[entries.size()]));
 		try {
 			jarFile1.close();
@@ -884,28 +893,29 @@ public class AbcCreator implements Module,
 	}
 
 	private final Path generateMap(final Object name, final Object title) {
-		final Path map = midi.getParent().resolve(midi.getFilename() + ".map");
-		final OutputStream out = io.openOut(map.toFile());
-		final String style = STYLE.value();
+		final Path map = this.midi.getParent().resolve(
+				this.midi.getFilename() + ".map");
+		final OutputStream out = this.io.openOut(map.toFile());
+		final String style = this.STYLE.value();
 
-		io.writeln(out, String.format("Name: %s", title));
-		io.writeln(out, "Speedup: " + BruteParams.SPEED.value());
-		io.writeln(out, "Pitch: " + BruteParams.PITCH.value());
-		io.writeln(out, "Style: " + style);
-		io.writeln(out, "Volume: " + BruteParams.VOLUME.value());
-		io.writeln(out, "Compress: " + BruteParams.DYNAMIC.value());
-		io.writeln(out,
+		this.io.writeln(out, String.format("Name: %s", title));
+		this.io.writeln(out, "Speedup: " + BruteParams.SPEED.value());
+		this.io.writeln(out, "Pitch: " + BruteParams.PITCH.value());
+		this.io.writeln(out, "Style: " + style);
+		this.io.writeln(out, "Volume: " + BruteParams.VOLUME.value());
+		this.io.writeln(out, "Compress: " + BruteParams.DYNAMIC.value());
+		this.io.writeln(out,
 				"%no pitch guessing   %uncomment to switch off guessing of default octaves");
-		io.writeln(
+		this.io.writeln(
 				out,
 				"%no back folding     %uncomment to switch off folding of tone-pitches inside the playable region");
-		io.writeln(out, "fadeout length " + BruteParams.FADEOUT.value());
-		io.writeln(out, String.format("Transcriber : %s", name));
+		this.io.writeln(out, "fadeout length " + BruteParams.FADEOUT.value());
+		this.io.writeln(out, String.format("Transcriber : %s", name));
 		final Map<DragObject<JPanel, JPanel, JPanel>, Integer> abcPartMap = new HashMap<>();
 		boolean empty = true;
-		io.updateProgress();
+		this.io.updateProgress();
 
-		for (final Iterator<DropTargetContainer<JPanel, JPanel, JPanel>> targetIter = targets
+		for (final Iterator<DropTargetContainer<JPanel, JPanel, JPanel>> targetIter = this.targets
 				.iterator();;) {
 			final DropTargetContainer<JPanel, JPanel, JPanel> target = targetIter
 					.next();
@@ -920,37 +930,37 @@ public class AbcCreator implements Module,
 					params.append(" ");
 					params.append(t.printParam(param));
 				}
-				io.writeln(out, "");
-				io.writeln(out, "abctrack begin");
-				io.writeln(out, "polyphony 6 top");
-				io.writeln(out, "duration 2");
-				io.writeln(out, String.format("instrument %s%s",
+				this.io.writeln(out, "");
+				this.io.writeln(out, "abctrack begin");
+				this.io.writeln(out, "polyphony 6 top");
+				this.io.writeln(out, "duration 2");
+				this.io.writeln(out, String.format("instrument %s%s",
 						target.toString(), params.toString()));
 				writeAbcTrack(out, t, abcPartMap);
-				io.writeln(out, "abctrack end");
-				io.updateProgress();
+				this.io.writeln(out, "abctrack end");
+				this.io.updateProgress();
 			}
 		}
 
-		io.writeln(out, "");
-		io.writeln(out,
+		this.io.writeln(out, "");
+		this.io.writeln(out,
 				"% Instrument names are the ones from lotro, pibgorn is supported as well");
-		io.writeln(
+		this.io.writeln(
 				out,
 				"% Polyphony sets the maximal number of simultanious tones for this instrument (6 is max)");
-		io.writeln(out,
+		this.io.writeln(out,
 				"% Pitch is in semitones, to shift an octave up : pitch 12 or down  pitch -12");
-		io.writeln(
+		this.io.writeln(
 				out,
 				"% Volume will be added /substracted from the normal volume of that track (-127 - 127), everything above/below is truncatedtch is in semitones, to shift an octave up : pitch 12 or down  pitch -12");
-		io.close(out);
+		this.io.close(out);
 		return empty ? null : map;
 	}
 
 	private void prepareMaps(final Path drumMaps) {
 		final String[] files = drumMaps.toFile().list();
 		if (files != null) {
-			initState.setSize(InitState.DRUM_MAP, files.length);
+			this.initState.setSize(InitState.DRUM_MAP, files.length);
 			for (final String f : files) {
 				if (f.startsWith("drum") && f.endsWith(".drummap.txt")) {
 					final String idString = f.substring(4, f.length() - 12);
@@ -958,53 +968,55 @@ public class AbcCreator implements Module,
 					try {
 						id = Integer.parseInt(idString);
 					} catch (final Exception e) {
-						initState.progress();
+						this.initState.progress();
 						continue;
 					}
-					taskPool.addTask(new Runnable() {
+					this.taskPool.addTask(new Runnable() {
 
 						@Override
 						public final void run() {
 							try {
-								copy(drumMaps.resolve(f), bruteDir.resolve(f));
+								copy(drumMaps.resolve(f),
+										AbcCreator.this.bruteDir.resolve(f));
 
-								initState.progress();
+								AbcCreator.this.initState.progress();
 							} catch (final IOException e) {
 								e.printStackTrace();
 							}
 						}
 					});
-					maps.add(id);
+					this.maps.add(id);
 				} else {
-					initState.progress();
+					this.initState.progress();
 				}
 			}
 		}
 		for (int i = 0; i < AbcCreator.DRUM_MAPS_COUNT; i++) {
-			maps.add(i);
+			this.maps.add(i);
 		}
-		taskPool.waitForTasks();
+		this.taskPool.waitForTasks();
 	}
 
 	private final void runLoop() {
-		if (bruteDir == null) {
+		if (this.bruteDir == null) {
 			return;
 		}
 		while (true) {
-			if (master.isInterrupted()) {
+			if (this.master.isInterrupted()) {
 				return;
 			}
-			midi = io.selectFile(
+			this.midi = this.io.selectFile(
 					"Which midi do you want to transcribe to abc?",
-					midi == null ? Path.getPath(
-							main.getConfigValue(Main.GLOBAL_SECTION,
+					this.midi == null ? Path.getPath(
+							this.main.getConfigValue(Main.GLOBAL_SECTION,
 									Main.PATH_KEY, null).split("/")).toFile()
-							: midi.getParent().toFile(), AbcCreator.midiFilter);
-			if (midi == null) {
+							: this.midi.getParent().toFile(),
+					AbcCreator.midiFilter);
+			if (this.midi == null) {
 				break;
 			}
 
-			String abcName = midi.getFilename();
+			String abcName = this.midi.getFilename();
 			{
 				final int end = abcName.lastIndexOf('.');
 				if (end >= 0) {
@@ -1012,102 +1024,103 @@ public class AbcCreator implements Module,
 				}
 				abcName += ".abc";
 			}
-			abc = midi.getParent().resolve(abcName);
+			this.abc = this.midi.getParent().resolve(abcName);
 			// if (!abc.getFileName().endsWith(".abc")) {
 			// abc = abc.getParent().resolve(abc.getFileName() + ".abc");
 			// }
-			if (!parser.setMidi(midi)) {
+			if (!this.parser.setMidi(this.midi)) {
 				continue;
 			}
-			final MidiMap events = parser.parse();
+			final MidiMap events = this.parser.parse();
 			if (events == null) {
 				continue;
 			}
 			try {
-				copy(midi, brutesMidi);
+				copy(this.midi, this.brutesMidi);
 			} catch (final IOException e) {
-				io.handleException(ExceptionHandle.CONTINUE, e);
+				this.io.handleException(ExceptionHandle.CONTINUE, e);
 				continue;
 			}
 
 			int val;
 			try {
-				val = call("midival.exe", bruteDir);
+				val = call("midival.exe", this.bruteDir);
 				if (val != 0) {
-					io.printError("Unable to execute BRuTE", false);
+					this.io.printError("Unable to execute BRuTE", false);
 					Thread.currentThread().interrupt();
 					return;
 				}
 			} catch (final InterruptedException e) {
-				master.interrupt();
+				this.master.interrupt();
 				return;
 			} catch (final IOException e) {
-				io.handleException(ExceptionHandle.CONTINUE, e);
+				this.io.handleException(ExceptionHandle.CONTINUE, e);
 				continue;
 			}
-			System.out.printf("%s -> %s\n", midi, abc);
-			io.handleGUIPlugin(dragAndDropPlugin);
-			if (master.isInterrupted()) {
+			System.out.printf("%s -> %s\n", this.midi, this.abc);
+			this.io.handleGUIPlugin(this.dragAndDropPlugin);
+			if (this.master.isInterrupted()) {
 				return;
 			}
-			final String defaultTitle = midi.getFilename();
+			final String defaultTitle = this.midi.getFilename();
 			final List<Option> options = new ArrayList<>();
 
-			if (TITLE.value() == null) {
-				TITLE.value(defaultTitle);
+			if (this.TITLE.value() == null) {
+				this.TITLE.value(defaultTitle);
 			}
-			options.add(TITLE);
-			io.getOptions(options);
-			if (master.isInterrupted()) {
+			options.add(this.TITLE);
+			this.io.getOptions(options);
+			if (this.master.isInterrupted()) {
 				return;
 			}
-			final String name = main.getConfigValue(Main.GLOBAL_SECTION,
+			final String name = this.main.getConfigValue(Main.GLOBAL_SECTION,
 					Main.NAME_KEY, null);
 			if (name == null) {
 				return;
 			}
-			final Object result = call_back(name, TITLE.value(),
-					dragAndDropPlugin.size());
+			final Object result = call_back(name, this.TITLE.value(),
+					this.dragAndDropPlugin.size());
 			if (result != null) {
-				io.printMessage(null, "transcribed\n" + midi + "\nto\n" + abc
-						+ "\n\n" + result.toString(), true);
+				this.io.printMessage(null, "transcribed\n" + this.midi
+						+ "\nto\n" + this.abc + "\n\n" + result.toString(),
+						true);
 			}
-			dragAndDropPlugin.reset();
+			this.dragAndDropPlugin.reset();
 		}
 	}
 
 	private final void unpack(final JarFile jarFile,
 			final ZipEntry... jarEntries) {
 		for (final ZipEntry jarEntry : jarEntries) {
-			if (master.isInterrupted()) {
+			if (this.master.isInterrupted()) {
 				return;
 			}
 
 			final OutputStream out;
 			final java.io.File file;
 
-			file = bruteDir.resolve(jarEntry.getName()).toFile();
+			file = this.bruteDir.resolve(jarEntry.getName()).toFile();
 
 			if (!file.getParentFile().exists()) {
 				if (!file.getParentFile().mkdirs()) {
-					initState.setFailed();
-					bruteDir.delete();
+					this.initState.setFailed();
+					this.bruteDir.delete();
 					return;
 				}
 			}
 			try {
-				out = io.openOut(file);
+				out = this.io.openOut(file);
 				try {
-					io.write(jarFile.getInputStream(jarEntry), out);
+					this.io.write(jarFile.getInputStream(jarEntry), out);
 				} finally {
-					io.close(out);
+					this.io.close(out);
 				}
 			} catch (final IOException e) {
-				initState.setFailed();
-				bruteDir.delete();
+				this.initState.setFailed();
+				this.bruteDir.delete();
 				return;
 			}
-			initState.progress();
+			this.initState.progress();
 		}
 	}
 
@@ -1122,7 +1135,7 @@ public class AbcCreator implements Module,
 					abcTrack);
 			final Integer delay = BruteParams.DELAY.getLocalValue(midiTrack,
 					abcTrack);
-			io.write(out, String.format(
+			this.io.write(out, String.format(
 					"miditrack %d pitch %d volume %d delay %d",
 					Integer.valueOf(midiTrack.getId()), pitch, volume, delay));
 			final int total = midiTrack.getTargets();
@@ -1132,10 +1145,10 @@ public class AbcCreator implements Module,
 					part = abcPartMap.get(midiTrack);
 				}
 				abcPartMap.put(midiTrack, part + 1);
-				io.writeln(out, String.format(" prio 100 " + "split %d %d",
-						total, part));
+				this.io.writeln(out, String.format(
+						" prio 100 " + "split %d %d", total, part));
 			} else {
-				io.write(out, "\r\n");
+				this.io.write(out, "\r\n");
 			}
 		}
 	}
@@ -1156,10 +1169,10 @@ public class AbcCreator implements Module,
 					}
 				}
 				filesAndDirs.add(destination.resolve(s));
-				taskPool.addTask(new Runnable() {
+				this.taskPool.addTask(new Runnable() {
 					@Override
 					public final void run() {
-						if (master.isInterrupted()) {
+						if (AbcCreator.this.master.isInterrupted()) {
 							return;
 						}
 						try {
@@ -1167,16 +1180,16 @@ public class AbcCreator implements Module,
 						} catch (final IOException e) {
 							e.printStackTrace();
 						}
-						initState.progress();
+						AbcCreator.this.initState.progress();
 					}
 				});
 			}
 			return filesAndDirs;
 		}
-		final InputStream in = io.openIn(source.toFile());
-		final OutputStream out = io.openOut(destination.toFile());
-		io.write(in, out);
-		io.close(out);
+		final InputStream in = this.io.openIn(source.toFile());
+		final OutputStream out = this.io.openOut(destination.toFile());
+		this.io.write(in, out);
+		this.io.close(out);
 		filesAndDirs.add(destination);
 		return filesAndDirs;
 	}
@@ -1186,11 +1199,11 @@ public class AbcCreator implements Module,
 		if (source.toFile().isDirectory()) {
 			if (destination.toFile().exists()
 					&& !destination.toFile().isDirectory()) {
-				initState.setFailed();
+				this.initState.setFailed();
 				throw new IOException("Copying directory to file");
 			}
 			final String[] files = source.toFile().list();
-			initState.incrementSize(files.length);
+			this.initState.incrementSize(files.length);
 			for (final String s : files) {
 				if (!destination.toFile().exists()) {
 					if (!destination.toFile().mkdir()) {
@@ -1198,11 +1211,12 @@ public class AbcCreator implements Module,
 								+ destination);
 					}
 				}
-				taskPool.addTask(new Runnable() {
+				this.taskPool.addTask(new Runnable() {
 					@Override
 					public final void run() {
-						if (master.isInterrupted() || initState.failed()) {
-							bruteDir.delete();
+						if (AbcCreator.this.master.isInterrupted()
+								|| AbcCreator.this.initState.failed()) {
+							AbcCreator.this.bruteDir.delete();
 							return;
 						}
 						try {
@@ -1210,25 +1224,25 @@ public class AbcCreator implements Module,
 						} catch (final IOException e) {
 							e.printStackTrace();
 						}
-						initState.progress();
+						AbcCreator.this.initState.progress();
 					}
 				});
 			}
 			return;
 		}
-		final InputStream in = io.openIn(source.toFile());
-		final OutputStream out = io.openOut(destination.toFile());
-		io.write(in, out);
-		io.close(out);
+		final InputStream in = this.io.openIn(source.toFile());
+		final OutputStream out = this.io.openOut(destination.toFile());
+		this.io.write(in, out);
+		this.io.close(out);
 	}
 
 	/*
 	 * Copies all BruTE into current directory
 	 */
 	final boolean init() throws IOException {
-		if (wdDir.toFile().isDirectory()) {
-			final Path bruteArchive = wdDir.resolve("BruTE.jar");
-			initState.startPhase(InitState.UNPACK_JAR);
+		if (this.wdDir.toFile().isDirectory()) {
+			final Path bruteArchive = this.wdDir.resolve("BruTE.jar");
+			this.initState.startPhase(InitState.UNPACK_JAR);
 			if (!bruteArchive.exists()) {
 				final Path bruteArchive2 = bruteArchive.getParent().resolve(
 						"..", "brute", bruteArchive.getFilename());
@@ -1243,7 +1257,7 @@ public class AbcCreator implements Module,
 			}
 		} else {
 			final JarFile jarFile;
-			jarFile = new JarFile(wdDir.toFile());
+			jarFile = new JarFile(this.wdDir.toFile());
 			try {
 				extract(jarFile, "BruTE.jar");
 			} finally {
@@ -1251,11 +1265,6 @@ public class AbcCreator implements Module,
 			}
 		}
 		return true;
-	}
-
-	@Override
-	public void exec(final Runnable task) {
-		taskPool.addTask(task);
 	}
 
 }

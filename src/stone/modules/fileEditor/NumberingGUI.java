@@ -42,10 +42,10 @@ public class NumberingGUI extends GUIPlugin {
 	 * @param io
 	 */
 	public NumberingGUI(final SongChangeData data, final IOHandler io) {
-		indices = data.getIndices();
-		titles = data.getTitles();
-		instruments = data.getInstruments();
-		scd = data;
+		this.indices = data.getIndices();
+		this.titles = data.getTitles();
+		this.instruments = data.getInstruments();
+		this.scd = data;
 		this.io = io;
 	}
 
@@ -57,12 +57,12 @@ public class NumberingGUI extends GUIPlugin {
 		final Map<Integer, Integer> mapIdx = buildRenumberIdxMap();
 		final Map<Integer, String> mapNumber = buildRenumberNumMap();
 		final Map<Integer, Boolean> mapOpt = buildOptMap();
-		scd.renumber(mapIdx, mapNumber, mapOpt);
+		this.scd.renumber(mapIdx, mapNumber, mapOpt);
 	}
 
 	private Map<Integer, Boolean> buildOptMap() {
 		final Map<Integer, Boolean> map = new HashMap<>();
-		for (final Entry<Integer, JCheckBox> opts : idxToOpt.entrySet()) {
+		for (final Entry<Integer, JCheckBox> opts : this.idxToOpt.entrySet()) {
 			map.put(opts.getKey(), opts.getValue().isSelected());
 		}
 		return map;
@@ -70,14 +70,13 @@ public class NumberingGUI extends GUIPlugin {
 
 	private Map<Integer, Integer> buildRenumberIdxMap() {
 		final Map<Integer, Integer> map = new HashMap<>();
-		for (final Map.Entry<Integer, JTextField> idcs : idxToField
+		for (final Map.Entry<Integer, JTextField> idcs : this.idxToField
 				.entrySet()) {
 			final Integer idxNew;
 			try {
-				idxNew =
-						Integer.parseInt(idcs.getValue().getText().trim());
+				idxNew = Integer.parseInt(idcs.getValue().getText().trim());
 			} catch (final Exception e) {
-				io.printError("Error parsing index\n"
+				this.io.printError("Error parsing index\n"
 						+ "Song will remain unchanged", false);
 				return null;
 			}
@@ -88,7 +87,7 @@ public class NumberingGUI extends GUIPlugin {
 
 	private final Map<Integer, String> buildRenumberNumMap() {
 		final Map<Integer, String> map = new HashMap<>();
-		for (final Entry<Integer, JTextField> idcs : idxToNum.entrySet()) {
+		for (final Entry<Integer, JTextField> idcs : this.idxToNum.entrySet()) {
 			String value = idcs.getValue().getText().replaceAll("\t", " ");
 			while (value.contains("  ")) {
 				value = value.replaceAll("  ", " ");
@@ -102,9 +101,8 @@ public class NumberingGUI extends GUIPlugin {
 	protected final boolean display(final JPanel panel) {
 		panel.setLayout(new GridLayout(0, 1));
 		final Font xFieldFont = Font.decode("Arial 12 bold");
-		final Dimension xFieldSize =
-				new Dimension(xFieldFont.getSize() * 4, xFieldFont
-						.getSize());
+		final Dimension xFieldSize = new Dimension(xFieldFont.getSize() * 4,
+				xFieldFont.getSize());
 		{
 			final JPanel headerPanel = new JPanel();
 			final JLabel headerLabelW = new JLabel("     Idx        ");
@@ -116,7 +114,7 @@ public class NumberingGUI extends GUIPlugin {
 			headerPanel.add(headerLabelC);
 			panel.add(headerPanel);
 		}
-		final List<Integer> keys = new ArrayList<>(indices.keySet());
+		final List<Integer> keys = new ArrayList<>(this.indices.keySet());
 		java.util.Collections.sort(keys);
 		for (final Integer key : keys) {
 			final JPanel trackPanel = new JPanel();
@@ -125,13 +123,12 @@ public class NumberingGUI extends GUIPlugin {
 			final JCheckBox optBox = new JCheckBox();
 			final String title;
 			{
-				final Set<?> instruments_ = instruments.get(key);
-				final String titleString = titles.get(key);
-				title =
-						(titleString == null ? "<No title>" : titleString)
-								+ " "
-								+ (instruments_ == null ? "[?]"
-										: instruments_.toString());
+				final Set<?> instruments_ = this.instruments.get(key);
+				final String titleString = this.titles.get(key);
+				title = (titleString == null ? "<No title>" : titleString)
+						+ " "
+						+ (instruments_ == null ? "[?]" : instruments_
+								.toString());
 			}
 			trackPanel.setLayout(new BorderLayout());
 			idxPanel.setLayout(new GridLayout(1, 0));
@@ -142,12 +139,12 @@ public class NumberingGUI extends GUIPlugin {
 			trackPanel.add(new JLabel(title), BorderLayout.SOUTH);
 			xField.setFont(xFieldFont);
 			xField.setPreferredSize(xFieldSize);
-			final JTextField numField = new JTextField(indices.get(key));
-			idxToNum.put(key, numField);
+			final JTextField numField = new JTextField(this.indices.get(key));
+			this.idxToNum.put(key, numField);
 			idxPanel.add(numField);
 			panel.add(trackPanel);
-			idxToField.put(key, xField);
-			idxToOpt.put(key, optBox);
+			this.idxToField.put(key, xField);
+			this.idxToOpt.put(key, optBox);
 		}
 		final JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new BorderLayout());
@@ -159,7 +156,7 @@ public class NumberingGUI extends GUIPlugin {
 
 	@Override
 	protected final String getTitle() {
-		return "Change Numbering - " + scd.file().getFilename();
+		return "Change Numbering - " + this.scd.file().getFilename();
 	}
 
 }

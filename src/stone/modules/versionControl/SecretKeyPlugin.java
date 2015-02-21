@@ -41,7 +41,7 @@ public class SecretKeyPlugin extends GUIPlugin {
 	 * @return the bytes for the selected key
 	 */
 	public final byte[] getKey() {
-		return decode(textField.getText());
+		return decode(this.textField.getText());
 	}
 
 
@@ -49,19 +49,18 @@ public class SecretKeyPlugin extends GUIPlugin {
 	 * @return the entered text
 	 */
 	public final String getValue() {
-		return textField.getText();
+		return this.textField.getText();
 	}
 
 	@Override
 	protected final boolean display(final JPanel panel) {
 		final JPanel panelButton = new JPanel();
 		panel.setLayout(new BorderLayout());
-		panel.add(textField);
+		panel.add(this.textField);
 		panel.add(panelButton, BorderLayout.SOUTH);
 		panelButton.add(GUIInterface.Button.ABORT.getButton(),
 				BorderLayout.EAST);
-		panelButton.add(GUIInterface.Button.OK.getButton(),
-				BorderLayout.EAST);
+		panelButton.add(GUIInterface.Button.OK.getButton(), BorderLayout.EAST);
 		return false;
 	}
 

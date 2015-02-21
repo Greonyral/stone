@@ -19,13 +19,16 @@ class ValueFloat extends Value<Double> {
 
 		@Override
 		public final void stateChanged(final ChangeEvent e) {
-			value = slider.getValue() / factor;
-			System.out.printf("min: %d value: %d max: %d\n", Integer
-					.valueOf(min), Integer.valueOf(slider.getValue()),
-					Integer.valueOf(max));
-			label.setText(String.format("%s %.2f", value == 0 ? " "
-					: value > 0 ? "+" : "-", Double.valueOf(Math
-					.abs(value))));
+			ValueFloat.this.value = ValueFloat.this.slider.getValue()
+					/ ValueFloat.this.factor;
+			System.out.printf("min: %d value: %d max: %d\n",
+					Integer.valueOf(ValueFloat.this.min),
+					Integer.valueOf(ValueFloat.this.slider.getValue()),
+					Integer.valueOf(ValueFloat.this.max));
+			ValueFloat.this.label.setText(String.format("%s %.2f",
+					ValueFloat.this.value == 0 ? " "
+							: ValueFloat.this.value > 0 ? "+" : "-", Double
+							.valueOf(Math.abs(ValueFloat.this.value))));
 		}
 	}
 
@@ -42,49 +45,48 @@ class ValueFloat extends Value<Double> {
 	private final DragObject<Container, Container, Container> object;
 	private final DropTarget<Container, Container, Container> target;
 
-	ValueFloat(BruteParams<Double> bruteParams, double initValue,
-			double step, double ticks) {
+	ValueFloat(BruteParams<Double> bruteParams, double initValue, double step,
+			double ticks) {
 		this.bruteParams = bruteParams;
-		value = (int) (initValue * factor);
-		min = (int) ((initValue - step) * factor);
-		max = (int) ((initValue + step) * factor);
-		this.ticks = (int) (ticks * factor);
-		this.step = (int) (step * factor);
-		object = null;
-		target = null;
+		this.value = (int) (initValue * this.factor);
+		this.min = (int) ((initValue - step) * this.factor);
+		this.max = (int) ((initValue + step) * this.factor);
+		this.ticks = (int) (ticks * this.factor);
+		this.step = (int) (step * this.factor);
+		this.object = null;
+		this.target = null;
 	}
 
 	@Override
 	public final synchronized void display() {
-		slider.setMinimum(min);
-		slider.setMaximum(max);
-		slider.setValue((int) (value * factor));
-		slider.setPaintTicks(true);
-		slider.setPaintLabels(true);
-		slider.setMajorTickSpacing(step);
-		slider.setMinorTickSpacing(ticks);
-		label.setText(String.format("%s %.2f", value == 0 ? " "
-				: value > 0 ? "+" : "-", Double.valueOf(Math.abs(value)
-				/ factor)));
-		if (object != null) {
-			bruteParams.setLocalValue(object, target, Double
-					.valueOf(value));
+		this.slider.setMinimum(this.min);
+		this.slider.setMaximum(this.max);
+		this.slider.setValue((int) (this.value * this.factor));
+		this.slider.setPaintTicks(true);
+		this.slider.setPaintLabels(true);
+		this.slider.setMajorTickSpacing(this.step);
+		this.slider.setMinorTickSpacing(this.ticks);
+		this.label.setText(String.format("%s %.2f", this.value == 0 ? " "
+				: this.value > 0 ? "+" : "-", Double.valueOf(Math
+				.abs(this.value) / this.factor)));
+		if (this.object != null) {
+			this.bruteParams.setLocalValue(this.object, this.target,
+					Double.valueOf(this.value));
 		}
 
 		@SuppressWarnings("unchecked")
-		final Dictionary<Integer, JLabel> dict = slider.getLabelTable();
+		final Dictionary<Integer, JLabel> dict = this.slider.getLabelTable();
 		final Enumeration<Integer> keys = dict.keys();
 		while (keys.hasMoreElements()) {
 			final Integer key = keys.nextElement();
 			final JLabel labelDict = dict.get(key);
-			labelDict.setText(String.format("%3.2f", Double.valueOf(key
-					.intValue()
-					/ factor)));
+			labelDict.setText(String.format("%3.2f",
+					Double.valueOf(key.intValue() / this.factor)));
 			final Dimension d = labelDict.getSize();
 			d.width = 3 * labelDict.getFont().getSize();
 			labelDict.setSize(d);
 		}
-		slider.addChangeListener(new SliderListener());
+		this.slider.addChangeListener(new SliderListener());
 
 	}
 
@@ -95,12 +97,12 @@ class ValueFloat extends Value<Double> {
 
 	@Override
 	public final Double value() {
-		return Double.valueOf(value / factor);
+		return Double.valueOf(this.value / this.factor);
 	}
 
 	@Override
 	public final synchronized void value(final Double d) {
-		value = (int) (d.doubleValue() * factor);
+		this.value = (int) (d.doubleValue() * this.factor);
 	}
 
 	@Override
@@ -109,9 +111,9 @@ class ValueFloat extends Value<Double> {
 	}
 
 	@Override
-	final <A extends Container, B extends Container, C extends Container>
-			Value<Double> localInstance(final DragObject<A, B, C> object,
-					final DropTarget<A, B, C> target, final Double value) {
+	final <A extends Container, B extends Container, C extends Container> Value<Double> localInstance(
+			final DragObject<A, B, C> object, final DropTarget<A, B, C> target,
+			final Double value) {
 		throw new UnsupportedOperationException();
 	}
 }

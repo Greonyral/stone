@@ -40,9 +40,8 @@ public class StartupContainer {
 	public final static Class<Module> loadModule(final String module) {
 		try {
 			@SuppressWarnings("unchecked")
-			final Class<Module> clazz =
-					(Class<Module>) StartupContainer.loader
-							.loadClass("stone.modules." + module);
+			final Class<Module> clazz = (Class<Module>) StartupContainer.loader
+					.loadClass("stone.modules." + module);
 			return clazz;
 		} catch (final ClassNotFoundException e) {
 			// Should never been thrown, but to make the compiler happy
@@ -76,27 +75,24 @@ public class StartupContainer {
 
 	private StartupContainer() {
 		try {
-			io = new IOHandler(Main.TOOLNAME);
+			this.io = new IOHandler(Main.TOOLNAME);
 		} catch (final InterruptedException e) {
 			e.printStackTrace();
 		}
 		boolean jar_ = false;
 		Path workingDirectory_ = null;
 		try {
-			final Class<?> loaderClass =
-					StartupContainer.loader.getClass();
-			jar_ =
-					(boolean) loaderClass.getMethod("wdIsJarArchive")
-							.invoke(StartupContainer.loader);
-			workingDirectory_ =
-					Path.getPath(loaderClass.getMethod("getWorkingDir")
-							.invoke(StartupContainer.loader).toString()
-							.split("/"));
+			final Class<?> loaderClass = StartupContainer.loader.getClass();
+			jar_ = (boolean) loaderClass.getMethod("wdIsJarArchive").invoke(
+					StartupContainer.loader);
+			workingDirectory_ = Path.getPath(loaderClass
+					.getMethod("getWorkingDir").invoke(StartupContainer.loader)
+					.toString().split("/"));
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
-		workingDirectory = workingDirectory_;
-		jar = jar_;
+		this.workingDirectory = workingDirectory_;
+		this.jar = jar_;
 	}
 
 	/**
@@ -112,8 +108,8 @@ public class StartupContainer {
 	 * @return the created taskPool
 	 */
 	public final TaskPool createTaskPool() {
-		taskPool = new TaskPool(this);
-		return taskPool;
+		this.taskPool = new TaskPool(this);
+		return this.taskPool;
 	}
 
 	/**
@@ -133,24 +129,22 @@ public class StartupContainer {
 	 * @return a Container or <i>null</i> if the Container failed to load.
 	 */
 	public final Container getContainer(final String s) {
-		final Container container = containerMap.get(s);
+		final Container container = this.containerMap.get(s);
 		if (container == null) {
 			try {
 				@SuppressWarnings("unchecked")
-				final Class<Container> containerClass =
-						(Class<Container>) StartupContainer.loader
-								.loadClass(s);
+				final Class<Container> containerClass = (Class<Container>) StartupContainer.loader
+						.loadClass(s);
 				Container containerNew;
-				containerNew =
-						(Container) containerClass.getMethod("create",
-								getClass()).invoke(null, this);
-				containerMap.put(s, containerNew);
+				containerNew = (Container) containerClass.getMethod("create",
+						getClass()).invoke(null, this);
+				this.containerMap.put(s, containerNew);
 				return containerNew;
 			} catch (final InvocationTargetException e) {
 				e.getCause().printStackTrace();
-			} catch (final IllegalAccessException
-					| IllegalArgumentException | NoSuchMethodException
-					| SecurityException | ClassNotFoundException e) {
+			} catch (final IllegalAccessException | IllegalArgumentException
+					| NoSuchMethodException | SecurityException
+					| ClassNotFoundException e) {
 				e.printStackTrace();
 				return null;
 			}
@@ -163,38 +157,38 @@ public class StartupContainer {
 	 * @return the IO-handler
 	 */
 	public final IOHandler getIO() {
-		return io;
+		return this.io;
 	}
 
 	/**
 	 * @return the instance of the main-module
 	 */
 	public final Main getMain() {
-		return main;
+		return this.main;
 	}
 
 	/**
 	 * @return the MasterThread
 	 */
 	public final MasterThread getMaster() {
-		return master;
+		return this.master;
 	}
 
 	/**
 	 * @return the OptionContainer
 	 */
 	public final OptionContainer getOptionContainer() {
-		if (optionContainer == null) {
-			optionContainer = new OptionContainer(flags, main);
+		if (this.optionContainer == null) {
+			this.optionContainer = new OptionContainer(this.flags, this.main);
 		}
-		return optionContainer;
+		return this.optionContainer;
 	}
 
 	/**
 	 * @return the TaskPool
 	 */
 	public final TaskPool getTaskPool() {
-		return taskPool;
+		return this.taskPool;
 	}
 
 	/**
@@ -202,7 +196,7 @@ public class StartupContainer {
 	 *         from.
 	 */
 	public final Path getWorkingDir() {
-		return workingDirectory;
+		return this.workingDirectory;
 	}
 
 	/**
@@ -210,7 +204,7 @@ public class StartupContainer {
 	 * {@link #waitForInit()}.
 	 */
 	public final synchronized void parseDone() {
-		--wait;
+		--this.wait;
 		notifyAll();
 	}
 
@@ -235,14 +229,14 @@ public class StartupContainer {
 	 * threads to parse the config-file.
 	 */
 	public final synchronized void waitForInit() {
-		if (--wait <= 0) {
+		if (--this.wait <= 0) {
 			return;
 		}
-		while (wait != 0) {
+		while (this.wait != 0) {
 			try {
 				wait();
 			} catch (final InterruptedException e) {
-				master.interrupt();
+				this.master.interrupt();
 			}
 		}
 	}
@@ -253,14 +247,14 @@ public class StartupContainer {
 	 * @return <i>True</i> if the tool has been loaded from a jar-archive.
 	 */
 	public final boolean wdIsJarArchive() {
-		return jar;
+		return this.jar;
 	}
 
 	final Object flags() {
-		final Map<String, String> map = flags.getValues();
+		final Map<String, String> map = this.flags.getValues();
 		final String[] params = new String[map.size()];
-		final Iterator<Map.Entry<String, String>> iter =
-				map.entrySet().iterator();
+		final Iterator<Map.Entry<String, String>> iter = map.entrySet()
+				.iterator();
 		int i = -1;
 		while (iter.hasNext()) {
 			final Map.Entry<String, String> e = iter.next();

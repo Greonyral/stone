@@ -58,12 +58,12 @@ public final class MaskedStringOption extends Option {
 	 */
 	public MaskedStringOption(final OptionContainer optionContainer,
 			final String name, final String toolTip,
-			final String guiDescription, char shortFlag,
-			final String longFlag, final String section, final String key) {
+			final String guiDescription, char shortFlag, final String longFlag,
+			final String section, final String key) {
 		super(optionContainer, name, toolTip, guiDescription, shortFlag,
 				longFlag, true, section, key, null);
-		content = new StringBuilder(super.value());
-		sb = new StringBuilder(value());
+		this.content = new StringBuilder(super.value());
+		this.sb = new StringBuilder(value());
 	}
 
 	/** */
@@ -73,7 +73,7 @@ public final class MaskedStringOption extends Option {
 		final JPanel buttonPanel = new JPanel();
 		final JTextField textField = new JTextField();
 
-		if (content.length() == 0) {
+		if (this.content.length() == 0) {
 			textField.setText(getTooltip());
 			textField.setForeground(Color.GRAY);
 		} else {
@@ -92,27 +92,27 @@ public final class MaskedStringOption extends Option {
 
 			@Override
 			public final void keyReleased(final KeyEvent e) {
-				if (initialValue) {
+				if (MaskedStringOption.this.initialValue) {
 					if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
-						content.clear();
-						initialValue = false;
+						MaskedStringOption.this.content.clear();
+						MaskedStringOption.this.initialValue = false;
 						textField.setCaretPosition(0);
 					}
 				}
-				cursor[1] = textField.getSelectionStart();
-				cursor[2] = textField.getSelectionEnd();
-				if (cursor[1] == cursor[2]) {
-					cursor[0] = textField.getCaretPosition();
+				this.cursor[1] = textField.getSelectionStart();
+				this.cursor[2] = textField.getSelectionEnd();
+				if (this.cursor[1] == this.cursor[2]) {
+					this.cursor[0] = textField.getCaretPosition();
 				}
-				content.handleEvent(e, cursor);
+				MaskedStringOption.this.content.handleEvent(e, this.cursor);
 				printValue(textField);
-				if (cursor[1] != cursor[2]) {
-					textField.setSelectionStart(cursor[1]);
-					textField.setSelectionEnd(cursor[2]);
-				} else if (content.isEmpty()) {
+				if (this.cursor[1] != this.cursor[2]) {
+					textField.setSelectionStart(this.cursor[1]);
+					textField.setSelectionEnd(this.cursor[2]);
+				} else if (MaskedStringOption.this.content.isEmpty()) {
 					textField.setCaretPosition(0);
 				} else {
-					textField.setCaretPosition(cursor[0]);
+					textField.setCaretPosition(this.cursor[0]);
 				}
 				e.consume();
 			}
@@ -123,14 +123,13 @@ public final class MaskedStringOption extends Option {
 			}
 		});
 
-		final JCheckBox saveBox = new JCheckBox(), showBox =
-				new JCheckBox();
+		final JCheckBox saveBox = new JCheckBox(), showBox = new JCheckBox();
 		saveBox.setText("Save");
 		saveBox.addChangeListener(new ChangeListener() {
 
 			@Override
 			public void stateChanged(final ChangeEvent e) {
-				save = !save;
+				MaskedStringOption.this.save = !MaskedStringOption.this.save;
 			}
 		});
 
@@ -139,7 +138,7 @@ public final class MaskedStringOption extends Option {
 
 			@Override
 			public void stateChanged(final ChangeEvent e) {
-				show = !show;
+				MaskedStringOption.this.show = !MaskedStringOption.this.show;
 				printValue(textField);
 			}
 		});
@@ -168,7 +167,7 @@ public final class MaskedStringOption extends Option {
 	 *         be saved. Else the same value as {@link #value()} would return.
 	 */
 	public final String getValueToSave() {
-		if (save) {
+		if (this.save) {
 			return value();
 		}
 		return null;
@@ -201,31 +200,31 @@ public final class MaskedStringOption extends Option {
 	/** */
 	@Override
 	public final String value() {
-		return content.toString();
+		return this.content.toString();
 	}
 
 	/** */
 	@Override
 	public final void value(final String s) {
 		super.value(s);
-		content.set(s);
+		this.content.set(s);
 	}
 
 	final void printValue(final JTextField textField) {
-		if (content.isEmpty()) {
+		if (this.content.isEmpty()) {
 			textField.setText(getTooltip());
 			textField.setForeground(Color.GRAY);
 		} else {
 			textField.setForeground(Color.BLACK);
-			if (show) {
-				textField.setText(content.toString());
+			if (this.show) {
+				textField.setText(this.content.toString());
 			} else {
-				sb.clear();
-				final int len = content.length();
+				this.sb.clear();
+				final int len = this.content.length();
 				for (int i = 0; i < len; i++) {
-					sb.appendLast('\u25cf');
+					this.sb.appendLast('\u25cf');
 				}
-				textField.setText(sb.toString());
+				textField.setText(this.sb.toString());
 			}
 		}
 

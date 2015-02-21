@@ -7,8 +7,8 @@ interface DeserializeContainer {
 
 	SongData parse(byte[] bytes) throws IOException;
 
-	int readSize(InputStream is) throws IOException;
-	
 	String read(InputStream is) throws IOException;
+
+	int readSize(InputStream is) throws IOException;
 
 }

@@ -56,7 +56,7 @@ public abstract class MidiParser {
 		@Override
 		public final String toString() {
 			return "End of track signaled, but header said its longer: "
-					+ trackLen + " bytes left";
+					+ MidiParser.this.trackLen + " bytes left";
 		}
 	}
 
@@ -86,10 +86,10 @@ public abstract class MidiParser {
 		abstract ParseState getNext(byte read) throws ParsingException;
 
 		void parse(byte read) throws ParsingException {
-			if (trackLen-- <= 0) {
+			if (MidiParser.this.trackLen-- <= 0) {
 				throw new NoEOT();
 			}
-			state = getNext(read);
+			MidiParser.this.state = getNext(read);
 		}
 
 		abstract void reset();
@@ -104,17 +104,17 @@ public abstract class MidiParser {
 
 		@Override
 		final ParseState getNext(byte read) {
-			delta <<= 7;
-			delta += 0x7f & read;
+			this.delta <<= 7;
+			this.delta += 0x7f & read;
 			if ((read & 0x80) != 0) {
 				return this;
 			}
-			return TYPE;
+			return MidiParser.this.TYPE;
 		}
 
 		@Override
 		final void reset() {
-			delta = 0;
+			this.delta = 0;
 		}
 	}
 
@@ -128,16 +128,17 @@ public abstract class MidiParser {
 			if (read != 0) {
 				return null;
 			}
-			if (trackLen != 0) {
+			if (MidiParser.this.trackLen != 0) {
 				throw new MissingBytesAtEOT();
 			}
-			if (activeChannel >= 0) {
-				tracksToChannel.put(activeTrack,
-						(byte) (0xff & activeChannel));
+			if (MidiParser.this.activeChannel >= 0) {
+				MidiParser.this.tracksToChannel.put(
+						MidiParser.this.activeTrack,
+						(byte) (0xff & MidiParser.this.activeChannel));
 			}
-			++activeTrack;
-			activeChannel = -1;
-			return HEADER;
+			++MidiParser.this.activeTrack;
+			MidiParser.this.activeChannel = -1;
+			return MidiParser.this.HEADER;
 		}
 
 		@Override
@@ -160,29 +161,32 @@ public abstract class MidiParser {
 
 		@Override
 		final void parse(byte read) throws ParsingException {
-			bytes.add(read);
-			if (bytes.size() == 8) {
-				int first4Bytes = 0xff & bytes.remove();
+			MidiParser.this.bytes.add(read);
+			if (MidiParser.this.bytes.size() == 8) {
+				int first4Bytes = 0xff & MidiParser.this.bytes.remove();
 				for (int i = 1; i < 4; i++) {
 					first4Bytes <<= 8;
-					first4Bytes += 0xff & bytes.remove();
+					first4Bytes += 0xff & MidiParser.this.bytes.remove();
 				}
 				if (first4Bytes != MidiParser.TRACK_HEADER_INT) {
 					throw new InvalidMidiTrackHeader();
 				}
-				trackLen = 0xff & bytes.remove();
+				MidiParser.this.trackLen = 0xff & MidiParser.this.bytes
+						.remove();
 				for (int i = 1; i < 4; i++) {
-					trackLen <<= 8;
-					trackLen += 0xff & bytes.remove();
+					MidiParser.this.trackLen <<= 8;
+					MidiParser.this.trackLen += 0xff & MidiParser.this.bytes
+							.remove();
 				}
-				state = DELTA;
-				eventsEncoded.put(activeTrack, new ArrayList<MidiEvent>());
+				MidiParser.this.state = MidiParser.this.DELTA;
+				MidiParser.this.eventsEncoded.put(MidiParser.this.activeTrack,
+						new ArrayList<MidiEvent>());
 			}
 		}
 
 		@Override
 		final void reset() {
-			trackLen = 0;
+			MidiParser.this.trackLen = 0;
 		}
 	}
 
@@ -197,24 +201,24 @@ public abstract class MidiParser {
 			switch (read) {
 			// case 0x02:
 			// return COPYRIGHT;
-				case 0x03:
-					return NAME;
-					// case 0x04:
-					// return INSTRUMENT;
-				case 0x20:
-					return CHANNEL;
-					// case 0x21:
-					// return PORT;
-				case 0x2f:
-					return EOT;
-				case 0x51:
-					return TEMPO;
-				case 0x58:
-					return TIME;
-					// case 0x59:
-					// return KEY_SIG;
-				default:
-					return DISCARD_N;
+			case 0x03:
+				return MidiParser.this.NAME;
+				// case 0x04:
+				// return INSTRUMENT;
+			case 0x20:
+				return MidiParser.this.CHANNEL;
+				// case 0x21:
+				// return PORT;
+			case 0x2f:
+				return MidiParser.this.EOT;
+			case 0x51:
+				return MidiParser.this.TEMPO;
+			case 0x58:
+				return MidiParser.this.TIME;
+				// case 0x59:
+				// return KEY_SIG;
+			default:
+				return MidiParser.this.DISCARD_N;
 			}
 		}
 
@@ -235,27 +239,27 @@ public abstract class MidiParser {
 
 		@Override
 		final ParseState getNext(byte read) {
-			if (k < 0) {
-				k = 0xff & read;
+			if (this.k < 0) {
+				this.k = 0xff & read;
 				return this;
-			} else if (v < 0) {
-				v = 0xff & read;
-				if (activeChannel >= 0) {
-					channel = activeChannel;
+			} else if (this.v < 0) {
+				this.v = 0xff & read;
+				if (MidiParser.this.activeChannel >= 0) {
+					this.channel = MidiParser.this.activeChannel;
 				}
-				lastEvent =
-						new NoteOffEvent((byte) k, (byte) v,
-								(byte) channel, DELTA.delta, format);
-				return DELTA;
+				MidiParser.this.lastEvent = new NoteOffEvent((byte) this.k,
+						(byte) this.v, (byte) this.channel,
+						MidiParser.this.DELTA.delta, MidiParser.this.format);
+				return MidiParser.this.DELTA;
 			}
 			return null;
 		}
 
 		@Override
 		final void reset() {
-			k = -1;
-			v = -1;
-			channel = -1;
+			this.k = -1;
+			this.v = -1;
+			this.channel = -1;
 		}
 	}
 
@@ -271,35 +275,35 @@ public abstract class MidiParser {
 
 		@Override
 		final ParseState getNext(byte read) {
-			if (activeChannel == -1) {
-				activeChannel = channel;
-			} else if (activeChannel != channel) {
-				activeChannel = -2;
+			if (MidiParser.this.activeChannel == -1) {
+				MidiParser.this.activeChannel = this.channel;
+			} else if (MidiParser.this.activeChannel != this.channel) {
+				MidiParser.this.activeChannel = -2;
 			}
-			if (k < 0) {
-				k = 0xff & read;
+			if (this.k < 0) {
+				this.k = 0xff & read;
 				return this;
-			} else if (v < 0) {
-				v = 0xff & read;
-				if (v == 0) {
-					lastEvent =
-							new NoteOffEvent((byte) k, (byte) v,
-									(byte) channel, DELTA.delta, format);
+			} else if (this.v < 0) {
+				this.v = 0xff & read;
+				if (this.v == 0) {
+					MidiParser.this.lastEvent = new NoteOffEvent((byte) this.k,
+							(byte) this.v, (byte) this.channel,
+							MidiParser.this.DELTA.delta, MidiParser.this.format);
 				} else {
-					lastEvent =
-							new NoteOnEvent((byte) k, (byte) v,
-									(byte) channel, DELTA.delta, format);
+					MidiParser.this.lastEvent = new NoteOnEvent((byte) this.k,
+							(byte) this.v, (byte) this.channel,
+							MidiParser.this.DELTA.delta, MidiParser.this.format);
 				}
-				return DELTA;
+				return MidiParser.this.DELTA;
 			}
 			return null;
 		}
 
 		@Override
 		final void reset() {
-			k = -1;
-			v = -1;
-			channel = -1;
+			this.k = -1;
+			this.v = -1;
+			this.channel = -1;
 		}
 	}
 
@@ -313,13 +317,13 @@ public abstract class MidiParser {
 
 		@Override
 		final ParseState getNext(byte read) {
-			channelsToInstrument.put(channel, read);
-			return DELTA;
+			MidiParser.this.channelsToInstrument.put(this.channel, read);
+			return MidiParser.this.DELTA;
 		}
 
 		@Override
 		final void reset() {
-			channel = 0;
+			this.channel = 0;
 		}
 	}
 
@@ -329,7 +333,7 @@ public abstract class MidiParser {
 		private final boolean firstByteIsLen;
 
 		ParseState_ReadN() {
-			firstByteIsLen = true;
+			this.firstByteIsLen = true;
 		}
 
 		abstract void end() throws ParsingException;
@@ -342,36 +346,36 @@ public abstract class MidiParser {
 
 		@Override
 		void parse(byte read) throws ParsingException {
-			if (check) {
-				check = false;
-				if (len < 0) {
-					len = 0xff & read;
-					--trackLen;
+			if (this.check) {
+				this.check = false;
+				if (this.len < 0) {
+					this.len = 0xff & read;
+					--MidiParser.this.trackLen;
 				} else {
-					bytes.add(read);
+					MidiParser.this.bytes.add(read);
 				}
-				if ((trackLen -= len) < 0) {
+				if ((MidiParser.this.trackLen -= this.len) < 0) {
 					throw new NoEOT();
 				}
 			} else {
-				bytes.add(read);
+				MidiParser.this.bytes.add(read);
 			}
-			if (bytes.size() == len) {
-				if (firstByteIsLen) {
-					len = -1;
+			if (MidiParser.this.bytes.size() == this.len) {
+				if (this.firstByteIsLen) {
+					this.len = -1;
 				}
 				end();
-				check = true;
-				state = DELTA;
+				this.check = true;
+				MidiParser.this.state = MidiParser.this.DELTA;
 			}
 		}
 
 		@Override
 		final void reset() {
-			if (firstByteIsLen) {
-				len = -1;
+			if (this.firstByteIsLen) {
+				this.len = -1;
 			}
-			check = true;
+			this.check = true;
 		}
 	}
 
@@ -384,11 +388,12 @@ public abstract class MidiParser {
 		@Override
 		final void end() {
 			int tempo = 0;
-			while (!bytes.isEmpty()) {
+			while (!MidiParser.this.bytes.isEmpty()) {
 				tempo <<= 8;
-				tempo += 0xff & bytes.remove().byteValue();
+				tempo += 0xff & MidiParser.this.bytes.remove().byteValue();
 			}
-			lastEvent = new TempoChange(tempo, DELTA.delta);
+			MidiParser.this.lastEvent = new TempoChange(tempo,
+					MidiParser.this.DELTA.delta);
 		}
 	}
 
@@ -399,11 +404,13 @@ public abstract class MidiParser {
 
 		@Override
 		final void end() {
-			final byte n = bytes.remove().byteValue();
-			final int d = (int) Math.pow(2, bytes.remove().byteValue());
-			final byte c = bytes.remove().byteValue();
-			final byte b = bytes.remove().byteValue();
-			lastEvent = new Time(n, d, c, b, DELTA.delta);
+			final byte n = MidiParser.this.bytes.remove().byteValue();
+			final int d = (int) Math.pow(2, MidiParser.this.bytes.remove()
+					.byteValue());
+			final byte c = MidiParser.this.bytes.remove().byteValue();
+			final byte b = MidiParser.this.bytes.remove().byteValue();
+			MidiParser.this.lastEvent = new Time(n, d, c, b,
+					MidiParser.this.DELTA.delta);
 		}
 	}
 
@@ -419,99 +426,99 @@ public abstract class MidiParser {
 			final byte status, data;
 			final boolean runningStatus;
 			if ((read & 0xf0) < 0x80) {
-				status = (byte) ((0xf0 & lastStatus) >> 4);
-				data = (byte) (0x0f & lastStatus);
+				status = (byte) ((0xf0 & this.lastStatus) >> 4);
+				data = (byte) (0x0f & this.lastStatus);
 				runningStatus = true;
 			} else {
 				status = (byte) ((read & 0xf0) >> 4);
 				data = (byte) (read & 0x0f);
 				runningStatus = false;
-				lastStatus = read;
+				this.lastStatus = read;
 			}
 			switch (status) {
-				case 0x8:
-					// note off
-					if (runningStatus) {
-						NOTE_OFF.k = read;
-					} else {
-						NOTE_OFF.k = -1;
-					}
-					NOTE_OFF.v = -1;
-					NOTE_OFF.channel = data;
-					return NOTE_OFF;
-				case 0x9:
-					// note on
-					if (runningStatus) {
-						NOTE_ON.k = read;
-					} else {
-						NOTE_ON.k = -1;
-					}
-					NOTE_ON.v = -1;
-					NOTE_ON.channel = data;
-					return NOTE_ON;
-				case 0xa:
-					// polyphonic after touch
-					if (runningStatus) {
-						DISCARD_N.len = 1;
-					} else {
-						DISCARD_N.len = 2;
-					}
-					return DISCARD_N;
-				case 0xb:
-					// control change
-					if (runningStatus) {
-						DISCARD_N.len = 1;
-					} else {
-						DISCARD_N.len = 2;
-					}
-					return DISCARD_N;
-				case 0xc:
-					// program change
-					if (runningStatus) {
-						throw new IllegalStateException(
-								"Running state 0xc.");
-					}
-					PROGRAM_CHANGE.channel = data;
-					return PROGRAM_CHANGE;
-				case 0xd:
-					// channel pressure
-					if (runningStatus) {
-						DISCARD_N.len = 0;
-					} else {
-						DISCARD_N.len = 1;
-					}
-					return DISCARD_N;
-				case 0xe:
-					// pitch bend
-					if (runningStatus) {
-						DISCARD_N.len = 1;
-					} else {
-						DISCARD_N.len = 2;
-					}
-					return DISCARD_N;
+			case 0x8:
+				// note off
+				if (runningStatus) {
+					MidiParser.this.NOTE_OFF.k = read;
+				} else {
+					MidiParser.this.NOTE_OFF.k = -1;
+				}
+				MidiParser.this.NOTE_OFF.v = -1;
+				MidiParser.this.NOTE_OFF.channel = data;
+				return MidiParser.this.NOTE_OFF;
+			case 0x9:
+				// note on
+				if (runningStatus) {
+					MidiParser.this.NOTE_ON.k = read;
+				} else {
+					MidiParser.this.NOTE_ON.k = -1;
+				}
+				MidiParser.this.NOTE_ON.v = -1;
+				MidiParser.this.NOTE_ON.channel = data;
+				return MidiParser.this.NOTE_ON;
+			case 0xa:
+				// polyphonic after touch
+				if (runningStatus) {
+					MidiParser.this.DISCARD_N.len = 1;
+				} else {
+					MidiParser.this.DISCARD_N.len = 2;
+				}
+				return MidiParser.this.DISCARD_N;
+			case 0xb:
+				// control change
+				if (runningStatus) {
+					MidiParser.this.DISCARD_N.len = 1;
+				} else {
+					MidiParser.this.DISCARD_N.len = 2;
+				}
+				return MidiParser.this.DISCARD_N;
+			case 0xc:
+				// program change
+				if (runningStatus) {
+					throw new IllegalStateException("Running state 0xc.");
+				}
+				MidiParser.this.PROGRAM_CHANGE.channel = data;
+				return MidiParser.this.PROGRAM_CHANGE;
+			case 0xd:
+				// channel pressure
+				if (runningStatus) {
+					MidiParser.this.DISCARD_N.len = 0;
+				} else {
+					MidiParser.this.DISCARD_N.len = 1;
+				}
+				return MidiParser.this.DISCARD_N;
+			case 0xe:
+				// pitch bend
+				if (runningStatus) {
+					MidiParser.this.DISCARD_N.len = 1;
+				} else {
+					MidiParser.this.DISCARD_N.len = 2;
+				}
+				return MidiParser.this.DISCARD_N;
+			case 0xf:
+				// control
+				final ParseState nextMeta;
+				switch (data) {
+				case 0x0:
+					MidiParser.this.lastEvent = new Break(
+							MidiParser.this.DELTA.delta);
+					nextMeta = MidiParser.this.DISCARD_UNTIL_EOX;
+					break;
 				case 0xf:
-					// control
-					final ParseState nextMeta;
-					switch (data) {
-						case 0x0:
-							lastEvent = new Break(DELTA.delta);
-							nextMeta = DISCARD_UNTIL_EOX;
-							break;
-						case 0xf:
-							nextMeta = META;
-							break;
-						default:
-							nextMeta = null;
-							throw new IllegalStateException();
-					}
-					return nextMeta;
+					nextMeta = MidiParser.this.META;
+					break;
+				default:
+					nextMeta = null;
+					throw new IllegalStateException();
+				}
+				return nextMeta;
 			}
 			throw new IllegalStateException();
 		}
 
 		@Override
 		final void reset() {
-			lastStatus = 0;
+			this.lastStatus = 0;
 		}
 	}
 
@@ -532,8 +539,7 @@ public abstract class MidiParser {
 	 * @param sc
 	 * @return the selected parser
 	 */
-	public final static MidiParser
-			createInstance(final StartupContainer sc) {
+	public final static MidiParser createInstance(final StartupContainer sc) {
 		return new MidiParserImpl(sc);
 	}
 
@@ -541,8 +547,7 @@ public abstract class MidiParser {
 	protected final MasterThread master;
 
 	/** A map holding the parsed data */
-	protected final Map<Integer, List<MidiEvent>> eventsEncoded =
-			new HashMap<>();
+	protected final Map<Integer, List<MidiEvent>> eventsEncoded = new HashMap<>();
 	/** A map holding the parsed data */
 	protected final MidiMap eventsDecoded = new MidiMap(this);
 
@@ -573,9 +578,9 @@ public abstract class MidiParser {
 
 		@Override
 		final void end() {
-			final byte c = bytes.remove();
-			tracksToChannel.put(activeTrack, c);
-			activeChannel = 0xff & c;
+			final byte c = MidiParser.this.bytes.remove();
+			MidiParser.this.tracksToChannel.put(MidiParser.this.activeTrack, c);
+			MidiParser.this.activeChannel = 0xff & c;
 		}
 	};
 	final ParseState_Delta DELTA = new ParseState_Delta();
@@ -584,7 +589,7 @@ public abstract class MidiParser {
 		@Override
 		final ParseState getNext(byte read) {
 			if (read == (byte) 0xf7) {
-				return DELTA;
+				return MidiParser.this.DELTA;
 			}
 			return this;
 		}
@@ -600,9 +605,10 @@ public abstract class MidiParser {
 
 		@Override
 		final void end() {
-			bytes.clear();
-			if (DELTA.delta != 0) {
-				lastEvent = new Break(DELTA.delta);
+			MidiParser.this.bytes.clear();
+			if (MidiParser.this.DELTA.delta != 0) {
+				MidiParser.this.lastEvent = new Break(
+						MidiParser.this.DELTA.delta);
 			}
 		}
 	};
@@ -614,21 +620,22 @@ public abstract class MidiParser {
 
 		@Override
 		final void end() {
-			sb.setLength(0);
-			while (!bytes.isEmpty()) {
-				sb.append((char) bytes.remove().byteValue());
+			MidiParser.this.sb.setLength(0);
+			while (!MidiParser.this.bytes.isEmpty()) {
+				MidiParser.this.sb.append((char) MidiParser.this.bytes.remove()
+						.byteValue());
 			}
-			if (sb.length() > 60) {
-				sb.setLength(60);
+			if (MidiParser.this.sb.length() > 60) {
+				MidiParser.this.sb.setLength(60);
 			}
-			titles.put(activeTrack, sb.toString().trim());
+			MidiParser.this.titles.put(MidiParser.this.activeTrack,
+					MidiParser.this.sb.toString().trim());
 		}
 
 	};
 	final ParseState_NoteOn NOTE_ON = new ParseState_NoteOn();
 	final ParseState_NoteOff NOTE_OFF = new ParseState_NoteOff();
-	final ParseState_ProgramChange PROGRAM_CHANGE =
-			new ParseState_ProgramChange();
+	final ParseState_ProgramChange PROGRAM_CHANGE = new ParseState_ProgramChange();
 
 	final ParseState TEMPO = new ParseState_Tempo();
 
@@ -637,8 +644,7 @@ public abstract class MidiParser {
 	/** A map mapping channels to instruments */
 	final Map<Byte, Byte> channelsToInstrument = new HashMap<>();
 	/** A map holding the instruments */
-	private final Map<Integer, MidiInstrument> instruments =
-			new HashMap<>();
+	private final Map<Integer, MidiInstrument> instruments = new HashMap<>();
 	/** A map holding the titles */
 	final Map<Integer, String> titles = new HashMap<>();
 	/** A map mapping tracks to channels */
@@ -651,7 +657,7 @@ public abstract class MidiParser {
 	private int lock = 0;
 	private int lockRead = 0;
 	private long mod;
-	ParseState state = HEADER;
+	ParseState state = this.HEADER;
 
 	int trackLen;
 
@@ -668,14 +674,14 @@ public abstract class MidiParser {
 	 * @return the duration of entire song in seconds
 	 */
 	public final double getDuration() {
-		return duration;
+		return this.duration;
 	}
 
 	/**
 	 * @return the currently used midi-file
 	 */
 	public final String getMidi() {
-		return midi.getFilename();
+		return this.midi.getFilename();
 	}
 
 	/**
@@ -688,7 +694,7 @@ public abstract class MidiParser {
 	 */
 	public final Map<Integer, MidiInstrument> instruments() {
 		synchronized (this) {
-			while (lock > 0) {
+			while (this.lock > 0) {
 				try {
 					wait();
 				} catch (final InterruptedException e) {
@@ -696,20 +702,20 @@ public abstract class MidiParser {
 					return null;
 				}
 			}
-			++lockRead;
+			++this.lockRead;
 		}
 		try {
 			parseIfNeeded();
-			if (lastParsedMidi == null) {
+			if (this.lastParsedMidi == null) {
 				synchronized (this) {
-					--lockRead;
+					--this.lockRead;
 					notifyAll();
 				}
 				return null;
 			}
-			final Map<Integer, MidiInstrument> map =
-					new TreeMap<>(instruments);
-			for (final Integer track : eventsEncoded.keySet()) {
+			final Map<Integer, MidiInstrument> map = new TreeMap<>(
+					this.instruments);
+			for (final Integer track : this.eventsEncoded.keySet()) {
 				if (track == 0) {
 					continue;
 				}
@@ -717,11 +723,9 @@ public abstract class MidiParser {
 					break;
 				}
 				if (!map.containsKey(track)) {
-					final Byte channelObject = tracksToChannel.get(track);
-					final byte channel =
-							(byte) (channelObject == null ? track
-									.byteValue() - 1 : channelObject
-									.byteValue());
+					final Byte channelObject = this.tracksToChannel.get(track);
+					final byte channel = (byte) (channelObject == null ? track
+							.byteValue() - 1 : channelObject.byteValue());
 					if ((channel == 9) || (channel == 10)) {
 						map.put(track, MidiInstrument.DRUMS);
 					} else {
@@ -729,8 +733,8 @@ public abstract class MidiParser {
 						if (channel == -1) {
 							i = MidiInstrument.get(track.byteValue());
 						} else {
-							final Byte instrument =
-									channelsToInstrument.get(channel);
+							final Byte instrument = this.channelsToInstrument
+									.get(channel);
 							if (instrument == null) {
 								i = null;
 							} else {
@@ -743,11 +747,11 @@ public abstract class MidiParser {
 			}
 			return map;
 		} catch (final FileNotFoundException e) {
-			io.printError("Selected midi does not exist", true);
+			this.io.printError("Selected midi does not exist", true);
 			return null;
 		} finally {
 			synchronized (this) {
-				--lockRead;
+				--this.lockRead;
 				notifyAll();
 			}
 		}
@@ -780,7 +784,7 @@ public abstract class MidiParser {
 	 */
 	public final MidiMap parse() {
 		synchronized (this) {
-			while ((lock > 0) || (lockRead > 0)) {
+			while ((this.lock > 0) || (this.lockRead > 0)) {
 				try {
 					wait();
 				} catch (final InterruptedException e) {
@@ -788,22 +792,22 @@ public abstract class MidiParser {
 					return null;
 				}
 			}
-			++lockRead;
+			++this.lockRead;
 		}
 		try {
 			parseIfNeeded();
-			if (lastParsedMidi == null) {
+			if (this.lastParsedMidi == null) {
 				return null;
 			}
-			final MidiMap eventsDecoded_ = eventsDecoded.clone();
+			final MidiMap eventsDecoded_ = this.eventsDecoded.clone();
 			return eventsDecoded_;
 		} catch (final FileNotFoundException e) {
-			io.printError("Selected midi does not exist", true);
+			this.io.printError("Selected midi does not exist", true);
 			return null;
 		} finally {
 			synchronized (this) {
 				// exception will decrement sooner
-				--lockRead;
+				--this.lockRead;
 				notifyAll();
 			}
 		}
@@ -814,7 +818,7 @@ public abstract class MidiParser {
 	 * @return the map mapping ids of midi-tracks to subsequent numbers
 	 */
 	public final Map<Integer, Integer> renumberMap() {
-		return new HashMap<>(renumberMap);
+		return new HashMap<>(this.renumberMap);
 	}
 
 	/**
@@ -828,54 +832,54 @@ public abstract class MidiParser {
 			throw new IllegalArgumentException();
 		}
 		synchronized (this) {
-			++lock;
-			while (lockRead > 0) {
+			++this.lock;
+			while (this.lockRead > 0) {
 				try {
 					wait();
 				} catch (final InterruptedException e) {
-					--lock;
+					--this.lock;
 					notifyAll();
 					return false;
 				}
 			}
-			lockRead = 1;
+			this.lockRead = 1;
 		}
-		if ((this.midi == midi) && (mod == midi.toFile().lastModified())) {
+		if ((this.midi == midi) && (this.mod == midi.toFile().lastModified())) {
 			synchronized (this) {
-				lockRead = 0;
-				--lock;
+				this.lockRead = 0;
+				--this.lock;
 				notifyAll();
 			}
 			return true;
 		}
 		this.midi = null;
-		duration = 0;
-		lastParsedMidi = null;
-		tracksToChannel.clear();
-		channelsToInstrument.clear();
-		titles.clear();
-		eventsEncoded.clear();
-		renumberMap.clear();
-		bytes.clear();
+		this.duration = 0;
+		this.lastParsedMidi = null;
+		this.tracksToChannel.clear();
+		this.channelsToInstrument.clear();
+		this.titles.clear();
+		this.eventsEncoded.clear();
+		this.renumberMap.clear();
+		this.bytes.clear();
 		for (final ParseState ps : MidiParser.instancesOfParseState) {
 			ps.reset();
 		}
-		state = HEADER;
-		activeTrack = 0;
-		activeChannel = -1;
-		ntracks = -1;
+		this.state = this.HEADER;
+		this.activeTrack = 0;
+		this.activeChannel = -1;
+		this.ntracks = -1;
 		try {
 			prepareMidi(midi);
 			this.midi = midi;
-			mod = midi.toFile().lastModified();
+			this.mod = midi.toFile().lastModified();
 			return true;
 		} catch (final Exception e) {
-			io.handleException(ExceptionHandle.CONTINUE, e);
+			this.io.handleException(ExceptionHandle.CONTINUE, e);
 			return false;
 		} finally {
 			synchronized (this) {
-				lockRead = 0;
-				--lock;
+				this.lockRead = 0;
+				--this.lock;
 				notifyAll();
 			}
 		}
@@ -891,7 +895,7 @@ public abstract class MidiParser {
 	 */
 	public final Map<Integer, String> titles() {
 		synchronized (this) {
-			while ((lock > 0) || (lockRead > 0)) {
+			while ((this.lock > 0) || (this.lockRead > 0)) {
 				try {
 					wait();
 				} catch (final InterruptedException e) {
@@ -899,17 +903,17 @@ public abstract class MidiParser {
 					return null;
 				}
 			}
-			++lockRead;
+			++this.lockRead;
 		}
 		try {
 			parseIfNeeded();
-			return new HashMap<>(titles);
+			return new HashMap<>(this.titles);
 		} catch (final FileNotFoundException e) {
-			io.printError("Selected midi does not exist", true);
+			this.io.printError("Selected midi does not exist", true);
 			return null;
 		} finally {
 			synchronized (this) {
-				--lockRead;
+				--this.lockRead;
 				notifyAll();
 			}
 		}
@@ -920,43 +924,43 @@ public abstract class MidiParser {
 	 * @return a set of all indices of last parsed midi.
 	 */
 	public final Set<Integer> tracks() {
-		return eventsEncoded.keySet();
+		return this.eventsEncoded.keySet();
 	}
 
 	private final void parseIfNeeded() throws FileNotFoundException {
-		if (lastParsedMidi != midi) {
-			if (midi != null) {
-				if (!midi.exists()) {
+		if (this.lastParsedMidi != this.midi) {
+			if (this.midi != null) {
+				if (!this.midi.exists()) {
 					throw new FileNotFoundException();
 				}
 				try {
 					createMidiMap();
 					decodeMidiMap();
 				} catch (final IOException e) {
-					lastParsedMidi = null;
+					this.lastParsedMidi = null;
 					synchronized (this) {
 						notifyAll();
 					}
 					e.printStackTrace();
-					io.handleException(ExceptionHandle.CONTINUE, e);
+					this.io.handleException(ExceptionHandle.CONTINUE, e);
 					return;
 				} catch (final DecodingException e) {
-					lastParsedMidi = null;
-					io.printError(e.toString(), false);
+					this.lastParsedMidi = null;
+					this.io.printError(e.toString(), false);
 					return;
 				} catch (final ParsingException e) {
-					lastParsedMidi = null;
-					io.printError(e.toString(), false);
+					this.lastParsedMidi = null;
+					this.io.printError(e.toString(), false);
 					return;
 				}
 			}
-		} else if (lastParsedMidi == null) {
+		} else if (this.lastParsedMidi == null) {
 			throw new IllegalStateException("Nothing parsed");
 		}
 		if (Thread.currentThread().isInterrupted()) {
 			return;
 		}
-		lastParsedMidi = midi;
+		this.lastParsedMidi = this.midi;
 	}
 
 	/**
@@ -972,20 +976,20 @@ public abstract class MidiParser {
 	 */
 	protected final MidiEvent createEvent(byte[] message, int delta)
 			throws ParsingException {
-		if (state == HEADER) {
-			state = DELTA;
+		if (this.state == this.HEADER) {
+			this.state = this.DELTA;
 		}
-		assert (state == DELTA) || (state == HEADER);
-		lastEvent = null;
-		DELTA.delta = delta;
-		state = TYPE;
+		assert (this.state == this.DELTA) || (this.state == this.HEADER);
+		this.lastEvent = null;
+		this.DELTA.delta = delta;
+		this.state = this.TYPE;
 		for (final byte element : message) {
-			state.parse(element);
+			this.state.parse(element);
 		}
-		assert (state == DELTA) || (state == HEADER);
-		DELTA.delta = 0;
+		assert (this.state == this.DELTA) || (this.state == this.HEADER);
+		this.DELTA.delta = 0;
 
-		return lastEvent;
+		return this.lastEvent;
 	}
 
 	/**
@@ -1017,21 +1021,21 @@ public abstract class MidiParser {
 	 * @throws ParsingException
 	 *             if the midi file breaks the grammar of midi-files
 	 */
-	protected final MidiEvent parse(final InputStream in)
-			throws IOException, ParsingException {
+	protected final MidiEvent parse(final InputStream in) throws IOException,
+			ParsingException {
 		if (Thread.currentThread().isInterrupted()) {
 			return null;
 		}
-		assert (state == DELTA) || (state == HEADER);
-		lastEvent = null;
-		DELTA.delta = 0;
-		while ((state == DELTA) || (state == HEADER)) {
-			state.parse((byte) in.read());
+		assert (this.state == this.DELTA) || (this.state == this.HEADER);
+		this.lastEvent = null;
+		this.DELTA.delta = 0;
+		while ((this.state == this.DELTA) || (this.state == this.HEADER)) {
+			this.state.parse((byte) in.read());
 		}
 		do {
-			state.parse((byte) in.read());
-		} while ((state != DELTA) && (state != HEADER));
-		return lastEvent;
+			this.state.parse((byte) in.read());
+		} while ((this.state != this.DELTA) && (this.state != this.HEADER));
+		return this.lastEvent;
 	}
 
 	/**
@@ -1041,6 +1045,5 @@ public abstract class MidiParser {
 	 * @param newMidi
 	 * @throws Exception
 	 */
-	protected abstract void prepareMidi(final Path newMidi)
-			throws Exception;
+	protected abstract void prepareMidi(final Path newMidi) throws Exception;
 }

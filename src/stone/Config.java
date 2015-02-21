@@ -5,30 +5,41 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
 import stone.util.LinkedMap;
 
-final class Config {
+public final class Config {
 
 	private static final String CONFIG_FILE = "config.txt";
-	
-	final Map<String, Map<String, String>> mapSKV = new HashMap<>();
-	final Map<String, String> mapKV = new HashMap<>();
 
-	Config() {
-		final InputStream in = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE);
+	private final Map<String, Map<String, String>> mapSKV = new HashMap<>();
+	private final Map<String, String> mapKV = new HashMap<>();
+
+	private final static Config instance = new Config();
+
+	public static Config getInstance() {
+		return instance;
+	}
+
+	private Config() {
+		final InputStream in = getClass().getClassLoader().getResourceAsStream(
+				CONFIG_FILE);
+		if (in == null) {
+			return;
+		}
 		byte[] bytes;
 		try {
 			bytes = new byte[in.available()];
 			in.read(bytes);
 			final String[] lines = new String(bytes).split("\n");
-			Map<String, String> map = mapKV;
+			Map<String, String> map = this.mapKV;
 			for (final String line : lines) {
 				if (!line.contains(" ")) {
 					final String section = line;
-					map = mapSKV.get(section);
+					map = this.mapSKV.get(section);
 					if (map == null) {
 						final Map<String, String> _map = new LinkedMap<String, String>();
-						mapSKV.put(section, _map);
+						this.mapSKV.put(section, _map);
 						map = _map;
 					}
 				} else {
@@ -38,7 +49,7 @@ final class Config {
 					map.put(key, value);
 				}
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		} finally {
 			try {
@@ -49,12 +60,12 @@ final class Config {
 		}
 	}
 
-	final String getValue(final String key) {
-		return mapKV.get(key);
+	public Set<String> getSection(final String section) {
+		return this.mapSKV.get(section).keySet();
 	}
 
-	public Set<String> getSection(final String section) {
-		return mapSKV.get(section).keySet();
+	public final String getValue(final String key) {
+		return this.mapKV.get(key);
 	}
 
 }

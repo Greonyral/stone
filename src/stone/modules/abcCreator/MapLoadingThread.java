@@ -28,8 +28,7 @@ final class MapLoadingThread implements Runnable {
 	@Override
 	public final void run() {
 
-		final List<MidiInstrumentDropTarget> targetList =
-				new ArrayList<>();
+		final List<MidiInstrumentDropTarget> targetList = new ArrayList<>();
 
 		class LoadedMapEntry implements DndPluginCaller.LoadedMapEntry {
 
@@ -44,13 +43,14 @@ final class MapLoadingThread implements Runnable {
 				final String[] s = string.split(" ");
 
 				try {
-					t = ParamMap.parseParams(activeInstrument, s);
+					t = ParamMap.parseParams(this.activeInstrument, s);
 				} catch (final Exception e1) {
 					e1.printStackTrace();
-					error = true;
+					this.error = true;
 					return;
 				}
-				abcMapPlugin.link(t, activeInstrument);
+				MapLoadingThread.this.abcMapPlugin.link(t,
+						this.activeInstrument);
 			}
 
 			@Override
@@ -62,41 +62,41 @@ final class MapLoadingThread implements Runnable {
 					setError();
 					return;
 				}
-				activeInstrument = m.createNewTarget();
-				targetList.add(activeInstrument);
+				this.activeInstrument = m.createNewTarget();
+				targetList.add(this.activeInstrument);
 				if (s.length == 2) {
 					try {
-						activeInstrument.setParam("map", Integer
-								.valueOf(s[1]));
+						this.activeInstrument.setParam("map",
+								Integer.valueOf(s[1]));
 					} catch (final Exception e) {
-						error = true;
+						this.error = true;
 					}
 				}
 			}
 
 			@Override
 			public final boolean error() {
-				return error;
+				return this.error;
 			}
 
 			@Override
 			public final void setError() {
-				error = true;
+				this.error = true;
 			}
 		}
 
 		final LoadedMapEntry loader = new LoadedMapEntry();
 
-		abcMapPlugin.caller.loadMap(mapToLoad, loader);
+		this.abcMapPlugin.caller.loadMap(this.mapToLoad, loader);
 		if (loader.error) {
-			abcMapPlugin.state.label.setText("Loading map failed");
+			this.abcMapPlugin.state.label.setText("Loading map failed");
 		} else {
-			abcMapPlugin.state.loadingMap = false;
-			abcMapPlugin.state.label
+			this.abcMapPlugin.state.loadingMap = false;
+			this.abcMapPlugin.state.label
 					.setText("Parsing completed - Updating GUI ...");
 			final Set<Track> clonesAdded = new HashSet<>();
 			for (final MidiInstrumentDropTarget t : targetList) {
-				abcMapPlugin.addToCenter(t);
+				this.abcMapPlugin.addToCenter(t);
 				for (final DragObject<JPanel, JPanel, JPanel> track : t) {
 					if (track.isAlias()) {
 						clonesAdded.add((Track) track);
@@ -104,15 +104,16 @@ final class MapLoadingThread implements Runnable {
 				}
 			}
 			for (final Track clone : clonesAdded) {
-				abcMapPlugin.initObject(clone);
+				this.abcMapPlugin.initObject(clone);
 			}
-			abcMapPlugin.state.label.setText("Loading map completed");
+			this.abcMapPlugin.state.label.setText("Loading map completed");
 		}
-		synchronized (abcMapPlugin.state) {
-			abcMapPlugin.state.upToDate = false;
-			abcMapPlugin.state.running = false;
-			assert abcMapPlugin.state.loadingMap == true; // locks future loads
-			abcMapPlugin.state.notifyAll();
+		synchronized (this.abcMapPlugin.state) {
+			this.abcMapPlugin.state.upToDate = false;
+			this.abcMapPlugin.state.running = false;
+			assert this.abcMapPlugin.state.loadingMap == true; // locks future
+																// loads
+			this.abcMapPlugin.state.notifyAll();
 		}
 	}
 }

@@ -34,7 +34,7 @@ public class TaskPool {
 	 *            the StartupContainer for initialization
 	 */
 	public TaskPool(final StartupContainer os) {
-		master = new MasterThread(os, this);
+		this.master = new MasterThread(os, this);
 		Debug.print("%d available CPUs\n", NUM_CPUS);
 	}
 
@@ -44,16 +44,17 @@ public class TaskPool {
 	 * @param task
 	 */
 	public final void addTask(final Runnable task) {
-		synchronized (taskPool) {
-			taskPool.add(task);
-			taskPool.notify();
+		synchronized (this.taskPool) {
+			this.taskPool.add(task);
+			this.taskPool.notify();
 		}
 	}
 
 	@Deprecated
 	public final void addTaskForAll(final Runnable... task) {
-		for (final Runnable t : task)
+		for (final Runnable t : task) {
 			addTaskForAll(t);
+		}
 	}
 
 
@@ -77,11 +78,11 @@ public class TaskPool {
 	 */
 	public final void addTaskForAll(final Runnable task, int percent) {
 		final int n = NUM_CPUS * Math.max(1, Math.min(100, percent) / 100);
-		synchronized (taskPool) {
+		synchronized (this.taskPool) {
 			for (int i = 0; i < n; i++) {
-				taskPool.add(task);
+				this.taskPool.add(task);
 			}
-			taskPool.notifyAll();
+			this.taskPool.notifyAll();
 		}
 	}
 
@@ -89,21 +90,22 @@ public class TaskPool {
 	 * Closes this pool. All waiting tasks will be woken up.
 	 */
 	public final void close() {
-		synchronized (taskPool) {
-			if (closed) {
+		synchronized (this.taskPool) {
+			if (this.closed) {
 				return;
 			}
-			closed = true;
-			taskPool.notifyAll();
-			synchronized (runningTaskList) {
-				for (final Thread t : runningTaskList)
+			this.closed = true;
+			this.taskPool.notifyAll();
+			synchronized (this.runningTaskList) {
+				for (final Thread t : this.runningTaskList) {
 					t.interrupt();
+				}
 			}
-			while (runningTasks > 0) {
+			while (this.runningTasks > 0) {
 				try {
-					taskPool.wait();
+					this.taskPool.wait();
 				} catch (final InterruptedException e) {
-					master.interrupt();
+					this.master.interrupt();
 				}
 			}
 		}
@@ -114,15 +116,15 @@ public class TaskPool {
 	 *         InterruptedException
 	 */
 	public final MasterThread getMaster() {
-		return master;
+		return this.master;
 	}
 
 	/**
 	 * Forks and starts the master thread.
 	 */
 	public final Runnable runMaster() {
-		master.setName("master");
-		master.start();
+		this.master.setName("master");
+		this.master.start();
 		final Runnable workerRun = new Runnable() {
 
 			@Override
@@ -148,12 +150,12 @@ public class TaskPool {
 	 * waiting.
 	 */
 	public final void waitForTasks() {
-		while ((runningTasks > 0) || !taskPool.isEmpty()) {
-			synchronized (taskPool) {
+		while ((this.runningTasks > 0) || !this.taskPool.isEmpty()) {
+			synchronized (this.taskPool) {
 				try {
-					taskPool.wait();
+					this.taskPool.wait();
 				} catch (final InterruptedException e) {
-					master.interrupt();
+					this.master.interrupt();
 				}
 			}
 		}
@@ -168,39 +170,41 @@ public class TaskPool {
 	 */
 	final boolean runTask() {
 		final Runnable t;
-		synchronized (taskPool) {
-			while (taskPool.isEmpty()) {
-				if (closed) {
+		synchronized (this.taskPool) {
+			while (this.taskPool.isEmpty()) {
+				if (this.closed) {
 					return false;
 				}
 				try {
-					taskPool.wait();
+					this.taskPool.wait();
 				} catch (final InterruptedException e) {
-					master.interrupt();
+					this.master.interrupt();
 					return false;
 				}
 			}
-			++runningTasks;
-			t = taskPool.remove();
+			++this.runningTasks;
+			t = this.taskPool.remove();
 		}
-		synchronized (runningTaskList) {
-			runningTaskList.add(Thread.currentThread());
+		synchronized (this.runningTaskList) {
+			this.runningTaskList.add(Thread.currentThread());
 		}
 		try {
 			t.run();
 		} catch (final Exception e) {
 			Throwable tr = e;
-			while (tr.getCause() != null)
+			while (tr.getCause() != null) {
 				tr = tr.getCause();
-			if (!InterruptedException.class.isAssignableFrom(tr.getClass()))
+			}
+			if (!InterruptedException.class.isAssignableFrom(tr.getClass())) {
 				e.printStackTrace();
+			}
 		} finally {
-			synchronized (taskPool) {
-				taskPool.notifyAll();
-				--runningTasks;
-				runningTaskList.remove(Thread.currentThread());
+			synchronized (this.taskPool) {
+				this.taskPool.notifyAll();
+				--this.runningTasks;
+				this.runningTaskList.remove(Thread.currentThread());
 			}
 		}
-		return !master.isInterrupted();
+		return !this.master.isInterrupted();
 	}
 }

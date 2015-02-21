@@ -11,42 +11,36 @@ final class TestButtonMouseListener extends ReleaseListener {
 
 	@Override
 	public final void mouseReleased(final MouseEvent e) {
-		synchronized (abcMapPlugin.state) {
-			if (abcMapPlugin.state.loadingMap) {
+		synchronized (this.abcMapPlugin.state) {
+			if (this.abcMapPlugin.state.loadingMap) {
 				return;
 			}
-			while (abcMapPlugin.state.running) {
+			while (this.abcMapPlugin.state.running) {
 				try {
-					abcMapPlugin.state.wait();
+					this.abcMapPlugin.state.wait();
 				} catch (final InterruptedException ie) {
 					ie.printStackTrace();
 				}
 			}
-			if (abcMapPlugin.state.upToDate) {
-				abcMapPlugin.state.io.endProgress();
+			if (this.abcMapPlugin.state.upToDate) {
+				this.abcMapPlugin.state.io.endProgress();
 			}
-			abcMapPlugin.state.upToDate = false;
-			abcMapPlugin.state.running = true;
+			this.abcMapPlugin.state.upToDate = false;
+			this.abcMapPlugin.state.running = true;
 		}
-		abcMapPlugin.taskPool.addTask(new Runnable() {
+		this.abcMapPlugin.taskPool.addTask(new Runnable() {
 
 			@Override
 			public void run() {
-				final Object result =
-						TestButtonMouseListener.this.abcMapPlugin.caller
-								.call_back(
-										null,
-										null,
-										TestButtonMouseListener.this.abcMapPlugin
-												.size());
+				final Object result = TestButtonMouseListener.this.abcMapPlugin.caller
+						.call_back(null, null,
+								TestButtonMouseListener.this.abcMapPlugin
+										.size());
 				final boolean success = result != null;
 				synchronized (TestButtonMouseListener.this.abcMapPlugin.state) {
-					TestButtonMouseListener.this.abcMapPlugin.state
-							.notifyAll();
-					TestButtonMouseListener.this.abcMapPlugin.state.upToDate =
-							success;
-					TestButtonMouseListener.this.abcMapPlugin.state.running =
-							false;
+					TestButtonMouseListener.this.abcMapPlugin.state.notifyAll();
+					TestButtonMouseListener.this.abcMapPlugin.state.upToDate = success;
+					TestButtonMouseListener.this.abcMapPlugin.state.running = false;
 					if (!success) {
 						TestButtonMouseListener.this.abcMapPlugin.state.label
 								.setText("Creating abc failed");
@@ -54,10 +48,11 @@ final class TestButtonMouseListener extends ReleaseListener {
 						assert result != null;
 						TestButtonMouseListener.this.abcMapPlugin.state.label
 								.setText("The abc is up-to-date - "
-										+ result.toString().substring(
-												0,
-												result.toString().indexOf(
-														"%") + 1));
+										+ result.toString()
+												.substring(
+														0,
+														result.toString()
+																.indexOf("%") + 1));
 					}
 				}
 			}

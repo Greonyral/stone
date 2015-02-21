@@ -24,32 +24,31 @@ final class MainConfigWriter implements Runnable {
 		final java.io.OutputStream out;
 		final StringBuilder sb = new StringBuilder();
 
-		synchronized (main.configOld) {
-			synchronized (main.configNew) {
+		synchronized (this.main.configOld) {
+			synchronized (this.main.configNew) {
 				// throw all values into configOld
-				for (final Map.Entry<String, Map<String, String>> entryMap : main.configNew
+				for (final Map.Entry<String, Map<String, String>> entryMap : this.main.configNew
 						.entrySet()) {
-					final Map<String, String> map =
-							main.configOld.get(entryMap.getKey());
+					final Map<String, String> map = this.main.configOld
+							.get(entryMap.getKey());
 					if (map == null) {
-						main.configOld.put(entryMap.getKey(), entryMap
-								.getValue());
+						this.main.configOld.put(entryMap.getKey(),
+								entryMap.getValue());
 					} else {
 						map.putAll(entryMap.getValue());
 					}
 				}
-				main.configNew.clear();
+				this.main.configNew.clear();
 			}
 
 			// search for null keys
 			final Set<String> sectionsToRemove = new HashSet<>();
-			for (final Map.Entry<String, Map<String, String>> entryMap : main.configOld
+			for (final Map.Entry<String, Map<String, String>> entryMap : this.main.configOld
 					.entrySet()) {
 				final Set<String> keysToRemove = new HashSet<>();
-				for (final Map.Entry<String, String> map : entryMap
-						.getValue().entrySet()) {
-					if ((map.getValue() == null)
-							|| map.getValue().isEmpty()) {
+				for (final Map.Entry<String, String> map : entryMap.getValue()
+						.entrySet()) {
+					if ((map.getValue() == null) || map.getValue().isEmpty()) {
 						keysToRemove.add(map.getKey());
 					}
 				}
@@ -61,7 +60,7 @@ final class MainConfigWriter implements Runnable {
 				}
 			}
 			for (final String section : sectionsToRemove) {
-				main.configOld.remove(section);
+				this.main.configOld.remove(section);
 			}
 		}
 		// write some short info at the start
@@ -70,14 +69,15 @@ final class MainConfigWriter implements Runnable {
 		sb.append("# Lines leading with # will be inonred");
 		sb.append(FileSystem.getLineSeparator());
 		sb.append("# Use at own risk according to the documentation in the manual");
-		sb.append(FileSystem.getLineSeparator()); sb.append(FileSystem.getLineSeparator());
-		
-		for (final Map.Entry<String, Map<String, String>> sections : main.configOld
+		sb.append(FileSystem.getLineSeparator());
+		sb.append(FileSystem.getLineSeparator());
+
+		for (final Map.Entry<String, Map<String, String>> sections : this.main.configOld
 				.entrySet()) {
 			sb.append(sections.getKey());
 			sb.append(FileSystem.getLineSeparator());
-			for (final Map.Entry<String, String> entries : sections
-					.getValue().entrySet()) {
+			for (final Map.Entry<String, String> entries : sections.getValue()
+					.entrySet()) {
 				sb.append("\t");
 				sb.append(entries.getKey());
 				sb.append(" = ");
@@ -87,7 +87,7 @@ final class MainConfigWriter implements Runnable {
 		}
 
 		try {
-			out = new java.io.FileOutputStream(main.homeSetting.toFile());
+			out = new java.io.FileOutputStream(this.main.homeSetting.toFile());
 			try {
 				out.write(sb.toString().getBytes());
 				out.flush();
@@ -95,7 +95,7 @@ final class MainConfigWriter implements Runnable {
 				out.close();
 			}
 		} catch (final IOException e) {
-			main.homeSetting.delete();
+			this.main.homeSetting.delete();
 		}
 	}
 }

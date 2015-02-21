@@ -10,7 +10,7 @@ final class TempoChange extends MidiEvent {
 
 	@Override
 	public final String toString() {
-		return delta + " tempo: " + tempo;
+		return this.delta + " tempo: " + this.tempo;
 	}
 
 	@Override

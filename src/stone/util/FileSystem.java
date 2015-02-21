@@ -41,19 +41,19 @@ public abstract class FileSystem {
 		}
 
 		final String getFileSeparator() {
-			return sepFile;
+			return this.sepFile;
 		}
 
 		final String getLineSeparator() {
-			return sepLine;
+			return this.sepLine;
 		}
 
 		final String getSubtype() {
-			return subtype;
+			return this.subtype;
 		}
 
 		final OSType setSubtype(final String substring) {
-			subtype = substring;
+			this.subtype = substring;
 			return this;
 		}
 	}
@@ -101,13 +101,13 @@ public abstract class FileSystem {
 
 	private final static FileSystem createInstance() {
 		switch (FileSystem.type) {
-			case UNIX:
-				// case LINUX:
-				return new UnixFileSystem();
-			case WINDOWS:
-				return new WindowsFileSystem();
-			default:
-				return null;
+		case UNIX:
+			// case LINUX:
+			return new UnixFileSystem();
+		case WINDOWS:
+			return new WindowsFileSystem();
+		default:
+			return null;
 		}
 	}
 
@@ -126,21 +126,19 @@ public abstract class FileSystem {
 	private final static Path getHome() {
 		final String home_ = System.getProperty("user.home");
 		switch (FileSystem.type) {
-			case UNIX:
-				// case LINUX:
-				return Path.getPath(home_
-						.split(FileSystem.OSType.UNIX.sepFile));
-			case WINDOWS:
-				if (FileSystem.type.subtype.equals("Windows Vista")) {
-					// workaround for bug on vista, see
-					// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6519127
-					final String user = System.getProperty("user.name");
-					return Path.getPath((home_.substring(0, 9) + user)
-							.split("\\" + getFileSeparator()));
-				}
-				return Path
-						.getPath(home_.split("\\" + getFileSeparator()));
-			default:
+		case UNIX:
+			// case LINUX:
+			return Path.getPath(home_.split(FileSystem.OSType.UNIX.sepFile));
+		case WINDOWS:
+			if (FileSystem.type.subtype.equals("Windows Vista")) {
+				// workaround for bug on vista, see
+				// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6519127
+				final String user = System.getProperty("user.name");
+				return Path.getPath((home_.substring(0, 9) + user).split("\\"
+						+ getFileSeparator()));
+			}
+			return Path.getPath(home_.split("\\" + getFileSeparator()));
+		default:
 		}
 		return null;
 	}

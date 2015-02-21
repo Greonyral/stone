@@ -25,27 +25,38 @@ class Deserializer_3 extends Deserializer {
 
 	Deserializer_3(final SongDataContainer sdc) {
 		super(sdc);
-		final String entry = idx.getFilename().replace(".idx", "").replace(".zip", "");
-		inFile = idx.resolve("..", entry);
-		tmp = idx.getParent().resolve(entry + ".tmp");
-		final Set<String> zip = io.openZipIn(idx);
-		if (zip == null || !zip.contains(entry))
-			if (tmp.exists()) {
-				tmp.renameTo(inFile);
-				in = io.openIn(inFile.toFile());
-			} else 
-				in = null;
-		else
-			in = io.openIn(inFile.toFile());
-		out = io.openOut(tmp.toFile());
-		io.write(out, VERSION);
+		final String entry = this.idx.getFilename().replace(".idx", "")
+				.replace(".zip", "");
+		this.inFile = this.idx.resolve("..", entry);
+		this.tmp = this.idx.getParent().resolve(entry + ".tmp");
+		final Set<String> zip = this.io.openZipIn(this.idx);
+		if ((zip == null) || !zip.contains(entry)) {
+			if (this.tmp.exists()) {
+				this.tmp.renameTo(this.inFile);
+				this.in = this.io.openIn(this.inFile.toFile());
+			} else {
+				this.in = null;
+			}
+		} else {
+			this.in = this.io.openIn(this.inFile.toFile());
+		}
+		this.out = this.io.openOut(this.tmp.toFile());
+		this.io.write(this.out, VERSION);
+	}
+
+	private final void put(final ByteBuffer bb) {
+		final byte[] bArray = new byte[bb.position()];
+		System.arraycopy(bb.array(), 0, bArray, 0, bArray.length);
+		synchronized (this.out) {
+			this.io.write(this.out, bArray);
+		}
 	}
 
 	private final boolean readUntilSep(final ByteBuffer nameBuffer)
 			throws IOException {
 		nameBuffer.position(0);
 		do {
-			final int read = in.read();
+			final int read = this.in.read();
 			if (read == Deserializer_3.SEPERATOR_3) {
 				return false;
 			}
@@ -53,18 +64,32 @@ class Deserializer_3 extends Deserializer {
 				return true;
 			}
 			nameBuffer.put((byte) read);
-		} while (!in.EOFreached());
+		} while (!this.in.EOFreached());
 		throw new IOException("EOF");
 	}
 
 	@Override
+	protected final void abort_() {
+		this.io.close(this.out);
+		this.io.close(this.in);
+		this.idx.delete();
+		this.tmp.delete();
+	}
+
+	@Override
+	protected final void crawlDone_() {
+	}
+
+	@Override
 	protected void deserialize_() throws IOException {
-		if (in == null)
+		if (this.in == null) {
 			return;
-		io.startProgress("Reading data base of previous run", -1); // init
-		in.registerProgressMonitor(io);
-		io.setProgressTitle("Reading data base of previous run"); // set message
-		in.read(); // version byte
+		}
+		this.io.startProgress("Reading data base of previous run", -1); // init
+		this.in.registerProgressMonitor(this.io);
+		this.io.setProgressTitle("Reading data base of previous run"); // set
+																		// message
+		this.in.read(); // version byte
 
 		final byte[] modField = new byte[Long.SIZE / 8];
 		final byte[] intField = new byte[Integer.SIZE / 8];
@@ -73,8 +98,8 @@ class Deserializer_3 extends Deserializer {
 		final ByteBuffer intBuffer = ByteBuffer.wrap(intField);
 		final ByteBuffer idxBuffer = ByteBuffer.wrap(idxField);
 		final ByteBuffer nameBuffer = ByteBuffer.allocate(600);
-		final DirTree tree = sdc.getDirTree();
-		while (!in.EOFreached()) {
+		final DirTree tree = this.sdc.getDirTree();
+		while (!this.in.EOFreached()) {
 			if (Thread.currentThread().isInterrupted()) {
 				return;
 			}
@@ -82,19 +107,19 @@ class Deserializer_3 extends Deserializer {
 			final String name = new String(nameBuffer.array(), 0,
 					nameBuffer.position());
 
-			in.read(modField);
+			this.in.read(modField);
 			modBuffer.position(0);
 			final long mod;
 			final Map<Integer, String> voices;
 			if (ext) {
 				mod = modBuffer.getLong();
-				in.read(intField);
+				this.in.read(intField);
 				intBuffer.position(0);
 				voices = new HashMap<>(intBuffer.getInt());
 
 				boolean end = false;
 				do {
-					in.read(intField);
+					this.in.read(intField);
 					intBuffer.position(0);
 					final int idx = intBuffer.getInt();
 					end = readUntilSep(nameBuffer);
@@ -111,21 +136,30 @@ class Deserializer_3 extends Deserializer {
 				mod = modBuffer.getLong();
 				voices = new HashMap<>(voicesCount);
 				for (int i = 0; i < voicesCount; i++) {
-					in.read(idxField);
+					this.in.read(idxField);
 					idxBuffer.position(0);
 					final int idx = idxBuffer.getShort();
 					final String desc = new String(
-							in.readTo(Deserializer_3.SEPERATOR_3));
+							this.in.readTo(Deserializer_3.SEPERATOR_3));
 					voices.put(idx, desc);
 				}
 			}
-			final Path p = root.resolve(name.split("/"));
+			final Path p = this.root.resolve(name.split("/"));
 			if (p.exists()) {
 				tree.put(new SongData(p, voices, mod));
 			}
 		}
-		io.close(in);
-		inFile.delete();
+		this.io.close(this.in);
+		this.inFile.delete();
+	}
+
+	@Override
+	protected final void finish_() {
+		this.io.close(this.out);
+		this.idx.delete();
+		this.tmp.renameTo(this.inFile);
+		this.io.compress(this.idx.toFile(), this.inFile.toFile());
+		this.tmp.delete();
 	}
 
 	@Override
@@ -133,7 +167,7 @@ class Deserializer_3 extends Deserializer {
 		ByteBuffer bb = ByteBuffer.allocate(512);
 
 		final Map<Integer, String> voices = song.voices();
-		final byte[] path = song.getPath().relativize(root).getBytes();
+		final byte[] path = song.getPath().relativize(this.root).getBytes();
 
 		bb.put(path);
 		final int pos = bb.position();
@@ -219,34 +253,5 @@ class Deserializer_3 extends Deserializer {
 			bb.put(Deserializer_3.SEPERATOR_EXT_3);
 		}
 		put(bb);
-	}
-
-	private final void put(final ByteBuffer bb) {
-		final byte[] bArray = new byte[bb.position()];
-		System.arraycopy(bb.array(), 0, bArray, 0, bArray.length);
-		synchronized (out) {
-			io.write(out, bArray);
-		}
-	}
-
-	@Override
-	protected final void finish_() {
-		io.close(out);
-		idx.delete();
-		tmp.renameTo(inFile);
-		io.compress(idx.toFile(), inFile.toFile());
-		tmp.delete();
-	}
-
-	@Override
-	protected final void crawlDone_() {
-	}
-
-	@Override
-	protected final void abort_() {
-		io.close(out);
-		io.close(in);
-		idx.delete();
-		tmp.delete();
 	}
 }

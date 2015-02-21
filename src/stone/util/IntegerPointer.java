@@ -7,19 +7,19 @@ final class IntegerPointer {
 		this.i = i;
 	}
 
-	public final boolean isZero() {
-		return i == 0;
-	}
-
-	public final boolean greaterZero() {
-		return i > 0;
-	}
-
 	public final void decrement() {
-		--i;
+		--this.i;
 	}
 
 	public final void decrement(int value) {
-		i -= value;
+		this.i -= value;
+	}
+
+	public final boolean greaterZero() {
+		return this.i > 0;
+	}
+
+	public final boolean isZero() {
+		return this.i == 0;
 	}
 }

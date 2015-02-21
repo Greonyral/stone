@@ -8,22 +8,22 @@ final class Task {
 	final Path source;
 
 	Task(final String s, final Path tmp) {
-		name = s;
-		source = tmp.resolve(s);
+		this.name = s;
+		this.source = tmp.resolve(s);
 	}
 
 	Task(final Task t, final String s) {
-		name = t.name + "/" + s;
-		source = t.source.resolve(s);
+		this.name = t.name + "/" + s;
+		this.source = t.source.resolve(s);
 	}
 
 	@Override
 	public final String toString() {
-		return name + "->" + source;
+		return this.name + "->" + this.source;
 	}
 
 	final void delete() {
-		Path path = source.getParent();
+		Path path = this.source.getParent();
 		while (path.toFile().list().length == 0) {
 			path.delete();
 			path = path.getParent();

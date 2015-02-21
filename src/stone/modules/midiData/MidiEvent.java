@@ -50,6 +50,6 @@ public abstract class MidiEvent {
 	abstract int getChannel();
 
 	final EventType getType() {
-		return type;
+		return this.type;
 	}
 }

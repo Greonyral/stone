@@ -19,21 +19,20 @@ final class TC_Listener<C extends Container, D extends Container, T extends Cont
 	@Override
 	protected final void enter(boolean enter) {
 		if (enter) {
-			state.targetC = targetC;
+			this.state.targetC = this.targetC;
 		} else {
-			state.targetC = null;
+			this.state.targetC = null;
 		}
-		if (enter && (state.dragging != null)) {
-			targetC.getDisplayableComponent().setBackground(
-					enter ? DNDListener.C_DROP
-							: DNDListener.C_INACTIVE_TARGET);
+		if (enter && (this.state.dragging != null)) {
+			this.targetC.getDisplayableComponent().setBackground(
+					enter ? DNDListener.C_DROP : DNDListener.C_INACTIVE_TARGET);
 		} else {
-			targetC.getDisplayableComponent().setBackground(
+			this.targetC.getDisplayableComponent().setBackground(
 					enter ? DNDListener.C_ACTIVE
 							: DNDListener.C_INACTIVE_TARGET);
-			if (state.dragging == null) {
-				for (final DropTarget<C, D, T> t : targetC) {
-					if (t != state.emptyTarget) {
+			if (this.state.dragging == null) {
+				for (final DropTarget<C, D, T> t : this.targetC) {
+					if (t != this.state.emptyTarget) {
 						t.getDisplayableComponent().setBackground(
 								enter ? DNDListener.C_SELECTED0
 										: DNDListener.C_INACTIVE_TARGET);

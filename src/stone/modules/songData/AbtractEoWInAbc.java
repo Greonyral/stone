@@ -25,7 +25,7 @@ abstract class AbtractEoWInAbc {
 	abstract WarnOrErrorInAbc getType();
 
 	String printMessage() {
-		return getType().toString() + " " + line + ":\n" + getDetail()
-				+ "\n" + song + "\n";
+		return getType().toString() + " " + this.line + ":\n" + getDetail()
+				+ "\n" + this.song + "\n";
 	}
 }

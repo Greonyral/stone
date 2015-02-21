@@ -83,8 +83,8 @@ public class GUI implements GUIInterface {
 		public final void mouseReleased(final MouseEvent e) {
 			e.consume();
 			synchronized (GUI.Button.class) {
-				if (pressed == null) {
-					pressed = button;
+				if (GUI.this.pressed == null) {
+					GUI.this.pressed = this.button;
 				}
 				GUI.Button.class.notifyAll();
 			}
@@ -133,15 +133,15 @@ public class GUI implements GUIInterface {
 	public GUI(final GUI gui, final MasterThread master) {
 		this.master = master;
 
-		text = new JTextArea();
-		text.setBackground(Color.YELLOW);
-		text.setEditable(false);
-		text.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
-		wait = gui.wait;
+		this.text = new JTextArea();
+		this.text.setBackground(Color.YELLOW);
+		this.text.setEditable(false);
+		this.text.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
+		this.wait = gui.wait;
 
-		mainFrame = gui.mainFrame;
+		this.mainFrame = gui.mainFrame;
 
-		mainFrame.addWindowListener(new WindowListener() {
+		this.mainFrame.addWindowListener(new WindowListener() {
 
 			@Override
 			public final void windowActivated(final WindowEvent e) {
@@ -187,16 +187,16 @@ public class GUI implements GUIInterface {
 			}
 
 		});
-		mainFrame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+		this.mainFrame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 
-		bar = new JProgressBar();
+		this.bar = new JProgressBar();
 		for (final Button b : Button.values()) {
 			b.getButton().addMouseListener(new ButtonListener(b));
 		}
 		// hide the exceptions for the Progress
 		Thread.setDefaultUncaughtExceptionHandler(master
 				.getUncaughtExceptionHandler());
-		if (!mainFrame.isVisible()) {
+		if (!this.mainFrame.isVisible()) {
 			destroy();
 		}
 	}
@@ -209,27 +209,27 @@ public class GUI implements GUIInterface {
 	 * @throws InterruptedException
 	 */
 	public GUI(final String name) throws InterruptedException {
-		master = null;
-		bar = null;
-		text = null;
+		this.master = null;
+		this.bar = null;
+		this.text = null;
 
 		final java.io.InputStream in = getClass().getResourceAsStream(
 				"Icon.png");
 
-		wait = new JLabel(GUI.waitText);
+		this.wait = new JLabel(GUI.waitText);
 
-		mainFrame = new JFrame();
-		mainFrame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+		this.mainFrame = new JFrame();
+		this.mainFrame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 		// mainFrame.setResizable(false);
-		mainFrame.setTitle(name);
-		mainFrame.setLayout(new BorderLayout());
-		mainFrame.setMinimumSize(new Dimension(360, 100));
-		mainFrame.setMaximumSize(new Dimension(600, 680));
-		mainFrame.add(wait);
+		this.mainFrame.setTitle(name);
+		this.mainFrame.setLayout(new BorderLayout());
+		this.mainFrame.setMinimumSize(new Dimension(360, 100));
+		this.mainFrame.setMaximumSize(new Dimension(600, 680));
+		this.mainFrame.add(this.wait);
 
-		if (in != null)
+		if (in != null) {
 			try {
-				mainFrame.setIconImage(ImageIO.read(in));
+				this.mainFrame.setIconImage(ImageIO.read(in));
 			} catch (final IOException e) {
 				e.printStackTrace();
 			} finally {
@@ -239,9 +239,10 @@ public class GUI implements GUIInterface {
 					e.printStackTrace();
 				}
 			}
+		}
 
-		mainFrame.pack();
-		mainFrame.setVisible(true);
+		this.mainFrame.pack();
+		this.mainFrame.setVisible(true);
 	}
 
 	/**
@@ -257,62 +258,63 @@ public class GUI implements GUIInterface {
 		final JPanel panel = new JPanel();
 		final JPanel buttonBar = new JPanel();
 
-		text.setText(string);
+		this.text.setText(string);
 
 		panel.setLayout(new BorderLayout());
 		if (progress) {
-			bar.setStringPainted(false);
-			panel.add(bar, BorderLayout.NORTH);
+			this.bar.setStringPainted(false);
+			panel.add(this.bar, BorderLayout.NORTH);
 		}
-		panel.add(text);
+		panel.add(this.text);
 		panel.add(buttonBar, BorderLayout.SOUTH);
 
 		buttonBar.setLayout(new BorderLayout());
 		buttonBar.add(Button.YES.getButton(), BorderLayout.EAST);
 		buttonBar.add(Button.NO.getButton(), BorderLayout.WEST);
 
-		mainFrame.getContentPane().removeAll();
-		mainFrame.add(panel);
+		this.mainFrame.getContentPane().removeAll();
+		this.mainFrame.add(panel);
 
 		waitForButton();
 
-		return pressed;
+		return this.pressed;
 	}
 
 	/** */
 	@Override
 	public final void destroy() {
 		synchronized (this) {
-			if (destroyed) {
+			if (this.destroyed) {
 				return;
 			}
-			destroyed = true;
+			this.destroyed = true;
 		}
 		try {
-			master.interruptAndWait();
+			this.master.interruptAndWait();
 		} catch (final InterruptedException e) {
 			e.printStackTrace();
 		}
-		mainFrame.setVisible(false);
-		mainFrame.dispose();
+		this.mainFrame.setVisible(false);
+		this.mainFrame.dispose();
 	}
 
 	/** */
 	@Override
 	public final void endProgress() {
-		bar.setVisible(false);
-		if (Thread.currentThread() == master) {
-			mainFrame.remove(bar);
-			mainFrame.remove(wait); // may by added to north by another Thread
-									// by calling this method
-			wait.setText(GUI.waitText);
-			mainFrame.add(wait);
+		this.bar.setVisible(false);
+		if (Thread.currentThread() == this.master) {
+			this.mainFrame.remove(this.bar);
+			this.mainFrame.remove(this.wait); // may by added to north by
+												// another Thread
+			// by calling this method
+			this.wait.setText(GUI.waitText);
+			this.mainFrame.add(this.wait);
 			revalidate(true, false);
 		} else {
-			wait.setText("");
-			mainFrame.getContentPane().remove(
-					mainFrame.getContentPane().getComponentCount() - 1);
-			mainFrame.add(wait, BorderLayout.NORTH);
+			this.wait.setText("");
+			this.mainFrame.getContentPane().remove(
+					this.mainFrame.getContentPane().getComponentCount() - 1);
+			this.mainFrame.add(this.wait, BorderLayout.NORTH);
 			revalidate(false, false);
 		}
 	}
@@ -370,11 +372,11 @@ public class GUI implements GUIInterface {
 			o.displayWithGUI(panelPath, this);
 		}
 
-		wait.setText("Settings");
-		mainFrame.getContentPane().removeAll();
-		mainFrame.add(wait, BorderLayout.NORTH);
-		mainFrame.add(mainPanel);
-		mainFrame.add(Button.OK.button, BorderLayout.SOUTH);
+		this.wait.setText("Settings");
+		this.mainFrame.getContentPane().removeAll();
+		this.mainFrame.add(this.wait, BorderLayout.NORTH);
+		this.mainFrame.add(mainPanel);
+		this.mainFrame.add(Button.OK.button, BorderLayout.SOUTH);
 
 		waitForButton();
 
@@ -396,7 +398,7 @@ public class GUI implements GUIInterface {
 			final File initialDirectory) {
 		final JFileChooser chooser;
 		final JLabel title = new JLabel(titleMsg);
-		mainFrame.isAlwaysOnTop();
+		this.mainFrame.isAlwaysOnTop();
 		chooser = new JFileChooser(initialDirectory);
 		chooser.setDialogTitle(title.getText());
 		chooser.setDialogType(JFileChooser.OPEN_DIALOG);
@@ -408,30 +410,30 @@ public class GUI implements GUIInterface {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				synchronized (Button.class) {
-					if (pressed != null) {
+					if (GUI.this.pressed != null) {
 						return;
 					}
 					if (e.getActionCommand().equals("ApproveSelection")) {
-						pressed = Button.YES;
+						GUI.this.pressed = Button.YES;
 					} else {
-						pressed = Button.NO;
+						GUI.this.pressed = Button.NO;
 					}
 					Button.class.notifyAll();
 				}
 			}
 		});
 
-		final boolean aot = mainFrame.isAlwaysOnTop();
-		mainFrame.setAlwaysOnTop(false);
-		mainFrame.getContentPane().removeAll();
-		mainFrame.add(chooser);
-		mainFrame.add(title, BorderLayout.NORTH);
+		final boolean aot = this.mainFrame.isAlwaysOnTop();
+		this.mainFrame.setAlwaysOnTop(false);
+		this.mainFrame.getContentPane().removeAll();
+		this.mainFrame.add(chooser);
+		this.mainFrame.add(title, BorderLayout.NORTH);
 
 		waitForButton();
 
-		mainFrame.setAlwaysOnTop(aot);
+		this.mainFrame.setAlwaysOnTop(aot);
 
-		if (pressed != Button.YES) {
+		if (this.pressed != Button.YES) {
 			return null;
 		}
 		final File file = chooser.getSelectedFile();
@@ -446,32 +448,32 @@ public class GUI implements GUIInterface {
 	 */
 	@Override
 	public final Button getPressedButton() {
-		return pressed;
+		return this.pressed;
 	}
 
 	/** */
 	@Override
 	public final Component getProgressBar() {
-		return bar;
+		return this.bar;
 	}
 
 	/** */
 	@Override
 	public final void initProgress() {
-		bar.setStringPainted(false);
-		bar.setIndeterminate(true);
-		bar.setVisible(true);
-		if (Thread.currentThread() != master) {
-			mainFrame.remove(wait);
+		this.bar.setStringPainted(false);
+		this.bar.setIndeterminate(true);
+		this.bar.setVisible(true);
+		if (Thread.currentThread() != this.master) {
+			this.mainFrame.remove(this.wait);
 			final JPanel panel = new JPanel();
-			panel.add(wait, BorderLayout.NORTH);
-			panel.add(bar);
-			mainFrame.add(panel, BorderLayout.NORTH);
+			panel.add(this.wait, BorderLayout.NORTH);
+			panel.add(this.bar);
+			this.mainFrame.add(panel, BorderLayout.NORTH);
 			revalidate(false, false);
 		} else {
-			mainFrame.getContentPane().removeAll();
-			mainFrame.add(wait, BorderLayout.NORTH);
-			mainFrame.add(bar);
+			this.mainFrame.getContentPane().removeAll();
+			this.mainFrame.add(this.wait, BorderLayout.NORTH);
+			this.mainFrame.add(this.bar);
 			revalidate(true, false);
 		}
 
@@ -480,13 +482,13 @@ public class GUI implements GUIInterface {
 	/** */
 	@Override
 	public final void printErrorMessage(final String errorMessage) {
-		final Color oldBG = text.getBackground();
-		final Color oldFG = text.getForeground();
-		text.setBackground(Color.DARK_GRAY);
-		text.setForeground(Color.WHITE);
+		final Color oldBG = this.text.getBackground();
+		final Color oldFG = this.text.getForeground();
+		this.text.setBackground(Color.DARK_GRAY);
+		this.text.setForeground(Color.WHITE);
 		printMessageFunc(null, errorMessage, true);
-		text.setBackground(oldBG);
-		text.setForeground(oldFG);
+		this.text.setBackground(oldBG);
+		this.text.setForeground(oldFG);
 	}
 
 	/** */
@@ -500,30 +502,31 @@ public class GUI implements GUIInterface {
 	@Override
 	public final void runPlugin(final GUIPlugin plugin) {
 		final JPanel panel = new JPanel();
-		mainFrame.getContentPane().removeAll();
-		mainFrame.add(panel);
+		this.mainFrame.getContentPane().removeAll();
+		this.mainFrame.add(panel);
 		if (plugin.display(panel, this)) {
 			plugin.endDisplay();
-			mainFrame.getContentPane().removeAll();
-			mainFrame.add(wait);
-			wait.setText(waitText);
+			this.mainFrame.getContentPane().removeAll();
+			this.mainFrame.add(this.wait);
+			this.wait.setText(waitText);
 			revalidate(true, false);
 			return;
 		}
-		mainFrame.add(wait, BorderLayout.NORTH);
-		wait.setText(plugin.getTitle());
+		this.mainFrame.add(this.wait, BorderLayout.NORTH);
+		this.wait.setText(plugin.getTitle());
 		waitForButton();
 	}
 
 	/** */
 	@Override
 	public final List<String> selectModules(final List<String> modules) {
-		mainFrame.getContentPane().removeAll();
-		text.setText("Please select the actions you want to use. Selected actions\n"
-				+ "may update themselves if outdated. In this case reselect them\n"
-				+ "after the tool restarted.");
-		text.setBackground(mainFrame.getBackground());
-		text.setEditable(false);
+		this.mainFrame.getContentPane().removeAll();
+		this.text
+				.setText("Please select the actions you want to use. Selected actions\n"
+						+ "may update themselves if outdated. In this case reselect them\n"
+						+ "after the tool restarted.");
+		this.text.setBackground(this.mainFrame.getBackground());
+		this.text.setEditable(false);
 
 		final List<String> selection = new ArrayList<>();
 		final JPanel panel = new JPanel();
@@ -539,19 +542,19 @@ public class GUI implements GUIInterface {
 
 			@Override
 			public void stateChanged(final ChangeEvent e) {
-				if (!selection.remove(m)) {
-					selection.add(m);
+				if (!selection.remove(this.m)) {
+					selection.add(this.m);
 				}
 			}
 		}
 
-		mainFrame.add(text, BorderLayout.NORTH);
-		mainFrame.add(Button.OK.getButton(), BorderLayout.SOUTH);
-		mainFrame.add(panel);
+		this.mainFrame.add(this.text, BorderLayout.NORTH);
+		this.mainFrame.add(Button.OK.getButton(), BorderLayout.SOUTH);
+		this.mainFrame.add(panel);
 		for (final String m : modules) {
 			final JCheckBox box;
-			final ModuleInfo info = master.getModuleInfo(m);
-		
+			final ModuleInfo info = this.master.getModuleInfo(m);
+
 			box = new JCheckBox(info.name());
 			box.setToolTipText(info.tooltip());
 			box.addChangeListener(new BoxListener(m));
@@ -563,7 +566,7 @@ public class GUI implements GUIInterface {
 		panel.add(box);
 		waitForButton();
 
-		text.setBackground(Color.YELLOW);
+		this.text.setBackground(Color.YELLOW);
 
 		return selection;
 	}
@@ -571,77 +574,77 @@ public class GUI implements GUIInterface {
 	/** */
 	@Override
 	public final void setProgress(int pos) {
-		bar.setValue(pos);
+		this.bar.setValue(pos);
 	}
 
 	/** */
 	@Override
 	public final void setProgressSize(int size) {
 		if (size <= 0) {
-			bar.setStringPainted(false);
-			bar.setIndeterminate(true);
-			bar.setMaximum(1);
+			this.bar.setStringPainted(false);
+			this.bar.setIndeterminate(true);
+			this.bar.setMaximum(1);
 		} else {
-			bar.setStringPainted(true);
-			bar.setIndeterminate(false);
-			bar.setMaximum(size);
+			this.bar.setStringPainted(true);
+			this.bar.setIndeterminate(false);
+			this.bar.setMaximum(size);
 		}
-		bar.setValue(0);
+		this.bar.setValue(0);
 	}
 
 	/** */
 	@Override
 	public final void setProgressSize(int size, final String action) {
-		wait.setText(action);
-		bar.setValue(0);
+		this.wait.setText(action);
+		this.bar.setValue(0);
 		if (size <= 0) {
-			bar.setStringPainted(false);
-			bar.setIndeterminate(true);
-			bar.setMaximum(1);
+			this.bar.setStringPainted(false);
+			this.bar.setIndeterminate(true);
+			this.bar.setMaximum(1);
 		} else {
-			bar.setStringPainted(true);
-			bar.setIndeterminate(false);
-			bar.setMaximum(size);
+			this.bar.setStringPainted(true);
+			this.bar.setIndeterminate(false);
+			this.bar.setMaximum(size);
 		}
 	}
 
 	/** */
 	@Override
 	public final void setProgressTitle(final String action) {
-		wait.setText(action);
+		this.wait.setText(action);
 	}
 
 	private final void printMessageFunc(final String title,
 			final String message, boolean toFront) {
-		if (Thread.currentThread() == master) {
+		if (Thread.currentThread() == this.master) {
 			synchronized (Button.class) {
-				pressed = Button.ABORT;
+				this.pressed = Button.ABORT;
 				Button.class.notifyAll();
 			}
 		}
-		mainFrame.getContentPane().removeAll();
-		text.setEditable(false);
-		text.setText(message);
-		final int cols = text.getColumns() + 1;
+		this.mainFrame.getContentPane().removeAll();
+		this.text.setEditable(false);
+		this.text.setText(message);
+		final int cols = this.text.getColumns() + 1;
 		final JPanel panel = new JPanel();
 		final JScrollPane scrollPane = new JScrollPane(panel);
 		panel.setLayout(new BorderLayout());
-		panel.add(text);
+		panel.add(this.text);
 		scrollPane.setPreferredSize(new Dimension(600, cols < 20 ? cols * 8
 				: 800));
-		mainFrame.add(scrollPane);
+		this.mainFrame.add(scrollPane);
 		if (toFront) {
 			if (title != null) {
-				wait.setText(title);
+				this.wait.setText(title);
 			} else {
-				wait.setText("");
+				this.wait.setText("");
 			}
-			panel.add(wait, BorderLayout.NORTH);
+			panel.add(this.wait, BorderLayout.NORTH);
 			panel.add(Button.OK.getButton(), BorderLayout.SOUTH);
-			mainFrame.pack();
+			this.mainFrame.pack();
 			waitForButton();
 		} else {
-			mainFrame.pack();
+			this.mainFrame.pack();
 			synchronized (this) {
 				revalidate(true, false);
 			}
@@ -651,60 +654,60 @@ public class GUI implements GUIInterface {
 	private final void waitForButton() {
 		try {
 			synchronized (Button.class) {
-				if (master.isInterrupted()) {
+				if (this.master.isInterrupted()) {
 					return;
 				}
 				revalidate(true, true);
-				pressed = null;
-				if (Thread.currentThread() != master) {
-					master.interrupt();
+				this.pressed = null;
+				if (Thread.currentThread() != this.master) {
+					this.master.interrupt();
 				}
 				Button.class.wait();
-				if (master.isInterrupted()) {
+				if (this.master.isInterrupted()) {
 					destroy();
 				}
 			}
 			revalidate(true, false);
 		} catch (final InterruptedException e) {
-			master.interrupt();
+			this.master.interrupt();
 		}
-		if (pressed == Button.ABORT) {
+		if (this.pressed == Button.ABORT) {
 			destroy();
 		}
-		mainFrame.getContentPane().removeAll();
-		mainFrame.add(wait);
-		wait.setText(GUI.waitText);
+		this.mainFrame.getContentPane().removeAll();
+		this.mainFrame.add(this.wait);
+		this.wait.setText(GUI.waitText);
 		revalidate(true, false);
 	}
 
 	final Dimension getFrameSize() {
-		return mainFrame.getSize();
+		return this.mainFrame.getSize();
+	}
+
+	final Image getIcon() {
+		return this.mainFrame.getIconImage();
 	}
 
 	final void revalidate(boolean pack, boolean toFront) {
-		if (master.isInterrupted()) {
+		if (this.master.isInterrupted()) {
 			return;
 		}
 		if (pack) {
-			mainFrame.pack();
+			this.mainFrame.pack();
 		}
-		mainFrame.revalidate();
-		mainFrame.repaint();
+		this.mainFrame.revalidate();
+		this.mainFrame.repaint();
 		if (toFront) {
-			mainFrame.toFront();
+			this.mainFrame.toFront();
 		}
 	}
 
 	final void setFrameSize(final Dimension d) {
-		mainFrame.setSize(d);
+		this.mainFrame.setSize(d);
 	}
 
 	final void setResizable(boolean b) {
-		mainFrame.setResizable(b);
-	}
-
-	final Image getIcon() {
-		return mainFrame.getIconImage();
+		this.mainFrame.setResizable(b);
 	}
 
 }

@@ -38,16 +38,16 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 	 */
 	protected FileEditorPlugin(final FileEditor fileEditor, final Path root) {
 		this.fileEditor = fileEditor;
-		currentDir = base = root;
-		selection = new HashSet<>();
-		pathLabel = new JLabel();
+		this.currentDir = this.base = root;
+		this.selection = new HashSet<>();
+		this.pathLabel = new JLabel();
 	}
 
 	/**
 	 * @return the selection
 	 */
 	public final Set<Path> getSelection() {
-		return selection;
+		return this.selection;
 	}
 
 	/** */
@@ -64,10 +64,9 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 		panelSelection.setLayout(new GridLayout(0, 1));
 		panel.setLayout(new BorderLayout());
 		panel.add(scroll);
-		panel.add(pathLabel, BorderLayout.NORTH);
+		panel.add(this.pathLabel, BorderLayout.NORTH);
 		panel.add(panelButton, BorderLayout.SOUTH);
-		panelButton.add(GUIInterface.Button.OK.getButton(),
-				BorderLayout.EAST);
+		panelButton.add(GUIInterface.Button.OK.getButton(), BorderLayout.EAST);
 		panelButton.add(GUIInterface.Button.ABORT.getButton(),
 				BorderLayout.WEST);
 		displayDir(panelSelection, scroll);
@@ -81,24 +80,23 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 	}
 
 	final void displayDir(final JPanel panel, final JScrollPane scroll) {
-		final String[] dirs = fileEditor.getDirs(currentDir);
-		final String[] songs = fileEditor.getFiles(currentDir);
-		if (base == currentDir) {
-			pathLabel.setText("/");
+		final String[] dirs = this.fileEditor.getDirs(this.currentDir);
+		final String[] songs = this.fileEditor.getFiles(this.currentDir);
+		if (this.base == this.currentDir) {
+			this.pathLabel.setText("/");
 		} else {
-			pathLabel.setText(currentDir.relativize(base));
+			this.pathLabel.setText(this.currentDir.relativize(this.base));
 		}
 		for (final String dir : dirs) {
 			final JPanel contentPanel = new JPanel();
-			final Path p = currentDir.resolve(dir);
-			final JCheckBox box =
-					p == currentDir.getParent() ? null : new JCheckBox();
-			final JLabel label =
-					new JLabel(box == null ? "  ../  [" + p.getFilename()
-							+ "]" : dir);
+			final Path p = this.currentDir.resolve(dir);
+			final JCheckBox box = p == this.currentDir.getParent() ? null
+					: new JCheckBox();
+			final JLabel label = new JLabel(box == null ? "  ../  ["
+					+ p.getFilename() + "]" : dir);
 
 			if (box != null) {
-				if (selection.contains(p)) {
+				if (this.selection.contains(p)) {
 					box.setSelected(true);
 				}
 				box.addChangeListener(new ChangeListener() {
@@ -106,9 +104,9 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 					@Override
 					public void stateChanged(ChangeEvent arg0) {
 						if (box.isSelected()) {
-							selection.add(p);
+							FileEditorPlugin.this.selection.add(p);
 						} else {
-							selection.remove(p);
+							FileEditorPlugin.this.selection.remove(p);
 						}
 					}
 
@@ -120,8 +118,8 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 				contentPanel.add(box, BorderLayout.WEST);
 			}
 
-			contentPanel.addMouseListener(new DirMouseListener(this, dirs,
-					p, songs, panel, scroll));
+			contentPanel.addMouseListener(new DirMouseListener(this, dirs, p,
+					songs, panel, scroll));
 			label.setForeground(Color.ORANGE);
 			panel.add(contentPanel);
 		}
@@ -130,9 +128,9 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 			final JLabel label = new JLabel(song);
 			final JPanel contentPanel = new JPanel();
 			final JCheckBox box = new JCheckBox();
-			final Path p = currentDir.resolve(song);
+			final Path p = this.currentDir.resolve(song);
 
-			if (selection.contains(p)) {
+			if (this.selection.contains(p)) {
 				box.setSelected(true);
 			}
 			box.addChangeListener(new ChangeListener() {
@@ -140,9 +138,9 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 				@Override
 				public void stateChanged(ChangeEvent arg0) {
 					if (box.isSelected()) {
-						selection.add(p);
+						FileEditorPlugin.this.selection.add(p);
 					} else {
-						selection.remove(p);
+						FileEditorPlugin.this.selection.remove(p);
 					}
 				}
 

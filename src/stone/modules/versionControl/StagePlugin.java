@@ -14,25 +14,18 @@ import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SpringLayout;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
+
 import stone.MasterThread;
 import stone.io.GUI;
 import stone.io.GUIPlugin;
 import stone.util.Path;
 
 public class StagePlugin extends GUIPlugin {
-
-	private final List<Integer> offsetLeft = new LinkedList<>();
-	private final List<Integer> offsetRight = new LinkedList<>();
-
-	private final TreeSet<ChangedFile> unstagedFiles = new TreeSet<>();
-	private final TreeSet<ChangedFile> stagedFiles = new TreeSet<>();
-
-	private final JEditorPane left = new JEditorPane();
-	private final JEditorPane right = new JEditorPane();
 
 	class ButtonMouseListener implements MouseListener {
 
@@ -48,42 +41,12 @@ public class StagePlugin extends GUIPlugin {
 		}
 
 		@Override
-		public void mousePressed(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mouseReleased(final MouseEvent e) {
-			e.consume();
-			StagePlugin.this.terminate(ok);
-		}
-
-		@Override
 		public void mouseEntered(final MouseEvent e) {
 			e.consume();
 		}
 
 		@Override
 		public void mouseExited(final MouseEvent e) {
-			e.consume();
-		}
-
-	}
-
-	class StageMouseListener implements MouseListener {
-
-		final int h;
-		final List<Integer> offset;
-		final JEditorPane c;
-
-		StageMouseListener(final JEditorPane c, final List<Integer> offset) {
-			h = c.getFontMetrics(c.getFont()).getHeight() + 2;
-			this.c = c;
-			this.offset = offset;
-		}
-
-		@Override
-		public void mouseClicked(final MouseEvent e) {
 			e.consume();
 		}
 
@@ -95,154 +58,7 @@ public class StagePlugin extends GUIPlugin {
 		@Override
 		public void mouseReleased(final MouseEvent e) {
 			e.consume();
-			final int y = e.getPoint().y;
-			final int offset = y / h;
-			if (offset >= this.offset.size()) {
-				c.setSelectionStart(y);
-				c.setSelectionEnd(y);
-				c.revalidate();
-				return;
-			}
-			int start = getStart(offset);
-			int end = start + this.offset.get(offset);
-			if (c.getSelectionEnd() != c.getSelectionStart()) {
-				// normalize to start and end of line
-				start = Math.min(c.getSelectionStart(), start);
-				int startL = 0, i = 0;
-				while (true) {
-					int s = getStart(i);
-					if (s > start) {
-						--i;
-						break;
-					}
-					startL = s;
-					++i;
-				}
-				start = startL;
-				int endL = c.getSelectionEnd();
-				if (endL > end) {
-					while (i < this.offset.size()) {
-						int s = getStart(i) + this.offset.get(i);
-						endL = s;
-						if (s > c.getSelectionEnd())
-							break;
-						++i;
-					}
-					end = endL;
-				}
-			}
-			c.setSelectionStart(start + 1);
-			c.setSelectionEnd(end + 1);
-			c.revalidate();
-		}
-
-		private int getStart(int line) {
-			int offset = 0;
-			while (--line >= 0) {
-				offset += this.offset.get(line) + 1;
-			}
-			return offset;
-		}
-
-		@Override
-		public void mouseEntered(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mouseExited(final MouseEvent e) {
-			e.consume();
-		}
-	}
-
-	class StageActionAddListener implements MouseListener {
-
-		@Override
-		public void mouseClicked(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mousePressed(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mouseReleased(final MouseEvent e) {
-			e.consume();
-			final String s = left.getSelectedText();
-			if (s == null) {
-				return;
-			}
-			final String[] files = s.split("[M+-] ");
-			for (int i = 1; i < files.length; i++) {
-				final char c = s.charAt(files[0].length());
-				if (i < files.length - 1) {
-					files[i] = files[i].substring(0, files[i].length() - 1);
-					files[0] += " ";
-				}
-				final ChangedFile f = new ChangedFile(c, files[i]);
-				stagedFiles.add(f);
-				unstagedFiles.remove(f);
-				files[0] += c + " " + files[i];
-			}
-			left.setSelectionStart(0);
-			left.setSelectionEnd(0);
-			updateLeftAndRight();
-		}
-
-		@Override
-		public void mouseEntered(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mouseExited(final MouseEvent e) {
-			e.consume();
-		}
-
-	}
-
-	class StageActionRemoveListener implements MouseListener {
-
-		@Override
-		public void mouseClicked(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mousePressed(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mouseReleased(final MouseEvent e) {
-			e.consume();
-			final String s = right.getSelectedText();
-			if (s == null) {
-				return;
-			}
-			final String[] files = s.split("[M+-] ");
-			for (int i = 1; i < files.length; i++) {
-				final char c = s.charAt(files[0].length());
-				final ChangedFile f = new ChangedFile(c, files[i]);
-				unstagedFiles.add(f);
-				stagedFiles.remove(f);
-				files[0] += c + " " + files[i];
-			}
-			right.setSelectionStart(0);
-			right.setSelectionEnd(0);
-			updateLeftAndRight();
-		}
-
-		@Override
-		public void mouseEntered(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mouseExited(final MouseEvent e) {
-			e.consume();
+			terminate(this.ok);
 		}
 
 	}
@@ -259,27 +75,31 @@ public class StagePlugin extends GUIPlugin {
 			switch (c) {
 			case '+':
 				this.changeType = "<font color=green>+</font>";
-				removed = false;
+				this.removed = false;
 				break;
 			case 'M':
 				this.changeType = "M";
-				removed = false;
+				this.removed = false;
 				break;
 			case '-':
 				this.changeType = "<font color=red>-</font>";
-				removed = true;
+				this.removed = true;
 				break;
 			default:
 				this.changeType = null;
-				removed = false;
+				this.removed = false;
 			}
-			p = repoRoot.resolve(s.split("/"));
+			this.p = StagePlugin.this.repoRoot.resolve(s.split("/"));
 			this.s = s;
 		}
 
 		@Override
 		public int compareTo(final ChangedFile o) {
-			return p.compareTo(o.p);
+			return this.p.compareTo(o.p);
+		}
+
+		public boolean equals(final ChangedFile o) {
+			return this.p.equals(o);
 		}
 
 		@Override
@@ -289,25 +109,212 @@ public class StagePlugin extends GUIPlugin {
 			}
 			return false;
 		}
-		
+
 		@Override
 		public int hashCode() {
-			return p.hashCode();
-		}
-
-		public boolean equals(final ChangedFile o) {
-			return p.equals(o);
-		}
-
-		public String toString() {
-			return changeType + " " + s;
+			return this.p.hashCode();
 		}
 
 		public Integer length() {
-			return 2 + s.length();
+			return 2 + this.s.length();
+		}
+
+		@Override
+		public String toString() {
+			return this.changeType + " " + this.s;
 		}
 
 	}
+
+	class StageActionAddListener implements MouseListener {
+
+		@Override
+		public void mouseClicked(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseEntered(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseExited(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mousePressed(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseReleased(final MouseEvent e) {
+			e.consume();
+			final String s = StagePlugin.this.left.getSelectedText();
+			if (s == null) {
+				return;
+			}
+			final String[] files = s.split("[M+-] ");
+			for (int i = 1; i < files.length; i++) {
+				final char c = s.charAt(files[0].length());
+				if (i < (files.length - 1)) {
+					files[i] = files[i].substring(0, files[i].length() - 1);
+					files[0] += " ";
+				}
+				final ChangedFile f = new ChangedFile(c, files[i]);
+				StagePlugin.this.stagedFiles.add(f);
+				StagePlugin.this.unstagedFiles.remove(f);
+				files[0] += c + " " + files[i];
+			}
+			StagePlugin.this.left.setSelectionStart(0);
+			StagePlugin.this.left.setSelectionEnd(0);
+			updateLeftAndRight();
+		}
+
+	}
+
+	class StageActionRemoveListener implements MouseListener {
+
+		@Override
+		public void mouseClicked(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseEntered(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseExited(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mousePressed(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseReleased(final MouseEvent e) {
+			e.consume();
+			final String s = StagePlugin.this.right.getSelectedText();
+			if (s == null) {
+				return;
+			}
+			final String[] files = s.split("[M+-] ");
+			for (int i = 1; i < files.length; i++) {
+				final char c = s.charAt(files[0].length());
+				final ChangedFile f = new ChangedFile(c, files[i]);
+				StagePlugin.this.unstagedFiles.add(f);
+				StagePlugin.this.stagedFiles.remove(f);
+				files[0] += c + " " + files[i];
+			}
+			StagePlugin.this.right.setSelectionStart(0);
+			StagePlugin.this.right.setSelectionEnd(0);
+			updateLeftAndRight();
+		}
+
+	}
+
+	class StageMouseListener implements MouseListener {
+
+		final int h;
+		final List<Integer> offset;
+		final JEditorPane c;
+
+		StageMouseListener(final JEditorPane c, final List<Integer> offset) {
+			this.h = c.getFontMetrics(c.getFont()).getHeight() + 2;
+			this.c = c;
+			this.offset = offset;
+		}
+
+		@Override
+		public void mouseClicked(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseEntered(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseExited(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mousePressed(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseReleased(final MouseEvent e) {
+			e.consume();
+			final int y = e.getPoint().y;
+			final int offset = y / this.h;
+			if (offset >= this.offset.size()) {
+				this.c.setSelectionStart(y);
+				this.c.setSelectionEnd(y);
+				this.c.revalidate();
+				return;
+			}
+			int start = getStart(offset);
+			int end = start + this.offset.get(offset);
+			if (this.c.getSelectionEnd() != this.c.getSelectionStart()) {
+				// normalize to start and end of line
+				start = Math.min(this.c.getSelectionStart(), start);
+				int startL = 0, i = 0;
+				while (true) {
+					final int s = getStart(i);
+					if (s > start) {
+						--i;
+						break;
+					}
+					startL = s;
+					++i;
+				}
+				start = startL;
+				int endL = this.c.getSelectionEnd();
+				if (endL > end) {
+					while (i < this.offset.size()) {
+						final int s = getStart(i) + this.offset.get(i);
+						endL = s;
+						if (s > this.c.getSelectionEnd()) {
+							break;
+						}
+						++i;
+					}
+					end = endL;
+				}
+			}
+			this.c.setSelectionStart(start + 1);
+			this.c.setSelectionEnd(end + 1);
+			this.c.revalidate();
+		}
+
+		private int getStart(int line) {
+			int offset = 0;
+			while (--line >= 0) {
+				offset += this.offset.get(line) + 1;
+			}
+			return offset;
+		}
+	}
+
+	private final List<Integer> offsetLeft = new LinkedList<>();
+
+	private final List<Integer> offsetRight = new LinkedList<>();
+
+	private final TreeSet<ChangedFile> unstagedFiles = new TreeSet<>();
+
+	private final TreeSet<ChangedFile> stagedFiles = new TreeSet<>();
+
+	private final JEditorPane left = new JEditorPane();
+
+	private final JEditorPane right = new JEditorPane();
 
 	private final MasterThread master;
 	private final Status status;
@@ -330,17 +337,76 @@ public class StagePlugin extends GUIPlugin {
 		this.status = status;
 		this.repoRoot = repoRoot;
 		this.master = master;
-		left.setEditable(false);
-		right.setEditable(false);
+		this.left.setEditable(false);
+		this.right.setEditable(false);
 	}
 
-	final void terminate(boolean ok) {
-		if (!ok) {
-			master.interrupt();
+	public boolean doCommit(final Git gitSession) {
+		try {
+			if (this.master.isInterrupted()) {
+				return false;
+			}
+			if (this.commit) {
+				for (final ChangedFile f : this.unstagedFiles) {
+					if (this.untracked.remove(f.s) || this.missing.remove(f.s)
+							|| this.modified.remove(f.s)) {
+						continue;
+					} else {
+						// TODO unstage
+					}
+				}
+				for (final ChangedFile f : this.stagedFiles) {
+					if (this.untracked.remove(f.s) || this.missing.remove(f.s)
+							|| this.modified.remove(f.s)) {
+						if (f.removed) {
+							gitSession.rm().addFilepattern(f.s).call();
+						} else {
+							gitSession.add().addFilepattern(f.s).call();
+						}
+					}
+				}
+			}
+			return this.commit && !this.stagedFiles.isEmpty();
+		} catch (final Exception e) {
+			return false;
 		}
-		synchronized (GUI.Button.class) {
-			GUI.Button.class.notifyAll();
+	}
+
+	private void updateLeftAndRight() {
+		final StringBuilder sb = new StringBuilder();
+		this.offsetLeft.clear();
+		this.offsetRight.clear();
+
+		for (final ChangedFile f : this.unstagedFiles) {
+			if (sb.length() == 0) {
+				sb.append("<html><font face=\"Courier New\">");
+			} else {
+				sb.append("<br/>");
+			}
+			this.offsetLeft.add(f.length());
+			sb.append(f.toString());
 		}
+		sb.append("</font></html>");
+		this.left.setContentType("text/html");
+		this.left.setText(sb.toString());
+		sb.setLength(0);
+
+		for (final ChangedFile f : this.stagedFiles) {
+			if (sb.length() == 0) {
+				sb.append("<html><font face=\"Courier New\">");
+			} else {
+				sb.append("<br/>");
+			}
+			this.offsetRight.add(f.length());
+			sb.append(f.toString());
+		}
+		sb.append("</font></html>");
+		this.right.setContentType("text/html");
+		this.right.setText(sb.toString());
+		sb.setLength(0);
+
+		this.left.revalidate();
+		this.right.revalidate();
 	}
 
 	@Override
@@ -351,8 +417,8 @@ public class StagePlugin extends GUIPlugin {
 		final JButton buttonRemove = new JButton(" <- ");
 		final SpringLayout layout = new SpringLayout();
 
-		final JScrollPane leftScroll = new JScrollPane(left);
-		final JScrollPane rightScroll = new JScrollPane(right);
+		final JScrollPane leftScroll = new JScrollPane(this.left);
+		final JScrollPane rightScroll = new JScrollPane(this.right);
 
 		final int height = 600;
 		final int width = 800;
@@ -361,14 +427,14 @@ public class StagePlugin extends GUIPlugin {
 		panel.setLayout(layout);
 
 		leftScroll
-				.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+				.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		leftScroll
-				.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+				.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
 
 		rightScroll
-				.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+				.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		rightScroll
-				.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+				.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
 
 		layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, buttonAdd,
 				width / 2, SpringLayout.WEST, panel);
@@ -384,7 +450,7 @@ public class StagePlugin extends GUIPlugin {
 		layout.putConstraint(SpringLayout.EAST, buttonRemove, 0,
 				SpringLayout.EAST, buttonAdd);
 
-		if (commit) {
+		if (this.commit) {
 			panel.add(buttonRemove);
 			panel.add(buttonAdd);
 		}
@@ -414,12 +480,12 @@ public class StagePlugin extends GUIPlugin {
 		layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, okButton,
 				width / 2, SpringLayout.WEST, panel);
 		layout.putConstraint(SpringLayout.VERTICAL_CENTER, okButton,
-				height / 2 + 70, SpringLayout.NORTH, panel);
+				(height / 2) + 70, SpringLayout.NORTH, panel);
 		panel.add(okButton);
 		layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, abortButton,
 				width / 2, SpringLayout.WEST, panel);
 		layout.putConstraint(SpringLayout.VERTICAL_CENTER, abortButton,
-				height / 2 - 70, SpringLayout.NORTH, panel);
+				(height / 2) - 70, SpringLayout.NORTH, panel);
 		panel.add(abortButton);
 
 		panel.add(new JLabel(
@@ -429,42 +495,45 @@ public class StagePlugin extends GUIPlugin {
 		panel.setSize(panel.getMaximumSize());
 
 		// do the logic
-		left.setToolTipText("unstaged files - differences between current state and last commit. Next commit unaffected by these files");
-		right.setToolTipText("staged files - will be part of next commit");
+		this.left
+				.setToolTipText("unstaged files - differences between current state and last commit. Next commit unaffected by these files");
+		this.right.setToolTipText("staged files - will be part of next commit");
 
 		// unstaged files
-		untracked.addAll(status.getUntracked());
-		modified.addAll(status.getModified());
-		missing.addAll(status.getMissing());
+		this.untracked.addAll(this.status.getUntracked());
+		this.modified.addAll(this.status.getModified());
+		this.missing.addAll(this.status.getMissing());
 		// staged files
-		added.addAll(status.getAdded());
-		changed.addAll(status.getChanged());
-		removed.addAll(status.getRemoved());
+		this.added.addAll(this.status.getAdded());
+		this.changed.addAll(this.status.getChanged());
+		this.removed.addAll(this.status.getRemoved());
 
-		for (final String s : untracked) {
-			unstagedFiles.add(new ChangedFile('+', s));
+		for (final String s : this.untracked) {
+			this.unstagedFiles.add(new ChangedFile('+', s));
 		}
-		for (final String s : modified) {
-			unstagedFiles.add(new ChangedFile('M', s));
+		for (final String s : this.modified) {
+			this.unstagedFiles.add(new ChangedFile('M', s));
 		}
-		for (final String s : missing) {
-			unstagedFiles.add(new ChangedFile('-', s));
+		for (final String s : this.missing) {
+			this.unstagedFiles.add(new ChangedFile('-', s));
 		}
 
-		for (final String s : added) {
-			stagedFiles.add(new ChangedFile('+', s));
+		for (final String s : this.added) {
+			this.stagedFiles.add(new ChangedFile('+', s));
 		}
-		for (final String s : changed) {
-			stagedFiles.add(new ChangedFile('M', s));
+		for (final String s : this.changed) {
+			this.stagedFiles.add(new ChangedFile('M', s));
 		}
-		for (final String s : removed) {
-			stagedFiles.add(new ChangedFile('-', s));
+		for (final String s : this.removed) {
+			this.stagedFiles.add(new ChangedFile('-', s));
 		}
 		updateLeftAndRight();
 
-		if (commit) {
-			left.addMouseListener(new StageMouseListener(left, offsetLeft));
-			right.addMouseListener(new StageMouseListener(right, offsetRight));
+		if (this.commit) {
+			this.left.addMouseListener(new StageMouseListener(this.left,
+					this.offsetLeft));
+			this.right.addMouseListener(new StageMouseListener(this.right,
+					this.offsetRight));
 
 			buttonAdd.addMouseListener(new StageActionAddListener());
 		}
@@ -478,12 +547,13 @@ public class StagePlugin extends GUIPlugin {
 		repack(panel.getSize());
 
 		synchronized (GUI.Button.class) {
-			if (master.isInterrupted())
+			if (this.master.isInterrupted()) {
 				return true;
+			}
 			try {
 				GUI.Button.class.wait();
 			} catch (final InterruptedException e) {
-				commit = false;
+				this.commit = false;
 				e.printStackTrace();
 				return true;
 			}
@@ -494,73 +564,17 @@ public class StagePlugin extends GUIPlugin {
 		return true;
 	}
 
-	private void updateLeftAndRight() {
-		final StringBuilder sb = new StringBuilder();
-		offsetLeft.clear();
-		offsetRight.clear();
-
-		for (ChangedFile f : unstagedFiles) {
-			if (sb.length() == 0)
-				sb.append("<html><font face=\"Courier New\">");
-			else
-				sb.append("<br/>");
-			offsetLeft.add(f.length());
-			sb.append(f.toString());
-		}
-		sb.append("</font></html>");
-		left.setContentType("text/html");
-		left.setText(sb.toString());
-		sb.setLength(0);
-
-		for (ChangedFile f : stagedFiles) {
-			if (sb.length() == 0)
-				sb.append("<html><font face=\"Courier New\">");
-			else
-				sb.append("<br/>");
-			offsetRight.add(f.length());
-			sb.append(f.toString());
-		}
-		sb.append("</font></html>");
-		right.setContentType("text/html");
-		right.setText(sb.toString());
-		sb.setLength(0);
-
-		left.revalidate();
-		right.revalidate();
-	}
-
 	@Override
 	protected String getTitle() {
 		return "Git Stage";
 	}
 
-	public boolean doCommit(final Git gitSession) {
-		try {
-			if (master.isInterrupted())
-				return false;
-			if (commit) {
-				for (final ChangedFile f : unstagedFiles) {
-					if (untracked.remove(f.s) || missing.remove(f.s)
-							|| modified.remove(f.s)) {
-						continue;
-					} else {
-						// TODO unstage
-					}
-				}
-				for (final ChangedFile f : stagedFiles) {
-					if (untracked.remove(f.s) || missing.remove(f.s)
-							|| modified.remove(f.s)) {
-						if (f.removed) {
-							gitSession.rm().addFilepattern(f.s).call();
-						} else {
-							gitSession.add().addFilepattern(f.s).call();
-						}
-					}
-				}
-			}
-			return commit && !stagedFiles.isEmpty();
-		} catch (final Exception e) {
-			return false;
+	final void terminate(boolean ok) {
+		if (!ok) {
+			this.master.interrupt();
+		}
+		synchronized (GUI.Button.class) {
+			GUI.Button.class.notifyAll();
 		}
 	}
 

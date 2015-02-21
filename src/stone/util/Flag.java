@@ -26,12 +26,17 @@ public class Flag {
 	public static final char NoShortFlag = 5;
 	private static final int PRIMITIVE = 1;
 
+	private static final Flag instance = new Flag();
+
 	/**
 	 * @return the instance to use.
 	 */
 	public final static Flag getInstance() {
 		return Flag.instance;
 	}
+
+	private String[] args;
+	private String unknownOption;
 
 	private final Set<String> enabledFlags = new HashSet<>();
 	private final Map<String, String> help = new HashMap<>();
@@ -44,7 +49,6 @@ public class Flag {
 
 	private final Map<String, String> values = new HashMap<>();
 
-	private static final Flag instance = new Flag();
 
 	/**
 	 * Creates a new instance
@@ -60,7 +64,7 @@ public class Flag {
 	 * @return assigned value
 	 */
 	public final String getValue(final String flagId) {
-		return values.get(flagId);
+		return this.values.get(flagId);
 	}
 
 	/**
@@ -69,7 +73,7 @@ public class Flag {
 	 * @return a map containing all known flagIds with their values
 	 */
 	public final Map<String, String> getValues() {
-		return values;
+		return this.values;
 	}
 
 	/**
@@ -79,7 +83,8 @@ public class Flag {
 	 * @return <i>true</i> if <i>flagId</i> is enabled
 	 */
 	public final boolean isEnabled(final String flagId) {
-		return enabledFlags.contains(flagId);
+		parse();
+		return this.enabledFlags.contains(flagId);
 
 	}
 
@@ -91,45 +96,14 @@ public class Flag {
 	 * @return <i>true</i> if <i>args</i> were valid and parsing successful
 	 */
 	public final boolean parse(final String[] args) {
-		for (int i = 0, ci = -1; i < args.length; i++) {
-			final String id;
-			if ((ci < 0) && args[i].startsWith("--")) {
-				id = longToId.get(args[i].substring(2));
-			} else if ((ci < 0) && args[i].startsWith("-")) {
-				id = shortToId.get((int) args[i].charAt(1));
-				ci = 1;
-			} else {
-				final char c = args[i].charAt(++ci);
-				id = shortToId.get((int) c);
-			}
-			if (id == null) {
-				System.err.println("unknown option " + args[i]);
-				System.err.println(printHelp());
-				return false;
-			}
-			final String value;
-			if ((state.get(id) & Flag.PRIMITIVE) == 0) {
-				if (args[i].length() > (ci + 1)) {
-					System.err.println("unknown option " + args[i]);
-					System.err.println(printHelp());
-					return false;
-				}
-				value = args[++i];
-				ci = -1;
-			} else {
-				value = null;
-			}
-			enabledFlags.add(id);
-			values.put(id, value);
-			if (ci >= 0) {
-				if ((ci + 1) == args[i].length()) {
-					ci = -1;
-				} else {
-					i--;
-				}
-			}
-		}
-		return true;
+		this.args = args;
+		this.unknownOption = null;
+		parse();
+		return this.unknownOption == null;
+	}
+
+	public final boolean parseWOError() {
+		return parse();
 	}
 
 	/**
@@ -141,13 +115,13 @@ public class Flag {
 	public final String printHelp() {
 		String outPart1 = "", outPart2 = "";
 		final String outPart3 = "";
-		for (final String fOption : registeredFlags) {
-			final char shortF = (char) idToShort.get(fOption).intValue();
-			final String longF = idToLong.get(fOption);
+		for (final String fOption : this.registeredFlags) {
+			final char shortF = (char) this.idToShort.get(fOption).intValue();
+			final String longF = this.idToLong.get(fOption);
 			if ((shortF == Flag.NoShortFlag) && (longF == Flag.NoLongFlag)) {
 				continue;
 			}
-			final int state_ = state.get(fOption);
+			final int state_ = this.state.get(fOption);
 			final boolean primi = (state_ & Flag.PRIMITIVE) != 0;
 			outPart1 += " [";
 			if (shortF != Flag.NoShortFlag) {
@@ -167,20 +141,18 @@ public class Flag {
 			outPart1 += " ]";
 		}
 
-		for (final String fOption : registeredFlags) {
-			final String longF = idToLong.get(fOption);
-			final char shortF = (char) idToShort.get(fOption).intValue();
+		for (final String fOption : this.registeredFlags) {
+			final String longF = this.idToLong.get(fOption);
+			final char shortF = (char) this.idToShort.get(fOption).intValue();
 			if ((shortF == Flag.NoShortFlag) && (longF == Flag.NoLongFlag)) {
 				continue;
 			}
-			final String helpText = help.get(fOption);
-			outPart2 +=
-					"\n"
-							+ String.format("%s %-16s : %s",
-									shortF == Flag.NoShortFlag ? "  "
-											: "-" + shortF,
-									longF == null ? "" : "--" + longF,
-									helpText == null ? "" : helpText);
+			final String helpText = this.help.get(fOption);
+			outPart2 += "\n"
+					+ String.format("%s %-16s : %s",
+							shortF == Flag.NoShortFlag ? "  " : "-" + shortF,
+							longF == null ? "" : "--" + longF,
+							helpText == null ? "" : helpText);
 		}
 		return outPart1 + outPart2 + outPart3;
 	}
@@ -202,25 +174,25 @@ public class Flag {
 	 * @param argExpected
 	 *            <i>true</i>if this option needs a additional value
 	 */
-	public final void registerOption(final String flagId,
-			final String tooltip, char shortFlag, final String longFlag,
-			boolean argExpected) {
+	public final void registerOption(final String flagId, final String tooltip,
+			char shortFlag, final String longFlag, boolean argExpected) {
 		if (shortFlag != Flag.NoShortFlag) {
-			shortToId.put((int) shortFlag, flagId);
+			this.shortToId.put((int) shortFlag, flagId);
 		}
-		idToShort.put(flagId, (int) shortFlag);
+		this.idToShort.put(flagId, (int) shortFlag);
 		if (longFlag != Flag.NoLongFlag) {
-			longToId.put(longFlag, flagId);
+			this.longToId.put(longFlag, flagId);
 		}
-		idToLong.put(flagId, longFlag);
+		this.idToLong.put(flagId, longFlag);
 
-		help.put(flagId, tooltip);
-		registeredFlags.add(flagId);
+		this.help.put(flagId, tooltip);
+		this.registeredFlags.add(flagId);
 		int s = 0;
 		if (!argExpected) {
 			s |= Flag.PRIMITIVE;
 		}
-		state.put(flagId, s);
+		this.state.put(flagId, s);
+		this.unknownOption = null;
 	}
 
 	/**
@@ -231,7 +203,7 @@ public class Flag {
 	 */
 	public final void setValue(final Map<String, String> values) {
 		this.values.putAll(values);
-		enabledFlags.addAll(values.keySet());
+		this.enabledFlags.addAll(values.keySet());
 	}
 
 	/**
@@ -242,6 +214,63 @@ public class Flag {
 	 *            new value
 	 */
 	public final void setValue(final String flagId, final String value) {
-		values.put(flagId, value);
+		this.values.put(flagId, value);
+	}
+
+	public final String unknownOption() {
+		return "Unknown Option " + this.unknownOption;
+	}
+
+	private final boolean parse() {
+		if ((this.args == null) && (this.unknownOption == null)) {
+			return true;
+		}
+		for (int i = 0, ci = -1; i < this.args.length; i++) {
+			final String id;
+			if ((ci < 0) && this.args[i].startsWith("--")) {
+				id = this.longToId.get(this.args[i].substring(2));
+			} else if ((ci < 0) && this.args[i].startsWith("-")) {
+				id = this.shortToId.get((int) this.args[i].charAt(1));
+				ci = 1;
+			} else {
+				final char c = this.args[i].charAt(++ci);
+				id = this.shortToId.get((int) c);
+			}
+			if (id == null) {
+				if (this.unknownOption == null) {
+					this.unknownOption = this.args[i];
+				}
+				ci = -1;
+				continue;
+			}
+			final String value;
+			if ((this.state.get(id) & Flag.PRIMITIVE) == 0) {
+				if (this.args[i].length() < (ci + 1)) {
+					if (this.unknownOption == null) {
+						this.unknownOption = this.args[i];
+					}
+					ci = -1;
+					continue;
+				}
+				value = this.args[++i];
+				ci = -1;
+			} else {
+				value = null;
+			}
+			this.enabledFlags.add(id);
+			this.values.put(id, value);
+			if (ci >= 0) {
+				if ((ci + 1) == this.args[i].length()) {
+					ci = -1;
+				} else {
+					i--;
+				}
+			}
+		}
+		if (this.unknownOption == null) {
+			this.args = null;
+			return true;
+		}
+		return false;
 	}
 }

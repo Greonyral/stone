@@ -17,6 +17,7 @@ final class ArraySetList<E> extends ArrayList<E> implements Set<E> {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public final Spliterator<E> spliterator() {
 		throw new UnsupportedOperationException();
 	}

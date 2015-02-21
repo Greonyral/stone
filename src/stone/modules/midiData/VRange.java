@@ -16,30 +16,27 @@ class VRange {
 	VRange(int lowerBound, int upperBound, final Iterator<Color> c,
 			final VRange previous) {
 		if (previous == null) {
-			color_a = c.next().getRGB();
+			this.color_a = c.next().getRGB();
 		} else {
-			color_a = previous.color_b;
+			this.color_a = previous.color_b;
 		}
-		color_b = c.next().getRGB();
-		low = lowerBound;
-		high = upperBound;
-		distance = high - low - 1;
+		this.color_b = c.next().getRGB();
+		this.low = lowerBound;
+		this.high = upperBound;
+		this.distance = this.high - this.low - 1;
 	}
 
 	final Color getColor(int v) {
-		final double ratio = (v - low) / distance;
+		final double ratio = (v - this.low) / this.distance;
 		final int r, g, b;
 		final int rgb;
 
-		r =
-				VRange.R_MASK
-						& ((int) ((color_a & VRange.R_MASK) * (1 - ratio)) + (int) ((color_b & VRange.R_MASK) * ratio));
-		g =
-				VRange.G_MASK
-						& ((int) ((color_a & VRange.G_MASK) * (1 - ratio)) + (int) ((color_b & VRange.G_MASK) * ratio));
-		b =
-				VRange.B_MASK
-						& ((int) ((color_a & VRange.B_MASK) * (1 - ratio)) + (int) ((color_b & VRange.B_MASK) * ratio));
+		r = VRange.R_MASK
+				& ((int) ((this.color_a & VRange.R_MASK) * (1 - ratio)) + (int) ((this.color_b & VRange.R_MASK) * ratio));
+		g = VRange.G_MASK
+				& ((int) ((this.color_a & VRange.G_MASK) * (1 - ratio)) + (int) ((this.color_b & VRange.G_MASK) * ratio));
+		b = VRange.B_MASK
+				& ((int) ((this.color_a & VRange.B_MASK) * (1 - ratio)) + (int) ((this.color_b & VRange.B_MASK) * ratio));
 
 		rgb = 0xff000000 | r | g | b;
 		return new Color(rgb);

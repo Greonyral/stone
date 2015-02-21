@@ -49,48 +49,48 @@ public class MidiMap {
 		/** */
 		@Override
 		public final int compareTo(final Note o) {
-			if (key == o.key) {
-				if (start == o.start) {
-					return (int) Math.signum(o.end - end);
+			if (this.key == o.key) {
+				if (this.start == o.start) {
+					return (int) Math.signum(o.end - this.end);
 				}
-				return (int) Math.sin(o.start - start);
+				return (int) Math.sin(o.start - this.start);
 			}
-			return o.key - key;
+			return o.key - this.key;
 		}
 
 		/**
 		 * @return the time in minutes when this note ends.
 		 */
 		public final double getEnd() {
-			return end;
+			return this.end;
 		}
 
 		/**
 		 * @return the note played as encoded in the underlying midi.
 		 */
 		public final int getKey() {
-			return key;
+			return this.key;
 		}
 
 		/**
 		 * @return the time in minutes when this note starts.
 		 */
 		public final double getStart() {
-			return start;
+			return this.start;
 		}
 
 		/** */
 		@Override
 		public final String toString() {
-			return String.format("%02d: [%4.2f %4.2f]", key, start, end);
+			return String.format("%02d: [%4.2f %4.2f]", this.key, this.start,
+					this.end);
 		}
 	}
 
 	private final static int MAX_VOL = 0x7f;
 	private final static List<Color> colors = MidiMap.buildColorMap();
 
-	private final static TreeMap<Integer, VRange> vMap = MidiMap
-			.buildVMap();
+	private final static TreeMap<Integer, VRange> vMap = MidiMap.buildVMap();
 
 	private final static List<Color> buildColorMap() {
 		// 0 ppp 0x00007f
@@ -113,16 +113,13 @@ public class MidiMap {
 
 	private final static TreeMap<Integer, VRange> buildVMap() {
 		final TreeMap<Integer, VRange> map = new TreeMap<>();
-		final double step =
-				(double) MidiMap.MAX_VOL / MidiMap.colors.size();
+		final double step = (double) MidiMap.MAX_VOL / MidiMap.colors.size();
 		double lowerBound = 0;
 		VRange last = null;
 		final Iterator<Color> color = MidiMap.colors.iterator();
 		while (color.hasNext()) {
 			final double upperBound = lowerBound + step;
-			last =
-					new VRange((int) lowerBound, (int) upperBound, color,
-							last);
+			last = new VRange((int) lowerBound, (int) upperBound, color, last);
 			map.put((int) lowerBound, last);
 			lowerBound = upperBound;
 		}
@@ -130,14 +127,13 @@ public class MidiMap {
 	}
 
 	private final static Color getColor(final Note note) {
-		return MidiMap.vMap.floorEntry(note.volumne).getValue().getColor(
-				note.volumne);
+		return MidiMap.vMap.floorEntry(note.volumne).getValue()
+				.getColor(note.volumne);
 	}
 
 	private final Set<Note> notes = new HashSet<>();
 
-	private final Map<Double, Map<Integer, List<Note>>> timeToTracksMap =
-			new HashMap<>();
+	private final Map<Double, Map<Integer, List<Note>>> timeToTracksMap = new HashMap<>();
 
 	private final Dimension d = new Dimension();
 	private final int scale = 480; // 16th note at 200 bpm
@@ -150,9 +146,9 @@ public class MidiMap {
 	private final int NOTE_RANGE = MidiMap.NOTE_TOP - MidiMap.NOTE_BOT;
 
 	private MidiMap(final MidiMap clone) {
-		parser = clone.parser;
-		timeToTracksMap.putAll(clone.timeToTracksMap);
-		notes.addAll(clone.notes);
+		this.parser = clone.parser;
+		this.timeToTracksMap.putAll(clone.timeToTracksMap);
+		this.notes.addAll(clone.notes);
 	}
 
 	MidiMap(final MidiParser parser) {
@@ -168,19 +164,19 @@ public class MidiMap {
 	 * @param end
 	 * @param volumne
 	 */
-	public final void addNote(int track, int key, double start,
-			double end, int volumne) {
+	public final void addNote(int track, int key, double start, double end,
+			int volumne) {
 		final Note note = new Note(key, start, end, volumne, track);
-		final Map<Integer, List<Note>> mapTrack =
-				timeToTracksMap.get(start);
+		final Map<Integer, List<Note>> mapTrack = this.timeToTracksMap
+				.get(start);
 		final List<Note> listTrack;
-		notes.add(note);
+		this.notes.add(note);
 
 		if (mapTrack == null) {
 			final Map<Integer, List<Note>> map = new HashMap<>();
 			listTrack = new ArrayList<>();
 			map.put(track, listTrack);
-			timeToTracksMap.put(start, map);
+			this.timeToTracksMap.put(start, map);
 		} else {
 			final List<Note> listTrack_tmp = mapTrack.get(track);
 			if (listTrack_tmp == null) {
@@ -198,8 +194,8 @@ public class MidiMap {
 	 * Clears this map.
 	 */
 	public final void clear() {
-		timeToTracksMap.clear();
-		notes.clear();
+		this.timeToTracksMap.clear();
+		this.notes.clear();
 	}
 
 	/**
@@ -219,7 +215,7 @@ public class MidiMap {
 	 * @return a list of notes.
 	 */
 	public final List<Note> get(int id, double time) {
-		final Map<Integer, List<Note>> map = timeToTracksMap.get(time);
+		final Map<Integer, List<Note>> map = this.timeToTracksMap.get(time);
 		if (map == null) {
 			return null;
 		}
@@ -233,7 +229,7 @@ public class MidiMap {
 	 * @return a map of notes. Index is the track where the notes are played.
 	 */
 	public final Map<Integer, List<Note>> getNotes(double time) {
-		return timeToTracksMap.get(time);
+		return this.timeToTracksMap.get(time);
 	}
 
 	/**
@@ -243,12 +239,12 @@ public class MidiMap {
 	 */
 	public final void init(final JPanel mainPanel) {
 		// System.out.println(parser.getDuration());
-		d.width = (int) ((parser.getDuration() + (1.0 / 60.0)) * scale);
-		d.height = parser.tracks().size() * (NOTE_RANGE + 9);
-		mainPanel.setMaximumSize(d);
-		mainPanel.setMinimumSize(d);
-		mainPanel.setPreferredSize(d);
-		mainPanel.setSize(d);
+		this.d.width = (int) ((this.parser.getDuration() + (1.0 / 60.0)) * this.scale);
+		this.d.height = this.parser.tracks().size() * (this.NOTE_RANGE + 9);
+		mainPanel.setMaximumSize(this.d);
+		mainPanel.setMinimumSize(this.d);
+		mainPanel.setPreferredSize(this.d);
+		mainPanel.setSize(this.d);
 	}
 
 	/**
@@ -257,23 +253,21 @@ public class MidiMap {
 	 * @param g
 	 */
 	public final void paint(final Graphics g) {
-		g.clearRect(0, 0, d.width, d.height);
+		g.clearRect(0, 0, this.d.width, this.d.height);
 		final Graphics g0 = g.create();
-		final int heightPerSong = NOTE_RANGE + 9;
+		final int heightPerSong = this.NOTE_RANGE + 9;
 		final Font f1 = Font.decode("Arial bold 14");
 		final Font f0 = Font.decode("Arial 8");
 		{
 			final Graphics g1 = g0.create();
 			g1.setColor(Color.BLACK);
 			g1.setFont(f0);
-			for (int x = 12; x < d.width; x += scale) {
-				for (int y = f1.getSize(); y < d.height; y +=
-						heightPerSong) {
-					g1.drawString(String.valueOf((y / heightPerSong) + 1),
-							x, y + 4);
-					g1.drawString(String.valueOf((y / heightPerSong) + 1),
-							x, (y + heightPerSong) - (2 * f1.getSize())
-									- 4);
+			for (int x = 12; x < this.d.width; x += this.scale) {
+				for (int y = f1.getSize(); y < this.d.height; y += heightPerSong) {
+					g1.drawString(String.valueOf((y / heightPerSong) + 1), x,
+							y + 4);
+					g1.drawString(String.valueOf((y / heightPerSong) + 1), x,
+							(y + heightPerSong) - (2 * f1.getSize()) - 4);
 				}
 			}
 
@@ -282,26 +276,26 @@ public class MidiMap {
 		g0.setFont(Font.decode("Times 11"));
 
 		// draw grid
-		for (int x = 0, sec = -1, min = 0; x < d.width; x += scale / 6) {
-			g0.drawLine(x, 0, x, d.height);
+		for (int x = 0, sec = -1, min = 0; x < this.d.width; x += this.scale / 6) {
+			g0.drawLine(x, 0, x, this.d.height);
 			if (++sec == 6) {
 				sec = 0;
 				++min;
-				g0.drawLine(x - 1, 0, x - 1, d.height);
-				g0.drawLine(x + 1, 0, x + 1, d.height);
+				g0.drawLine(x - 1, 0, x - 1, this.d.height);
+				g0.drawLine(x + 1, 0, x + 1, this.d.height);
 			}
-			for (int y = 9; y < d.height; y += 5 * heightPerSong) {
+			for (int y = 9; y < this.d.height; y += 5 * heightPerSong) {
 				g0.drawString(String.format("%d:%d0", min, sec), x + 4, y);
 			}
 		}
 
-		for (int y = heightPerSong - 1; y < d.height; y += heightPerSong) {
-			g0.drawLine(0, y, d.width, y);
+		for (int y = heightPerSong - 1; y < this.d.height; y += heightPerSong) {
+			g0.drawLine(0, y, this.d.width, y);
 		}
 		final int scale_ = getScale();
 
 		// draw notes
-		for (final Note note : notes) {
+		for (final Note note : this.notes) {
 			final int x0 = (int) (note.start * scale_);
 			final int x1 = (int) (note.end * scale_);
 			final int y;
@@ -309,14 +303,12 @@ public class MidiMap {
 				y = (note.track * heightPerSong) - 1;
 				g0.setColor(Color.RED);
 			} else if (note.key >= MidiMap.NOTE_TOP) {
-				y =
-						(note.track * heightPerSong)
-								- (MidiMap.NOTE_TOP - MidiMap.NOTE_BOT);
+				y = (note.track * heightPerSong)
+						- (MidiMap.NOTE_TOP - MidiMap.NOTE_BOT);
 				g0.setColor(Color.RED);
 			} else {
-				y =
-						(note.track * heightPerSong)
-								- (note.key - MidiMap.NOTE_BOT);
+				y = (note.track * heightPerSong)
+						- (note.key - MidiMap.NOTE_BOT);
 				g0.setColor(MidiMap.getColor(note));
 
 			}
@@ -357,7 +349,7 @@ public class MidiMap {
 	private final int getScale() {
 		final int scale_;
 		synchronized (this) {
-			scale_ = scale;
+			scale_ = this.scale;
 		}
 		return scale_;
 	}

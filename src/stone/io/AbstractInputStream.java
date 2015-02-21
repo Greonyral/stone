@@ -12,7 +12,30 @@ public abstract class AbstractInputStream extends InputStream {
 	protected int _length = -1;
 
 	public AbstractInputStream(final byte[] buffer) {
-		_buffer = buffer;
+		this._buffer = buffer;
+	}
+
+	/**
+	 * Checks if <i>this</i> stream reached the end of file
+	 * 
+	 * @return <i>true</i> if <i>this</i> stream reached the end of file
+	 * @throws IOException
+	 */
+	public final boolean EOFreached() throws IOException {
+		if (this._length < this._offset) {
+			this._offset = this._length;
+		}
+		if ((this._offset == this._length) || (this._length < 0)) {
+			fillBuff();
+		}
+		if (this._length == 0) {
+			if (this.io != null) {
+				this.io.endProgress();
+				this.io = null;
+			}
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -29,64 +52,10 @@ public abstract class AbstractInputStream extends InputStream {
 		if (EOFreached()) {
 			return -1;
 		}
-		if (io != null) {
-			io.updateProgress();
+		if (this.io != null) {
+			this.io.updateProgress();
 		}
-		return 0xff & _buffer[_offset++];
-	}
-
-	/**
-	 * Checks if <i>this</i> stream reached the end of file
-	 * 
-	 * @return <i>true</i> if <i>this</i> stream reached the end of file
-	 * @throws IOException
-	 */
-	public final boolean EOFreached() throws IOException {
-		if (_length < _offset) {
-			_offset = _length;
-		}
-		if ((_offset == _length) || (_length < 0)) {
-			fillBuff();
-		}
-		if (_length == 0) {
-			if (io != null) {
-				io.endProgress();
-				io = null;
-			}
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Resets the stream to start
-	 */
-	@Override
-	public void reset() {
-		_length = -1;
-	}
-
-	protected abstract void fillBuff() throws IOException;
-
-	protected final void fillBuffByStream(final java.io.InputStream stream)
-			throws IOException {
-		final int buffered;
-		buffered = _length - _offset;
-		if (buffered > 0) {
-			System.arraycopy(_buffer, _offset, _buffer, 0, buffered);
-		}
-		_offset = 0;
-		_length = buffered;
-		if (stream.available() > 0) {
-			final int read = stream.read(_buffer, buffered, _buffer.length
-					- buffered);
-			_length += read;
-		}
-	}
-
-	protected void finalize() {
-		if (io != null)
-			io.close(this);
+		return 0xff & this._buffer[this._offset++];
 	}
 
 	/**
@@ -148,15 +117,49 @@ public abstract class AbstractInputStream extends InputStream {
 		}
 	}
 
+	/**
+	 * Resets the stream to start
+	 */
+	@Override
+	public void reset() {
+		this._length = -1;
+	}
+
+	protected abstract void fillBuff() throws IOException;
+
+	protected final void fillBuffByStream(final java.io.InputStream stream)
+			throws IOException {
+		final int buffered;
+		buffered = this._length - this._offset;
+		if (buffered > 0) {
+			System.arraycopy(this._buffer, this._offset, this._buffer, 0,
+					buffered);
+		}
+		this._offset = 0;
+		this._length = buffered;
+		if (stream.available() > 0) {
+			final int read = stream.read(this._buffer, buffered,
+					this._buffer.length - buffered);
+			this._length += read;
+		}
+	}
+
 	protected final int fillExternalBuffer(final byte[] buffer, int offset,
 			int length) {
-		final int remIntBuffer = _length - _offset;
+		final int remIntBuffer = this._length - this._offset;
 		final int lengthRet = Math.min(length, remIntBuffer);
-		System.arraycopy(_buffer, _offset, buffer, offset, lengthRet);
-		_offset += lengthRet;
-		if (io != null) {
-			io.updateProgress(lengthRet);
+		System.arraycopy(this._buffer, this._offset, buffer, offset, lengthRet);
+		this._offset += lengthRet;
+		if (this.io != null) {
+			this.io.updateProgress(lengthRet);
 		}
 		return lengthRet;
+	}
+
+	@Override
+	protected void finalize() {
+		if (this.io != null) {
+			this.io.close(this);
+		}
 	}
 }

@@ -11,6 +11,6 @@ enum WarnOrErrorInAbc {
 
 	@Override
 	final public String toString() {
-		return s;
+		return this.s;
 	}
 }

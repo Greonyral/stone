@@ -16,26 +16,27 @@ class ValueInt extends Value<Integer> {
 
 		@Override
 		public final void stateChanged(final ChangeEvent e) {
-			final int value_ = slider.getValue();
-			if (object == null) {
-				bruteParams.setGlobalValue(Integer.valueOf(value_));
-			} else {
-				bruteParams.setLocalValue(object, target, Integer
+			final int value_ = ValueInt.this.slider.getValue();
+			if (ValueInt.this.object == null) {
+				ValueInt.this.bruteParams.setGlobalValue(Integer
 						.valueOf(value_));
+			} else {
+				ValueInt.this.bruteParams.setLocalValue(ValueInt.this.object,
+						ValueInt.this.target, Integer.valueOf(value_));
 			}
-			label.setText(String.format("%s %d", value_ == 0 ? " "
-					: value_ > 0 ? "+" : "-", Integer.valueOf(Math
-					.abs(value_))));
-			if (interval > 0) {
-				if (value_ == min) {
-					min -= interval;
-					if (value_ < (max - (3 * interval))) {
-						max -= interval;
+			ValueInt.this.label.setText(String.format("%s %d",
+					value_ == 0 ? " " : value_ > 0 ? "+" : "-",
+					Integer.valueOf(Math.abs(value_))));
+			if (ValueInt.this.interval > 0) {
+				if (value_ == ValueInt.this.min) {
+					ValueInt.this.min -= ValueInt.this.interval;
+					if (value_ < (ValueInt.this.max - (3 * ValueInt.this.interval))) {
+						ValueInt.this.max -= ValueInt.this.interval;
 					}
-				} else if (value_ == max) {
-					max += interval;
-					if (value_ > (min + (3 * interval))) {
-						min += interval;
+				} else if (value_ == ValueInt.this.max) {
+					ValueInt.this.max += ValueInt.this.interval;
+					if (value_ > (ValueInt.this.min + (3 * ValueInt.this.interval))) {
+						ValueInt.this.min += ValueInt.this.interval;
 					}
 				} else {
 					return;
@@ -44,7 +45,7 @@ class ValueInt extends Value<Integer> {
 				return;
 			}
 			display();
-			slider.revalidate();
+			ValueInt.this.slider.revalidate();
 		}
 	}
 
@@ -63,65 +64,66 @@ class ValueInt extends Value<Integer> {
 	@SuppressWarnings("unchecked")
 	private <A extends Container, B extends Container, C extends Container> ValueInt(
 			BruteParams<Integer> bruteParams, final ValueInt value,
-			final DragObject<A, B, C> object,
-			final DropTarget<A, B, C> target, final Integer valueLocal) {
+			final DragObject<A, B, C> object, final DropTarget<A, B, C> target,
+			final Integer valueLocal) {
 		this.bruteParams = bruteParams;
-		interval = value.interval;
-		ticks = value.ticks;
+		this.interval = value.interval;
+		this.ticks = value.ticks;
 		this.value = valueLocal.intValue(); // bruteParams.globalValue or
 		// previously set value
-		max = value.max;
-		min = value.min;
+		this.max = value.max;
+		this.min = value.min;
 		this.object = (DragObject<Container, Container, Container>) object;
 		this.target = (DropTarget<Container, Container, Container>) target;
 	}
 
 	/** Creates a new Value with unbounded value */
-	ValueInt(BruteParams<Integer> bruteParams, int initValue,
-			int interval, int ticks) {
+	ValueInt(BruteParams<Integer> bruteParams, int initValue, int interval,
+			int ticks) {
 		this.bruteParams = bruteParams;
-		value = initValue;
-		min = initValue - interval;
-		max = initValue + interval;
+		this.value = initValue;
+		this.min = initValue - interval;
+		this.max = initValue + interval;
 		this.interval = interval;
 		this.ticks = ticks;
-		object = null;
-		target = null;
+		this.object = null;
+		this.target = null;
 	}
 
 	/** Creates a new Value with bounded value */
-	ValueInt(BruteParams<Integer> bruteParams, int initValue, int min,
-			int max, int ticks) {
+	ValueInt(BruteParams<Integer> bruteParams, int initValue, int min, int max,
+			int ticks) {
 		this.bruteParams = bruteParams;
-		value = initValue;
+		this.value = initValue;
 		this.min = min;
 		this.max = max;
-		interval = 0;
+		this.interval = 0;
 		this.ticks = ticks;
-		object = null;
-		target = null;
+		this.object = null;
+		this.target = null;
 	}
 
 	@Override
 	public synchronized final void display() {
-		slider.setMinimum(min);
-		slider.setMaximum(max);
-		slider.setValue(value);
-		slider.setPaintTicks(true);
-		slider.setPaintLabels(true);
-		slider.setMajorTickSpacing(interval);
-		slider.setMinorTickSpacing(ticks);
-		label.setText(String.format("%s %d", value == 0 ? " "
-				: value > 0 ? "+" : "-", Integer.valueOf(Math.abs(value))));
+		this.slider.setMinimum(this.min);
+		this.slider.setMaximum(this.max);
+		this.slider.setValue(this.value);
+		this.slider.setPaintTicks(true);
+		this.slider.setPaintLabels(true);
+		this.slider.setMajorTickSpacing(this.interval);
+		this.slider.setMinorTickSpacing(this.ticks);
+		this.label.setText(String.format("%s %d", this.value == 0 ? " "
+				: this.value > 0 ? "+" : "-", Integer.valueOf(Math
+				.abs(this.value))));
 
-		slider.addChangeListener(new SliderListener());
+		this.slider.addChangeListener(new SliderListener());
 	}
 
 	@Override
-	public <A extends Container, B extends Container, C extends Container>
-			Value<Integer> localInstance(DragObject<A, B, C> object,
-					DropTarget<A, B, C> target, final Integer value) {
-		return new ValueInt(bruteParams, this, object, target, value);
+	public <A extends Container, B extends Container, C extends Container> Value<Integer> localInstance(
+			DragObject<A, B, C> object, DropTarget<A, B, C> target,
+			final Integer value) {
+		return new ValueInt(this.bruteParams, this, object, target, value);
 	}
 
 	@Override
@@ -131,12 +133,12 @@ class ValueInt extends Value<Integer> {
 
 	@Override
 	public final Integer value() {
-		return Integer.valueOf(value);
+		return Integer.valueOf(this.value);
 	}
 
 	@Override
 	public final synchronized void value(final Integer i) {
-		value = i.intValue();
+		this.value = i.intValue();
 	}
 
 	@Override

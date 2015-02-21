@@ -14,22 +14,23 @@ final class NoteOffEvent extends MidiEvent {
 
 	@Override
 	public final String toString() {
-		if (format == 1) {
-			return delta + " off: " + k + " " + v;
+		if (this.format == 1) {
+			return this.delta + " off: " + this.k + " " + this.v;
 		}
-		if (format == 0) {
-			return delta + " off: " + k + " " + v + "@" + channel;
+		if (this.format == 0) {
+			return this.delta + " off: " + this.k + " " + this.v + "@"
+					+ this.channel;
 		}
-		return delta + " off: " + k + " " + v + "@" + channel + ","
-				+ format;
+		return this.delta + " off: " + this.k + " " + this.v + "@"
+				+ this.channel + "," + this.format;
 	}
 
 	@Override
 	final int getChannel() {
-		return 0xff & channel;
+		return 0xff & this.channel;
 	}
 
 	final int getKey() {
-		return k;
+		return this.k;
 	}
 }

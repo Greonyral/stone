@@ -24,8 +24,7 @@ public abstract class Debug {
 	} : new Debug() {
 
 		@Override
-		protected final void printImpl(final String string,
-				final Object[] args) {
+		protected final void printImpl(final String string, final Object[] args) {
 			return;
 		}
 
@@ -40,8 +39,7 @@ public abstract class Debug {
 	 *            Arguments referenced by the format specifiers in the format
 	 *            string.
 	 */
-	public final static void print(final String string,
-			final Object... args) {
+	public final static void print(final String string, final Object... args) {
 		Debug.instance.printImpl(string, args);
 	}
 

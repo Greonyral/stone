@@ -17,12 +17,11 @@ final class LoadButtonMouseListener extends ReleaseListener {
 	@Override
 	public final void mouseReleased(final MouseEvent e) {
 		e.consume();
-		if (abcMapPlugin.state.loadingMap) {
+		if (this.abcMapPlugin.state.loadingMap) {
 			return;
 		}
-		final JFileChooser fc =
-				new JFileChooser(abcMapPlugin.caller.getFile().getParent()
-						.toFile());
+		final JFileChooser fc = new JFileChooser(this.abcMapPlugin.caller
+				.getFile().getParent().toFile());
 		fc.setFileFilter(new FileFilter() {
 
 			@Override
@@ -38,15 +37,15 @@ final class LoadButtonMouseListener extends ReleaseListener {
 		});
 
 		fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		final int sel = fc.showOpenDialog(loadButton);
+		final int sel = fc.showOpenDialog(this.loadButton);
 		if (sel == JFileChooser.APPROVE_OPTION) {
-			for (final DragObject<JPanel, JPanel, JPanel> o : abcMapPlugin.trackMap
+			for (final DragObject<JPanel, JPanel, JPanel> o : this.abcMapPlugin.trackMap
 					.values()) {
 				for (final DropTarget<JPanel, JPanel, JPanel> t : o
 						.getTargetContainer().removeAllLinks(o)) {
-					if (t != abcMapPlugin.state.emptyTarget) {
-						t.getDisplayableComponent().getParent().remove(
-								t.getDisplayableComponent());
+					if (t != this.abcMapPlugin.state.emptyTarget) {
+						t.getDisplayableComponent().getParent()
+								.remove(t.getDisplayableComponent());
 					}
 				}
 				o.clearTargets();
@@ -55,25 +54,26 @@ final class LoadButtonMouseListener extends ReleaseListener {
 					alias.forgetAlias();
 					for (final DropTarget<JPanel, JPanel, JPanel> t : alias
 							.getTargetContainer().removeAllLinks(alias)) {
-						if (t != abcMapPlugin.state.emptyTarget) {
+						if (t != this.abcMapPlugin.state.emptyTarget) {
 							t.getDisplayableComponent().getParent()
 									.remove(t.getDisplayableComponent());
 						}
 					}
-					abcMapPlugin.panelLeft.remove(alias
+					this.abcMapPlugin.panelLeft.remove(alias
 							.getDisplayableComponent());
-					abcMapPlugin.panelLeft.validate();
+					this.abcMapPlugin.panelLeft.validate();
 				}
-				o.addTarget(abcMapPlugin.state.emptyTarget);
-				abcMapPlugin.state.emptyTarget.link(o);
+				o.addTarget(this.abcMapPlugin.state.emptyTarget);
+				this.abcMapPlugin.state.emptyTarget.link(o);
 			}
-			abcMapPlugin.emptyCenter();
-			abcMapPlugin.instrumentToTrack.clear();
-			abcMapPlugin.state.label.setText("Parsing loaded map ...");
-			abcMapPlugin.state.loadingMap = true;
+			this.abcMapPlugin.emptyCenter();
+			this.abcMapPlugin.instrumentToTrack.clear();
+			this.abcMapPlugin.state.label.setText("Parsing loaded map ...");
+			this.abcMapPlugin.state.loadingMap = true;
 			final File mapToLoad = fc.getSelectedFile();
-			ParamMap.setTracks(abcMapPlugin.trackMap);
-			abcMapPlugin.caller.exec(new MapLoadingThread(abcMapPlugin, mapToLoad));
+			ParamMap.setTracks(this.abcMapPlugin.trackMap);
+			this.abcMapPlugin.caller.exec(new MapLoadingThread(
+					this.abcMapPlugin, mapToLoad));
 		}
 	}
 }

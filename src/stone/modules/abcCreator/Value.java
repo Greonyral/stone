@@ -16,19 +16,19 @@ abstract class Value<E> {
 	protected final JSlider slider;
 
 	Value() {
-		panel = new JPanel();
-		label = new JLabel();
-		slider = new JSlider();
-		panel.setLayout(new BorderLayout());
-		panel.add(slider);
-		panel.add(label, BorderLayout.SOUTH);
+		this.panel = new JPanel();
+		this.label = new JLabel();
+		this.slider = new JSlider();
+		this.panel.setLayout(new BorderLayout());
+		this.panel.add(this.slider);
+		this.panel.add(this.label, BorderLayout.SOUTH);
 	}
 
 	public abstract void display();
 
 	public final JPanel panel() {
 		display();
-		return panel;
+		return this.panel;
 	}
 
 	/**
@@ -36,10 +36,9 @@ abstract class Value<E> {
 	 * @param target
 	 * @return the param value saved at object for given target
 	 */
-	abstract
-			<A extends Container, B extends Container, C extends Container>
-			Value<E> localInstance(DragObject<A, B, C> object,
-					DropTarget<A, B, C> target, final E value);
+	abstract <A extends Container, B extends Container, C extends Container> Value<E> localInstance(
+			DragObject<A, B, C> object, DropTarget<A, B, C> target,
+			final E value);
 
 	abstract E parse(String string);
 

@@ -20,26 +20,27 @@ final class DT_Listener<C extends Container, D extends Container, T extends Cont
 
 	private final void mark(boolean active) {
 		final Set<DragObject<?, ?, ?>> objects = new HashSet<>();
-		for (final DragObject<?, ?, ?> o : target) {
+		for (final DragObject<?, ?, ?> o : this.target) {
 			objects.add(o);
-			if (!active || (state.dragging == null)) {
+			if (!active || (this.state.dragging == null)) {
 				if (o.isAlias()) {
 					markAlias(active, o.getOriginal());
 				}
 				markAlias(active, o.getAliases());
 			}
 			o.getDisplayableComponent().setBackground(
-					active ? DNDListener.C_SELECTED0
-							: DNDListener.C_INACTIVE);
+					active ? DNDListener.C_SELECTED0 : DNDListener.C_INACTIVE);
 		}
-		target.getContainer().getDisplayableComponent().setBackground(
-				active ? DNDListener.C_SELECTED0
-						: DNDListener.C_INACTIVE_TARGET);
-		target.getDisplayableComponent().setBackground(
-				active ? DNDListener.C_ACTIVE
-						: DNDListener.C_INACTIVE_TARGET);
-		for (final DropTarget<?, ?, ?> t : target.getContainer()) {
-			if (t == target) {
+		this.target
+				.getContainer()
+				.getDisplayableComponent()
+				.setBackground(
+						active ? DNDListener.C_SELECTED0
+								: DNDListener.C_INACTIVE_TARGET);
+		this.target.getDisplayableComponent().setBackground(
+				active ? DNDListener.C_ACTIVE : DNDListener.C_INACTIVE_TARGET);
+		for (final DropTarget<?, ?, ?> t : this.target.getContainer()) {
+			if (t == this.target) {
 				continue;
 			}
 			t.getDisplayableComponent().setBackground(
@@ -58,24 +59,24 @@ final class DT_Listener<C extends Container, D extends Container, T extends Cont
 	private final void markAlias(boolean active,
 			final DragObject<?, ?, ?>... objects) {
 		final Set<DragObject<?, ?, ?>> blackList = new HashSet<>();
-		for (final DragObject<?, ?, ?> o : target) {
+		for (final DragObject<?, ?, ?> o : this.target) {
 			blackList.add(o);
 		}
 		for (final DragObject<?, ?, ?> o : objects) {
 			if (!blackList.contains(o)) {
 				o.getDisplayableComponent().setBackground(
-						active ? DNDListener.C_CLONE
-								: DNDListener.C_INACTIVE);
+						active ? DNDListener.C_CLONE : DNDListener.C_INACTIVE);
 			}
 			for (final DropTarget<?, ?, ?> t : o) {
-				if ((t != target) && (t != state.emptyTarget)) {
+				if ((t != this.target) && (t != this.state.emptyTarget)) {
 					t.getDisplayableComponent().setBackground(
 							active ? DNDListener.C_CLONE
 									: DNDListener.C_INACTIVE_TARGET);
 				}
 			}
-			if (o.getTargetContainer() != target.getContainer()) {
-				o.getTargetContainer().getDisplayableComponent()
+			if (o.getTargetContainer() != this.target.getContainer()) {
+				o.getTargetContainer()
+						.getDisplayableComponent()
 						.setBackground(
 								active ? DNDListener.C_CLONE
 										: DNDListener.C_INACTIVE_TARGET);
@@ -86,9 +87,9 @@ final class DT_Listener<C extends Container, D extends Container, T extends Cont
 	@Override
 	protected final void enter(boolean enter) {
 		if (enter) {
-			state.target = target;
+			this.state.target = this.target;
 		} else {
-			state.target = null;
+			this.state.target = null;
 		}
 		mark(enter);
 	}

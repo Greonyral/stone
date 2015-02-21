@@ -13,7 +13,7 @@ public final class ModuleInfo {
 	public ModuleInfo(final Config c, final StartupContainer sc,
 			final Class<Module> clazz, final String name) {
 		Module instance = null;
-		if (clazz != null)
+		if (clazz != null) {
 			try {
 				instance = clazz.getConstructor(sc.getClass()).newInstance(sc);
 			} catch (InstantiationException | IllegalAccessException
@@ -22,26 +22,27 @@ public final class ModuleInfo {
 				e.printStackTrace();
 				instance = null;
 			}
+		}
 		this.instance = instance;
 		this.name = name;
-		tooltip = c.getValue(name);
+		this.tooltip = c.getValue(name);
 	}
 
 	ModuleInfo(final Config c) {
-		name = c.getValue("mainClass");
-		tooltip = null;
-		instance = new stone.modules.Main();
-	}
-
-	final int getVersion() {
-		return instance == null ? -1 : instance.getVersion();
+		this.name = c.getValue("mainClass");
+		this.tooltip = null;
+		this.instance = new stone.modules.Main();
 	}
 
 	public final String name() {
-		return name;
+		return this.name;
 	}
 
 	public final String tooltip() {
-		return tooltip;
+		return this.tooltip;
+	}
+
+	final int getVersion() {
+		return this.instance == null ? -1 : this.instance.getVersion();
 	}
 }

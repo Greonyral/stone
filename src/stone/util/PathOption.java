@@ -70,15 +70,13 @@ public class PathOption extends Option {
 	 *            char, String, boolean, Option)
 	 */
 	public PathOption(final OptionContainer optionContainer,
-			final TaskPool taskPool, final String name,
-			final String toolTip, final String guiDescription,
-			char shortFlag, final String longFlag,
-			final PathOptionFileFilter fileFilter,
-			final int selectionMode, final String section,
-			final String key, final String defaultValue) {
+			final TaskPool taskPool, final String name, final String toolTip,
+			final String guiDescription, char shortFlag, final String longFlag,
+			final PathOptionFileFilter fileFilter, final int selectionMode,
+			final String section, final String key, final String defaultValue) {
 		super(optionContainer, name, toolTip, guiDescription, shortFlag,
 				longFlag, true, section, key, defaultValue);
-		filter = fileFilter;
+		this.filter = fileFilter;
 		this.optionContainer = optionContainer;
 		this.selectionMode = selectionMode;
 		this.taskPool = taskPool;
@@ -98,8 +96,7 @@ public class PathOption extends Option {
 			textField.setBackground(Color.WHITE);
 			textField.setText(getTooltip());
 		} else if (!valuePath.exists()) {
-			System.out.println(valuePath
-					+ " does not exist - deleting entry");
+			System.out.println(valuePath + " does not exist - deleting entry");
 			textField.setForeground(Color.BLACK);
 			textField.setBackground(Color.RED);
 			textField.setText(valuePath.toString());
@@ -135,8 +132,8 @@ public class PathOption extends Option {
 			@Override
 			public final void mouseReleased(final MouseEvent e) {
 				e.consume();
-				taskPool.addTask(new PathOptionTask(PathOption.this,
-						textField));
+				PathOption.this.taskPool.addTask(new PathOptionTask(
+						PathOption.this, textField));
 
 			}
 		});
@@ -203,9 +200,9 @@ public class PathOption extends Option {
 	}
 
 	private final String readBase() {
-		return optionContainer.getConfigValue(
-				stone.modules.Main.GLOBAL_SECTION,
-				stone.modules.Main.PATH_KEY, null);
+		return this.optionContainer.getConfigValue(
+				stone.modules.Main.GLOBAL_SECTION, stone.modules.Main.PATH_KEY,
+				null);
 	}
 
 	@Override
@@ -214,10 +211,9 @@ public class PathOption extends Option {
 	}
 
 	final void value(final File fileSelected) {
-		final File file = filter.value(fileSelected);
-		final Path path =
-				Path.getPath(file.toString().split(
-						"\\" + FileSystem.getFileSeparator()));
+		final File file = this.filter.value(fileSelected);
+		final Path path = Path.getPath(file.toString().split(
+				"\\" + FileSystem.getFileSeparator()));
 		final String base = readBase();
 		super.value(path.relativize(Path.getPath(base.split("/"))));
 	}

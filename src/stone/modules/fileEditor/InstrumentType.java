@@ -6,9 +6,9 @@ import java.util.Map;
 
 
 enum InstrumentType {
-	BAGPIPES("bagpipe"), CLARINET("clarinets"), COWBELL("cowbells",
-			"bells"), DRUMS("drum"), FLUTE("flutes"), HARP("harps"), HORN(
-			"horns"), LUTE("lutes"), MOOR_COWBELL, THEORBO, PIBGORN;
+	BAGPIPES("bagpipe"), CLARINET("clarinets"), COWBELL("cowbells", "bells"), DRUMS(
+			"drum"), FLUTE("flutes"), HARP("harps"), HORN("horns"), LUTE(
+			"lutes"), MOOR_COWBELL, THEORBO, PIBGORN;
 
 	private final String[] keys;
 	private static final Map<String, InstrumentType> map = buildMap();

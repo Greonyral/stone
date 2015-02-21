@@ -32,71 +32,76 @@ public final class CommitComparator implements Comparator<RevCommit> {
 		private long localTime, remoteTime;
 		private long diff, start, time;
 
-		CommitHistoryParser(final RevWalk walk,
-				final IOHandler io) {
+		CommitHistoryParser(final RevWalk walk, final IOHandler io) {
 			this.io = io;
 			this.walk = walk;
 		}
 
 		final RevCommit getParent(final RevCommit commitLocal,
-				final RevCommit commitRemote) throws MissingObjectException, IncorrectObjectTypeException, IOException {
-			local = commitLocal;
-			remote = commitRemote;
-			localTime = local.getCommitTime();
-			remoteTime = remote.getCommitTime();
-			diff = Math.abs(localTime - remoteTime);
-			io.startProgress("Merging " + Time.delta(diff * 1000), (int) diff);
-			start = Math.max(localTime, remoteTime);
-			while(true) {
-				if (localTime == remoteTime) {
-					if (remote.equals(local)) {
-						io.endProgress();
-						return remote;
+				final RevCommit commitRemote) throws MissingObjectException,
+				IncorrectObjectTypeException, IOException {
+			this.local = commitLocal;
+			this.remote = commitRemote;
+			this.localTime = this.local.getCommitTime();
+			this.remoteTime = this.remote.getCommitTime();
+			this.diff = Math.abs(this.localTime - this.remoteTime);
+			this.io.startProgress("Merging " + Time.delta(this.diff * 1000),
+					(int) this.diff);
+			this.start = Math.max(this.localTime, this.remoteTime);
+			while (true) {
+				if (this.localTime == this.remoteTime) {
+					if (this.remote.equals(this.local)) {
+						this.io.endProgress();
+						return this.remote;
 					}
-					
+
 				}
-				if (localTime > remoteTime) {
-					for (final RevCommit c : local.getParents()) {
-						walk.parseCommit(c);
-						localList.add(c);
+				if (this.localTime > this.remoteTime) {
+					for (final RevCommit c : this.local.getParents()) {
+						this.walk.parseCommit(c);
+						this.localList.add(c);
 					}
-					long timeBefore = localTime;
-					local = localList.pollLast();
-					localTime = local.getCommitTime();
-					if (start - localTime > diff) {
-						diff = start - localTime;
-						io.startProgress("Merging " + Time.delta(diff * 1000), (int) diff);
-						io.updateProgress((int) (start - timeBefore));
-						time = 0;
+					final long timeBefore = this.localTime;
+					this.local = this.localList.pollLast();
+					this.localTime = this.local.getCommitTime();
+					if ((this.start - this.localTime) > this.diff) {
+						this.diff = this.start - this.localTime;
+						this.io.startProgress(
+								"Merging " + Time.delta(this.diff * 1000),
+								(int) this.diff);
+						this.io.updateProgress((int) (this.start - timeBefore));
+						this.time = 0;
 					} else {
-						if (time > 0) {
-							io.updateProgress((int) (timeBefore - time));
+						if (this.time > 0) {
+							this.io.updateProgress((int) (timeBefore - this.time));
 						}
-						time = timeBefore;
+						this.time = timeBefore;
 					}
 				} else {
-					for (final RevCommit c : remote.getParents()) {
-						walk.parseCommit(c);
-						remoteList.add(c);
+					for (final RevCommit c : this.remote.getParents()) {
+						this.walk.parseCommit(c);
+						this.remoteList.add(c);
 					}
-					long timeBefore = remoteTime;
-					if (remoteList.isEmpty()) {
-						io.endProgress();
+					final long timeBefore = this.remoteTime;
+					if (this.remoteList.isEmpty()) {
+						this.io.endProgress();
 						Debug.print("rewritten history\n");
 						return null;
 					}
-					remote = remoteList.pollLast();
-					remoteTime = remote.getCommitTime();
-					if (start - remoteTime > diff) {
-						diff = start - remoteTime;
-						io.startProgress("Merging " + Time.delta(diff * 1000), (int) diff);
-						io.updateProgress((int) (start - timeBefore));
-						time = 0;
+					this.remote = this.remoteList.pollLast();
+					this.remoteTime = this.remote.getCommitTime();
+					if ((this.start - this.remoteTime) > this.diff) {
+						this.diff = this.start - this.remoteTime;
+						this.io.startProgress(
+								"Merging " + Time.delta(this.diff * 1000),
+								(int) this.diff);
+						this.io.updateProgress((int) (this.start - timeBefore));
+						this.time = 0;
 					} else {
-						if (time > 0) {
-							io.updateProgress((int) (time - timeBefore));
+						if (this.time > 0) {
+							this.io.updateProgress((int) (this.time - timeBefore));
 						}
-						time = timeBefore;
+						this.time = timeBefore;
 					}
 				}
 			}
@@ -105,15 +110,24 @@ public final class CommitComparator implements Comparator<RevCommit> {
 
 	private final static CommitComparator instance = new CommitComparator();
 
+	public final static CommitComparator init(final RevWalk walk,
+			final Git gitSession, final IOHandler io) {
+		return new CommitComparator(walk, gitSession, io);
+	}
+
+	public final static CommitComparator instance() {
+		return instance;
+	}
+
 	private final CommitHistoryParser chp;
 
 	private CommitComparator() {
-		chp = null;
+		this.chp = null;
 	}
 
 	private CommitComparator(final RevWalk walk, final Git gitSession,
 			final IOHandler io) {
-		chp = new CommitHistoryParser(walk, io);
+		this.chp = new CommitHistoryParser(walk, io);
 	}
 
 	/**
@@ -129,18 +143,10 @@ public final class CommitComparator implements Comparator<RevCommit> {
 		return delta;
 	}
 
-	public final static CommitComparator init(final RevWalk walk,
-			final Git gitSession, final IOHandler io) {
-		return new CommitComparator(walk, gitSession, io);
-	}
-
 	public final RevCommit getParent(final RevCommit commitLocal,
-			final RevCommit commitRemote) throws MissingObjectException, IncorrectObjectTypeException, IOException {
-		return chp.getParent(commitLocal, commitRemote);
-	}
-
-	public final static CommitComparator instance() {
-		return instance;
+			final RevCommit commitRemote) throws MissingObjectException,
+			IncorrectObjectTypeException, IOException {
+		return this.chp.getParent(commitLocal, commitRemote);
 	}
 
 }

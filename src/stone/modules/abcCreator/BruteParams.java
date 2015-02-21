@@ -24,8 +24,8 @@ import stone.io.IOHandler;
  */
 public class BruteParams<E> implements DndPluginCallerParams<E> {
 	/** Pitch with floating limits */
-	public static final BruteParams<Integer> PITCH = new BruteParams<>(
-			"Pitch", 0, 24, 12, true, true);
+	public static final BruteParams<Integer> PITCH = new BruteParams<>("Pitch",
+			0, 24, 12, true, true);
 	/** Compress with hard limits at 0.0 and 2.0 */
 	public static final BruteParams<Double> DYNAMIC = new BruteParams<>(
 			"Compress", 1.0, 1, 0.125, true, false);
@@ -37,8 +37,8 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 			"Volume", 0, -127, 127, 16, true, true);
 
 	/** Delay with hard limites */
-	public static final BruteParams<Integer> DELAY = new BruteParams<>(
-			"Delay", 0, 0, 32, 16, false, true);
+	public static final BruteParams<Integer> DELAY = new BruteParams<>("Delay",
+			0, 0, 32, 16, false, true);
 
 	public static final BruteParams<Integer> FADEOUT = new BruteParams<>(
 			"Fadeout", 0, 0, 512, 1, true, false);
@@ -76,8 +76,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 * @return an array containing all values
 	 */
 	public static final BruteParams<?>[] values() {
-		final BruteParams<?>[] values_ =
-				new BruteParams[BruteParams.values.length];
+		final BruteParams<?>[] values_ = new BruteParams[BruteParams.values.length];
 		System.arraycopy(BruteParams.values, 0, values_, 0, values_.length);
 		return values_;
 	}
@@ -120,8 +119,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 		for (int i = 0; i < fields.length; i++) {
 			try {
 				values_[i] = (BruteParams<?>) fields[i].get(null);
-			} catch (final IllegalArgumentException
-					| IllegalAccessException e) {
+			} catch (final IllegalArgumentException | IllegalAccessException e) {
 				e.printStackTrace();
 			}
 		}
@@ -136,19 +134,17 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 
 	private final Value<E> globalValue;
 
-	private final DoubleMap<DragObject<?, ?, ?>, DropTarget<?, ?, ?>, Value<E>> localValueMap =
-			new DoubleMap<>();
+	private final DoubleMap<DragObject<?, ?, ?>, DropTarget<?, ?, ?>, Value<E>> localValueMap = new DoubleMap<>();
 
 	@SuppressWarnings("unchecked")
 	private BruteParams(final String s, double initValue, double step,
 			double ticks, boolean global, boolean local) {
 		this.s = s;
-		globalValue =
-				(Value<E>) new ValueFloat((BruteParams<Double>) this,
-						initValue, step, ticks);
+		this.globalValue = (Value<E>) new ValueFloat(
+				(BruteParams<Double>) this, initValue, step, ticks);
 		this.local = local;
 		this.global = global;
-		defaultValue = (E) Double.valueOf(initValue);
+		this.defaultValue = (E) Double.valueOf(initValue);
 	}
 
 	/**
@@ -162,15 +158,14 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 * @param local
 	 */
 	@SuppressWarnings("unchecked")
-	private BruteParams(final String s, int initValue, int interval,
-			int ticks, boolean global, boolean local) {
+	private BruteParams(final String s, int initValue, int interval, int ticks,
+			boolean global, boolean local) {
 		this.s = s;
-		globalValue =
-				(Value<E>) new ValueInt((BruteParams<Integer>) this,
-						initValue, interval, ticks);
+		this.globalValue = (Value<E>) new ValueInt((BruteParams<Integer>) this,
+				initValue, interval, ticks);
 		this.local = local;
 		this.global = global;
-		defaultValue = (E) Integer.valueOf(initValue);
+		this.defaultValue = (E) Integer.valueOf(initValue);
 	}
 
 	/**
@@ -188,11 +183,10 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	private BruteParams(final String s, int initValue, int min, int max,
 			int ticks, boolean global, boolean local) {
 		this.s = s;
-		globalValue =
-				(Value<E>) new ValueInt((BruteParams<Integer>) this,
-						initValue, min, max, ticks);
+		this.globalValue = (Value<E>) new ValueInt((BruteParams<Integer>) this,
+				initValue, min, max, ticks);
 		this.local = local;
-		defaultValue = (E) Integer.valueOf(initValue);
+		this.defaultValue = (E) Integer.valueOf(initValue);
 		this.global = global;
 	}
 
@@ -201,7 +195,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 */
 	@Override
 	public final E defaultValue() {
-		return defaultValue;
+		return this.defaultValue;
 	}
 
 	/**
@@ -214,10 +208,10 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 		final JSlider slider = new JSlider();
 		final JLabel label = new JLabel();
 		panel.setLayout(new BorderLayout());
-		panel.add(new JLabel(s), BorderLayout.NORTH);
+		panel.add(new JLabel(this.s), BorderLayout.NORTH);
 		panel.add(slider);
 		panel.add(label, BorderLayout.SOUTH);
-		globalValue.display();
+		this.globalValue.display();
 	}
 
 	/**
@@ -230,15 +224,12 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 *            Container to display the DropTargetContainer
 	 */
 	@Override
-	public final
-			<C extends Container, D extends Container, T extends Container>
-			void display(final JPanel panel,
-					final DragObject<C, D, T> object,
-					final Iterator<DropTarget<C, D, T>> targets) {
+	public final <C extends Container, D extends Container, T extends Container> void display(
+			final JPanel panel, final DragObject<C, D, T> object,
+			final Iterator<DropTarget<C, D, T>> targets) {
 		panel.setLayout(new GridLayout(0, 1));
 		final Map<Integer, JPanel> mapPanel = new HashMap<>();
-		final Map<Integer, DropTarget<?, ?, ?>> mapTarget =
-				new HashMap<>();
+		final Map<Integer, DropTarget<?, ?, ?>> mapTarget = new HashMap<>();
 		for (int i = 0, id = 1; targets.hasNext(); i = id++) {
 			final DropTarget<C, D, T> target = targets.next();
 			final Value<E> value = getLocalValue0(object, target);
@@ -249,7 +240,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 		}
 		for (final Entry<Integer, JPanel> e : mapPanel.entrySet()) {
 			e.getValue().add(
-					new JLabel(s + "   "
+					new JLabel(this.s + "   "
 							+ mapTarget.get(e.getKey()).getName() + " "
 							+ e.getKey() + "/" + mapTarget.size()),
 					BorderLayout.NORTH);
@@ -270,10 +261,9 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 * @param abcTrack
 	 * @return The value set for given midiTrack and abcTrack.
 	 */
-	public final
-			<C extends Container, D extends Container, T extends Container>
-			E getLocalValue(final DragObject<C, D, T> midiTrack,
-					final DropTarget<C, D, T> abcTrack) {
+	public final <C extends Container, D extends Container, T extends Container> E getLocalValue(
+			final DragObject<C, D, T> midiTrack,
+			final DropTarget<C, D, T> abcTrack) {
 		final Value<E> localValue = getLocalValue0(midiTrack, abcTrack);
 		return localValue.value();
 	}
@@ -283,7 +273,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 * @param value
 	 */
 	public final void setGlobalValue(final E value) {
-		globalValue.value(value);
+		this.globalValue.value(value);
 	}
 
 	/**
@@ -298,10 +288,9 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 * @param target
 	 * @param value
 	 */
-	public final
-			<C extends Container, D extends Container, T extends Container>
-			void setLocalValue(final DragObject<C, D, T> object,
-					final DropTarget<C, D, T> target, final E value) {
+	public final <C extends Container, D extends Container, T extends Container> void setLocalValue(
+			final DragObject<C, D, T> object, final DropTarget<C, D, T> target,
+			final E value) {
 		getLocalValue0(object, target).value(value);
 	}
 
@@ -316,21 +305,20 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 * @param target
 	 * @param string
 	 */
-	public final
-			<C extends Container, D extends Container, T extends Container>
-			void setLocalValue(final DragObject<C, D, T> object,
-					final DropTarget<C, D, T> target, final String string) {
+	public final <C extends Container, D extends Container, T extends Container> void setLocalValue(
+			final DragObject<C, D, T> object, final DropTarget<C, D, T> target,
+			final String string) {
 		if (string == null) {
 			setLocalValue(object, target, this.defaultValue);
 		} else {
-			setLocalValue(object, target, globalValue.parse(string));
+			setLocalValue(object, target, this.globalValue.parse(string));
 		}
 	}
 
 	/** @return the key of <i>this</i> BruteParam */
 	@Override
 	public final String toString() {
-		return s;
+		return this.s;
 	}
 
 	/**
@@ -338,7 +326,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 */
 	@Override
 	public final E value() {
-		return globalValue.value();
+		return this.globalValue.value();
 	}
 
 	/**
@@ -348,7 +336,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 * @param io
 	 */
 	public final void value(final String value, final IOHandler io) {
-		if (!global) {
+		if (!this.global) {
 			io.handleException(ExceptionHandle.TERMINATE,
 					new IllegalAccessException());
 			return;
@@ -361,8 +349,8 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 			} else if ((comment >= 0) && (space < 0)) {
 				this.globalValue.value(value.substring(0, comment));
 			} else if ((comment >= 0) && (space >= 0)) {
-				this.globalValue.value(value.substring(0, Math.min(
-						comment, space)));
+				this.globalValue.value(value.substring(0,
+						Math.min(comment, space)));
 			} else {
 				this.globalValue.value(value);
 			}
@@ -371,16 +359,13 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 		}
 	}
 
-	private final
-			<C extends Container, D extends Container, T extends Container>
-			Value<E> getLocalValue0(final DragObject<C, D, T> object,
-					final DropTarget<C, D, T> target) {
-		final Value<E> localValue = localValueMap.get(object, target);
+	private final <C extends Container, D extends Container, T extends Container> Value<E> getLocalValue0(
+			final DragObject<C, D, T> object, final DropTarget<C, D, T> target) {
+		final Value<E> localValue = this.localValueMap.get(object, target);
 		if (localValue == null) {
-			final Value<E> localValueNew =
-					globalValue.localInstance(object, target, globalValue
-							.value());
-			localValueMap.put(object, target, localValueNew);
+			final Value<E> localValueNew = this.globalValue.localInstance(
+					object, target, this.globalValue.value());
+			this.localValueMap.put(object, target, localValueNew);
 			return localValueNew;
 		}
 		return localValue;

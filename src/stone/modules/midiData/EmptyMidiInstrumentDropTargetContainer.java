@@ -14,32 +14,31 @@ import stone.modules.abcCreator.DropTargetContainer;
 class EmptyMidiInstrumentDropTargetContainer implements
 		DropTargetContainer<JPanel, JPanel, JPanel> {
 
-	final EmptyMidiInstrumentDropTarget target =
-			new EmptyMidiInstrumentDropTarget(this);
+	final EmptyMidiInstrumentDropTarget target = new EmptyMidiInstrumentDropTarget(
+			this);
 	private final JPanel panel = new JPanel();
 
 	@Override
 	public final void clearTargets() {
-		for (final DragObject<JPanel, JPanel, JPanel> d : target.objects) {
+		for (final DragObject<JPanel, JPanel, JPanel> d : this.target.objects) {
 			d.clearTargets();
 		}
-		target.objects.clear();
+		this.target.objects.clear();
 	}
 
 	@Override
 	public final DropTarget<JPanel, JPanel, JPanel> createNewTarget() {
-		return target;
+		return this.target;
 	}
 
 	@Override
-	public final void delete(
-			final DropTarget<JPanel, JPanel, JPanel> dropTarget) {
+	public final void delete(final DropTarget<JPanel, JPanel, JPanel> dropTarget) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public final JPanel getDisplayableComponent() {
-		return panel;
+		return this.panel;
 	}
 
 	@Override
@@ -49,7 +48,7 @@ class EmptyMidiInstrumentDropTargetContainer implements
 
 	@Override
 	public final Iterator<DropTarget<JPanel, JPanel, JPanel>> iterator() {
-		if (target.objects.isEmpty()) {
+		if (this.target.objects.isEmpty()) {
 			return java.util.Collections.emptyIterator();
 		}
 		return new Iterator<DropTarget<JPanel, JPanel, JPanel>>() {
@@ -58,13 +57,13 @@ class EmptyMidiInstrumentDropTargetContainer implements
 
 			@Override
 			public final boolean hasNext() {
-				return hasNext;
+				return this.hasNext;
 			}
 
 			@Override
 			public final DropTarget<JPanel, JPanel, JPanel> next() {
-				hasNext = false;
-				return target;
+				this.hasNext = false;
+				return EmptyMidiInstrumentDropTargetContainer.this.target;
 			}
 
 			@Override
@@ -79,11 +78,10 @@ class EmptyMidiInstrumentDropTargetContainer implements
 	@Override
 	public Set<DropTarget<JPanel, JPanel, JPanel>> removeAllLinks(
 			final DragObject<JPanel, JPanel, JPanel> object) {
-		target.objects.remove(object);
-		if (target.objects.isEmpty()) {
-			final Set<DropTarget<JPanel, JPanel, JPanel>> s =
-					new HashSet<>();
-			s.add(target);
+		this.target.objects.remove(object);
+		if (this.target.objects.isEmpty()) {
+			final Set<DropTarget<JPanel, JPanel, JPanel>> s = new HashSet<>();
+			s.add(this.target);
 			return s;
 		}
 		return java.util.Collections.emptySet();
