@@ -5,9 +5,10 @@ import java.io.InputStream;
 
 public abstract class AbstractInputStream extends InputStream {
 
-	protected IOHandler io;
 	protected final byte[] _buffer;
 
+	protected IOHandler io;
+	
 	protected int _offset = 0;
 	protected int _length = -1;
 

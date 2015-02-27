@@ -2,6 +2,7 @@ package stone.modules;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -198,7 +199,7 @@ public class AbcCreator implements Module,
 
 	private static final PathOptionFileFilter INSTR_MAP_FILTER = new InstrumentMapFileFilter();
 
-	private final static int VERSION = 11;
+	private final static int VERSION = 12;
 
 	private static final FileFilter midiFilter = new MidiFileFilter();
 
@@ -863,6 +864,22 @@ public class AbcCreator implements Module,
 		return call(exe, CallType.EXE_WAIT, bruteDirectory);
 	}
 
+	private final void extract(final URL url) {
+		final String s = url.toString();
+		if (!s.startsWith("jar:")) {
+			this.initState.setFailed();
+			return;
+		}
+		try {
+			final JarFile jarFile = new JarFile(Path.getPath(url).toFile());
+			extract(jarFile, s.substring(s.indexOf("!") + 2));
+		} catch (final IOException e) {
+			e.printStackTrace();
+			this.initState.setFailed();
+		}
+
+	}
+
 	private final void extract(final JarFile jarFile, final String string)
 			throws IOException {
 		this.initState.startPhase(InitState.READ_JAR);
@@ -1247,11 +1264,17 @@ public class AbcCreator implements Module,
 				final Path bruteArchive2 = bruteArchive.getParent().resolve(
 						"..", "brute", bruteArchive.getFilename());
 				if (!bruteArchive2.exists()) {
-					System.err.println("Unable to find Brute\n" + bruteArchive
-							+ " does not exist.");
-					return false;
-				}
-				extract(bruteArchive2);
+					final URL bruteArchive3 = getClass().getClassLoader()
+							.getResource("BruTE.jar");
+					if (bruteArchive3 == null
+							&& !Path.getPath(bruteArchive3).exists()) {
+						System.err.println("Unable to find Brute\n"
+								+ bruteArchive + " does not exist.");
+						return false;
+					} else
+						extract(bruteArchive3);
+				} else
+					extract(bruteArchive2);
 			} else {
 				extract(bruteArchive);
 			}
@@ -1266,5 +1289,4 @@ public class AbcCreator implements Module,
 		}
 		return true;
 	}
-
 }

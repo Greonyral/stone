@@ -334,8 +334,6 @@ public final class Path implements Comparable<Path>, Externalizable {
 
 	private final Map<String, PathReference> successors = new TreeMap<>();
 
-	private File file = null;
-
 	private final String filename;
 
 	private final Path parent;
@@ -343,6 +341,8 @@ public final class Path implements Comparable<Path>, Externalizable {
 	private final String str;
 
 	private final String pathStr;
+
+	private File file = null;
 
 	/**
 	 * creates new path with parent != root
