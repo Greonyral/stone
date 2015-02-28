@@ -45,7 +45,7 @@ public class StartupContainer {
 			return clazz;
 		} catch (final ClassNotFoundException e) {
 			// Should never been thrown, but to make the compiler happy
-			e.printStackTrace();
+			// e.printStackTrace();
 		}
 		return null;
 	}

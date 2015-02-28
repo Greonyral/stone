@@ -1,6 +1,5 @@
 package stone;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,8 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
 import stone.modules.Main;
 import stone.util.FileSystem;
 import stone.util.Path;
@@ -195,7 +192,7 @@ public class ModuleLoader extends ClassLoader {
 
 		final Lookup found = find(name.split("\\."), ".class");
 		if (found == null) {
-			throw new ClassNotFoundException();
+			return null;
 		}
 
 		in = found.in;

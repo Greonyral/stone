@@ -60,6 +60,15 @@ public class IOHandler {
 
 	final MasterThread master;
 
+	private static Method getDestroyMethod() {
+		try {
+			return GUIInterface.class.getMethod("destroy");
+		} catch (final NoSuchMethodException | SecurityException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	/**
 	 * Creates a new IO-Handler
 	 * 
@@ -92,10 +101,14 @@ public class IOHandler {
 		this.guiReal = new GUI((GUI) sc.getIO().gui, this.master);
 		class GUIInvocationHandler implements InvocationHandler {
 
+			private final Method interruptMethod = getDestroyMethod();
+
+
 			@Override
 			public Object invoke(final Object proxy, final Method method,
 					final Object[] args) throws Throwable {
-				if (IOHandler.this.master.isInterrupted()) {
+				if (IOHandler.this.master.isInterrupted()
+						&& !method.equals(interruptMethod)) {
 					if (Thread.currentThread() != IOHandler.this.master) {
 						throw new InterruptedException();
 					}

@@ -16,7 +16,7 @@ public final class ModuleInfo {
 		if (clazz != null) {
 			try {
 				instance = clazz.getConstructor(sc.getClass()).newInstance(sc);
-			} catch (InstantiationException | IllegalAccessException
+			} catch (final InstantiationException | IllegalAccessException
 					| IllegalArgumentException | InvocationTargetException
 					| NoSuchMethodException | SecurityException e) {
 				e.printStackTrace();
