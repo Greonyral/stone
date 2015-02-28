@@ -75,7 +75,7 @@ modules/AbcCreator.jar: modules $(ABC_CLASSES) brute/BruTE.jar
 modules/SongbookUpdater.jar: modules $(SU_CLASSES)
 	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(SU_CLASSES_BASE)))))
 
-modules/FileEditor.jar: modules $(FE_CLASSES)
+modules/FileEditor.jar: modules $(FE_CLASSES) lib
 	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(FE_CLASSES_BASE)))))
 
 modules/VersionControl.jar: modules $(VC_CLASSES) lib
