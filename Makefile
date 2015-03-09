@@ -76,7 +76,7 @@ modules/SongbookUpdater.jar: modules $(SU_CLASSES)
 	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(SU_CLASSES_BASE)))))
 
 modules/FileEditor.jar: modules $(FE_CLASSES) lib
-	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(FE_CLASSES_BASE)))))
+	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(FE_CLASSES_BASE)))) -C lib org)
 
 modules/VersionControl.jar: modules $(VC_CLASSES) lib
 	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(VC_CLASSES_BASE)))) -C lib com -C lib org)
