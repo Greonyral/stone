@@ -199,7 +199,7 @@ public class AbcCreator implements Module,
 
 	private static final PathOptionFileFilter INSTR_MAP_FILTER = new InstrumentMapFileFilter();
 
-	private final static int VERSION = 12;
+	private final static int VERSION = 13;
 
 	private static final FileFilter midiFilter = new MidiFileFilter();
 

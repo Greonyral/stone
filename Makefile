@@ -3,7 +3,7 @@
 JAVAC=javac -g -cp $(BIN_DIR):lib -sourcepath src -d $(BIN_DIR)
 BIN_DIR=classes
 
-BRUTE_VERSION=19c
+BRUTE_VERSION=20b
 
 MAIN_SRC_FILES=Container Event Main MasterThread ModuleLoader \
  Config OptionSetup StartupContainer Task ThreadState ModuleInfo \
@@ -53,7 +53,7 @@ clean:
 	rm -rf $(BIN_DIR)
 
 purge:
-	rm -rf $(BIN_DIR) SToNe*.jar modules moduleInfo brute/BruTE.jar brute/19c
+	rm -rf $(BIN_DIR) SToNe*.jar modules moduleInfo brute/BruTE.jar brute/???
 
 modules:
 	mkdir -p modules
@@ -65,7 +65,7 @@ brute/$(BRUTE_VERSION): brute/$(BRUTE_VERSION).zip
 	unzip -d brute $<
 
 brute/BruTE.jar: brute/$(BRUTE_VERSION)
-	jar cfM0 $@ $(patsubst %,-C brute/19c %,drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe)
+	jar cfM0 $@ $(patsubst %,-C brute/$(BRUTE_VERSION) %,drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe)
 	
 
 #jar-archives
