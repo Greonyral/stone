@@ -87,7 +87,7 @@ final class MainConfigWriter implements Runnable {
 		}
 
 		try {
-			out = new java.io.FileOutputStream(this.main.homeSetting.toFile());
+			out = new java.io.FileOutputStream(Main.homeSetting.toFile());
 			try {
 				out.write(sb.toString().getBytes());
 				out.flush();
@@ -95,7 +95,7 @@ final class MainConfigWriter implements Runnable {
 				out.close();
 			}
 		} catch (final IOException e) {
-			this.main.homeSetting.delete();
+			Main.homeSetting.delete();
 		}
 	}
 }

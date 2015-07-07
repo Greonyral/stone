@@ -127,16 +127,17 @@ public class SongChangeData {
 		}
 		return indicesS;
 	}
-
+	
 	final static Set<Instrument> parse(final String string) {
 		final Set<Instrument> ret = new HashSet<>();
 		final stone.util.StringBuilder part = new stone.util.StringBuilder(
 				string);
 		final stone.util.StringBuilder tmp = new stone.util.StringBuilder();
-		final Set<Integer> numbers = new HashSet<>();
+		final Set<Id> numbers = new HashSet<>();
 
 		InstrumentType t = null;
 		boolean tmpContainsNumber = false;
+		int tmpContainsLetter = 0;
 
 		do {
 			final char c;
@@ -150,7 +151,8 @@ public class SongChangeData {
 			case ' ':
 				if (!tmp.isEmpty()) {
 					if (tmpContainsNumber) {
-						numbers.add(Integer.parseInt(tmp.toString()));
+						numbers.add(new Id(tmp.toString(), tmpContainsLetter));
+						tmpContainsLetter = 0;
 					} else {
 						if (t != null) {
 							ret.add(new Instrument(t, numbers));
@@ -160,6 +162,25 @@ public class SongChangeData {
 					}
 					tmp.clear();
 				}
+				break;
+			case 'a':
+			case 'b':
+			case 'c':
+			case 'd':
+				if (!tmpContainsNumber || tmpContainsLetter != 0) {
+					// default case
+					tmpContainsLetter = 0;
+					if (!tmp.isEmpty()) {
+						if (tmpContainsNumber) {
+							numbers.add(new Id(tmp.toString(), 0));
+							tmp.clear();
+						}
+					}
+					tmpContainsNumber = false;
+					tmp.appendLast(c);
+					break;
+				}
+				tmpContainsLetter = c;
 				break;
 			case '0':
 			case '1':
@@ -185,7 +206,7 @@ public class SongChangeData {
 			default:
 				if (!tmp.isEmpty()) {
 					if (tmpContainsNumber) {
-						numbers.add(Integer.parseInt(tmp.toString()));
+						numbers.add(new Id(tmp.toString(), tmpContainsLetter));
 						tmp.clear();
 					}
 				}
@@ -197,7 +218,7 @@ public class SongChangeData {
 		} while (!part.isEmpty());
 		if (!tmp.isEmpty()) {
 			if (tmpContainsNumber) {
-				numbers.add(Integer.parseInt(tmp.toString()));
+				numbers.add(new Id(tmp.toString(), tmpContainsLetter));
 			} else {
 				if (t != null) {
 					ret.add(new Instrument(t, numbers));
@@ -222,7 +243,7 @@ public class SongChangeData {
 
 	private final Set<Integer> total = new HashSet<>();
 
-	private final String[] mod = new String[2];
+	private final String[] mod = new String[3];
 	private final String[] date;
 
 	private final Path file;
@@ -260,6 +281,28 @@ public class SongChangeData {
 			title = extractModification(title);
 			title = title.trim();
 			if (!title.isEmpty()) {
+				if (title.startsWith("<")) {
+					if (!title.endsWith(">")) {
+						// resolving <title> instrument] on couple of Frie's
+						// songs
+						final int i = title.lastIndexOf(' ');
+						final String tempTitle = title.substring(0, i);
+						if (tempTitle.endsWith(">")) {
+							final String tempTitleBefore = "["
+									+ title.substring(i);
+							final String tempTitleAfter = extractInstrument(
+									titleEntry.getKey(), tempTitleBefore);
+							if (tempTitleAfter != tempTitleBefore)
+								if (tempTitleAfter.isEmpty())
+									title = tempTitle;
+								else
+									title = tempTitle + " " + tempTitleAfter;
+						}
+					}
+					if (title.endsWith(">")) {
+						title = title.substring(1, title.length() - 1);
+					}
+				}
 				this.titles.put(titleEntry.getKey(), title);
 			}
 			final Integer key = titleEntry.getKey();
@@ -560,7 +603,7 @@ public class SongChangeData {
 
 
 	private final String extractDuration(final Integer i, final String title) {
-		final int startDuration = title.indexOf("(");
+		final int startDuration = title.lastIndexOf("(");
 		if (startDuration >= 0) {
 			final int end = title.indexOf(")", startDuration) + 1;
 			if (end > 0) {
@@ -808,6 +851,64 @@ public class SongChangeData {
 				}
 			}
 		}
+		// Frie's scheme month-day-year
+		{
+			int first = title.indexOf("-");
+			while (first > 0) {
+				int second = title.indexOf('-', first + 1);
+				final String titlew;
+				if (second < 0) {
+					titlew = title + "-" + date[3].substring(2);
+					second = title.length();
+				} else
+					titlew = title;
+				if (second > 0) {
+					int start = titlew.lastIndexOf(' ', first);
+					if (start < 0)
+						start = 0;
+					final String dayString = titlew
+							.substring(first + 1, second);
+					final String yearString = titlew.substring(second + 1);
+					final String monthString = titlew.substring(start + 1,
+							first);
+					boolean valid = false;
+					try {
+						Integer.parseInt(yearString);
+						Integer.parseInt(dayString);
+						try {
+							Integer.parseInt(monthString);
+							valid = true;
+						} catch (final Exception e) {
+							for (final String shortMonth : Time
+									.getShortMonthNames()) {
+								if (monthString.equals(shortMonth)) {
+									valid = true;
+									break;
+								}
+							}
+						}
+					} catch (final Exception e) {
+
+					}
+					if (valid) {
+						this.mod[2] = yearString;
+						this.mod[1] = dayString;
+						this.mod[0] = monthString;
+						final int end = second + yearString.length() + 1;
+						if (end >= title.length()) {
+							return title.substring(0, start);
+						} else if (start <= 1) {
+							return titlew.substring(end);
+						} else {
+							return titlew.substring(0, start)
+									+ titlew.substring(end);
+						}
+					}
+				}
+				first = title.indexOf('-', first + 1);
+			}
+
+		}
 		return title;
 	}
 
@@ -858,7 +959,9 @@ public class SongChangeData {
 				this.mod[0] = month;
 				this.mod[1] = day;
 			}
-			scheme.mod(this.mod[0] + " " + this.mod[1]);
+			if (this.mod[2] == null)
+				this.mod[2] = this.date[3];
+			scheme.mod(this.mod[0],this.mod[1],this.mod[2]);
 		}
 		if (scheme.needsDuration()) {
 			if (this.duration.size() > 1) {

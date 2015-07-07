@@ -10,6 +10,7 @@ import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
@@ -326,6 +327,20 @@ public class GUI implements GUIInterface {
 		final ArrayList<StringOption> so = new ArrayList<>();
 		final ArrayList<PathOption> po = new ArrayList<>();
 		final ArrayList<MaskedStringOption> mo = new ArrayList<>();
+		final KeyEventHandler keh = new KeyEventHandler() {
+
+			@Override
+			public void handleKeyEvent(int event) {
+				switch (event) {
+				case KeyEvent.VK_ENTER:
+					synchronized (Button.class) {
+						GUI.this.pressed = Button.OK;
+						Button.class.notifyAll();
+					}
+				}
+			}
+
+		};
 
 		for (final Option o : options) {
 			if (o.isBoolean()) {
@@ -360,16 +375,16 @@ public class GUI implements GUIInterface {
 		panelText.add(panelMasked, BorderLayout.SOUTH);
 
 		for (final BooleanOption o : bo) {
-			o.displayWithGUI(panelBoolean, this);
+			o.displayWithGUI(panelBoolean, this, keh);
 		}
 		for (final StringOption o : so) {
-			o.displayWithGUI(panelString, this);
+			o.displayWithGUI(panelString, this, keh);
 		}
 		for (final MaskedStringOption o : mo) {
-			o.displayWithGUI(panelMasked, this);
+			o.displayWithGUI(panelMasked, this, keh);
 		}
 		for (final PathOption o : po) {
-			o.displayWithGUI(panelPath, this);
+			o.displayWithGUI(panelPath, this, keh);
 		}
 
 		this.wait.setText("Settings");
@@ -667,7 +682,6 @@ public class GUI implements GUIInterface {
 					destroy();
 				}
 			}
-			revalidate(true, false);
 		} catch (final InterruptedException e) {
 			this.master.interrupt();
 		}

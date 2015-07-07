@@ -1,0 +1,21 @@
+#! /bin/bash
+
+jarFlags=$1
+target=$2
+files=$3
+files_a=($3)
+
+trap "rm -f $target; exit 127" SIGINT
+
+echo -en "$target \033[33mbusy\033[0m"
+printf "\r"
+jar $jarFlags $target ${files[@]} 2>/dev/null
+success=$?
+if (( $success != 0 )) ; then
+	echo -e "$target \033[31mfailed\033[0m"
+	echo "jar $jarFlags $target ${files[@]}"
+	rm -f $target
+	exit $success
+fi
+echo -e "$target \033[32mdone\033[0m"
+exit $success

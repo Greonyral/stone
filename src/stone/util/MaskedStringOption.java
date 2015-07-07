@@ -13,6 +13,8 @@ import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import stone.io.KeyEventHandler;
+
 
 /**
  * An Option with ability to mask the value with asterisks
@@ -68,7 +70,7 @@ public final class MaskedStringOption extends Option {
 
 	/** */
 	@Override
-	public final void display(final JPanel panel) {
+	public final void display(final JPanel panel, final KeyEventHandler key) {
 		final JPanel mainPanel = new JPanel();
 		final JPanel buttonPanel = new JPanel();
 		final JTextField textField = new JTextField();
@@ -104,7 +106,10 @@ public final class MaskedStringOption extends Option {
 				if (this.cursor[1] == this.cursor[2]) {
 					this.cursor[0] = textField.getCaretPosition();
 				}
-				MaskedStringOption.this.content.handleEvent(e, this.cursor);
+				final int keyEvent = MaskedStringOption.this.content
+						.handleEvent(e, this.cursor);
+				if (keyEvent != 0)
+					key.handleKeyEvent(keyEvent);
 				printValue(textField);
 				if (this.cursor[1] != this.cursor[2]) {
 					textField.setSelectionStart(this.cursor[1]);

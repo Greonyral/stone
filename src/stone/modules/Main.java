@@ -27,7 +27,7 @@ public class Main implements Module {
 	private static final int MAX_LENGTH_INFO = 80;
 
 
-	private static final int VERSION = 20;
+	private static final int VERSION = 21;
 
 	/**
 	 * The name to be used for naming the config-file and the title.
@@ -166,7 +166,11 @@ public class Main implements Module {
 	 * The users homeDir
 	 */
 	public final Path homeDir = FileSystem.getBase();
-	final Path homeSetting = this.homeDir.resolve(".SToNe");
+	public static final Path homeSetting = StartupContainer
+			.getDatadirectory()
+			.resolve(
+					FileSystem.type == FileSystem.OSType.WINDOWS ? "launch.cfg.txt"
+							: "launch.cfg");
 
 	TaskPool taskPool;
 
@@ -253,10 +257,10 @@ public class Main implements Module {
 	 */
 	@Override
 	public final void repair() {
-		if (this.homeSetting.exists()) {
-			final boolean success = this.homeSetting.delete();
+		if (Main.homeSetting.exists()) {
+			final boolean success = Main.homeSetting.delete();
 			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
-					this.homeSetting.toString(), success ? "" : " failed");
+					Main.homeSetting.toString(), success ? "" : " failed");
 		}
 	}
 
@@ -284,49 +288,52 @@ public class Main implements Module {
 		if (io == null) {
 			return;
 		}
+
 		final Runnable workerRun = this.taskPool.runMaster();
+
 		this.taskPool.addTask(new Runnable() {
 
 			@Override
 			public void run() {
-				try {
-					sc.finishInit(flags); // sync barrier 1
-					final InputStream in = io.openIn(
-							Main.this.homeSetting.toFile(), FileSystem.UTF8);
-					final StringBuilder sb = new StringBuilder();
-					String section = null;
+				if (Main.homeSetting.exists())
 					try {
-						while (true) {
-							final int read = in.read();
-							if (read < 0) {
-								parseConfig(sb, section);
-								break;
+						sc.finishInit(flags); // sync barrier 1
+						final InputStream in = io.openIn(
+								Main.homeSetting.toFile(), FileSystem.UTF8);
+						final StringBuilder sb = new StringBuilder();
+						String section = null;
+						try {
+							while (true) {
+								final int read = in.read();
+								if (read < 0) {
+									parseConfig(sb, section);
+									break;
+								}
+								final char c = (char) read;
+								if ((c == '\r') || (c == '\t')) {
+									sb.append(' ');
+								} else if (c == '\n') {
+									section = parseConfig(sb, section);
+								} else {
+									sb.append(c);
+								}
 							}
-							final char c = (char) read;
-							if ((c == '\r') || (c == '\t')) {
-								sb.append(' ');
-							} else if (c == '\n') {
-								section = parseConfig(sb, section);
-							} else {
-								sb.append(c);
-							}
+						} catch (final IOException e) {
+							e.printStackTrace();
 						}
-					} catch (final IOException e) {
-						e.printStackTrace();
+						io.close(in);
+						if (sb.length() != 0) {
+							System.out.println("error parsing config");
+							sc.getMaster().interrupt();
+						} else {
+							sc.parseDone(); // sync barrier 2
+						}
+					} catch (final Exception e) {
+						Main.homeSetting.delete();
+						Main.this.taskPool.getMaster().interrupt();
+						io.close();
+						throw e;
 					}
-					io.close(in);
-					if (sb.length() != 0) {
-						System.out.println("error parsing config");
-						sc.getMaster().interrupt();
-					} else {
-						sc.parseDone(); // sync barrier 2
-					}
-				} catch (final Exception e) {
-					Main.this.homeSetting.delete();
-					Main.this.taskPool.getMaster().interrupt();
-					io.close();
-					throw e;
-				}
 			}
 
 		});

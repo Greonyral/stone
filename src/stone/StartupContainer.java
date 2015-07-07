@@ -8,11 +8,11 @@ import java.util.Map;
 import stone.io.IOHandler;
 import stone.modules.Main;
 import stone.modules.Module;
+import stone.util.FileSystem;
 import stone.util.Flag;
 import stone.util.OptionContainer;
 import stone.util.Path;
 import stone.util.TaskPool;
-
 
 /**
  * A central object holding every object needed for initialization
@@ -68,10 +68,12 @@ public class StartupContainer {
 
 	private final Map<String, Container> containerMap = new HashMap<>();
 
+
 	private int wait = 2;
 
 	private static final ClassLoader loader = StartupContainer.class
 			.getClassLoader();
+	private final static Path dataDirectory = Path.getDataDirectory().resolve(FileSystem.type == FileSystem.OSType.UNIX ? ".SToNe" : "SToNe");
 
 	private StartupContainer() {
 		try {
@@ -265,5 +267,23 @@ public class StartupContainer {
 			}
 		}
 		return params;
+	}
+
+	public final static Path getDatadirectory() {
+		return dataDirectory;
+	}
+
+	public final static void registerDownloadedModule(
+			final Path downloadedArchive, final String moduleName) {
+		if (moduleName.startsWith("Main"))
+			registerDownloadedModule(downloadedArchive, "SToNe");
+		else {
+			final Path target = dataDirectory.resolve(moduleName + ".jar");
+			downloadedArchive.renameTo(target);
+		}
+	}
+
+	public Object args() {
+		return flags.getArgs();
 	}
 }

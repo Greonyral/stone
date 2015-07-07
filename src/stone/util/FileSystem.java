@@ -17,7 +17,7 @@ public abstract class FileSystem {
 		/**
 		 * Any windows version between Windows XP and Windows 8
 		 */
-		WINDOWS("\\", "\r\n"),
+		WINDOWS("\\", "\r\n", "%appdata%"),
 		// /**
 		// * Any unix indicating itself as linux kernel
 		// */
@@ -25,19 +25,20 @@ public abstract class FileSystem {
 		/**
 		 * Any unix system, which is not sub-classified
 		 */
-		UNIX("/", "\n"),
+		UNIX("/", "\n", "~"),
 		/**
 		 * Any system not classified
 		 */
-		UNKNOWN(null, null);
+		UNKNOWN(null, null, null);
 
-		String subtype;
+		private String subtype;
 
-		private final String sepLine, sepFile;
+		private final String sepLine, sepFile, dataDirectory;
 
-		OSType(final String sepFile, final String sepLine) {
+		OSType(final String sepFile, final String sepLine, final String dataDirectory) {
 			this.sepLine = sepLine;
 			this.sepFile = sepFile;
+			this.dataDirectory = dataDirectory;
 		}
 
 		final String getFileSeparator() {
@@ -55,6 +56,14 @@ public abstract class FileSystem {
 		final OSType setSubtype(final String substring) {
 			this.subtype = substring;
 			return this;
+		}
+
+		/** 
+		 * 
+		 * @return the path of the directory containing additional data
+		 */
+		final String getDataDirectory() {
+			return this.dataDirectory;
 		}
 	}
 
@@ -97,6 +106,10 @@ public abstract class FileSystem {
 	 */
 	public final static String getLineSeparator() {
 		return FileSystem.type.getLineSeparator();
+	}
+	
+	public final static String getDataDirectory() {
+		return FileSystem.type.getDataDirectory();
 	}
 
 	private final static FileSystem createInstance() {

@@ -69,6 +69,10 @@ public final class Path implements Comparable<Path>, Externalizable {
 				p = p.getRootMapPathFunc(name[idx]);
 			}
 			return p;
+		} else if (FileSystem.type == FileSystem.OSType.WINDOWS && base.startsWith("%") && base.endsWith("%")) {
+			final Map<String, String> env = System.getenv();
+			final String path = env.get(base.substring(1, base.length() - 1).toUpperCase());
+			return getPath(path.split("\\" + FileSystem.getFileSeparator()));
 		} else {
 			p = Path.rootMap.get(base);
 		}
@@ -639,13 +643,15 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @see File#renameTo(File)
 	 */
 	public final boolean renameTo(final Path pathNew) {
+		if (pathNew == this)
+			return false;
 		if (!pathNew.getParent().exists()) {
 			if (!pathNew.getParent().toFile().mkdirs()) {
 				return false;
 			}
 		} else if (pathNew.exists()) {
 			if (!pathNew.toFile().delete()) {
-				System.err.println("Failed to delte existing file");
+				Debug.print("Failed to delte existing file %s\n", pathNew.toString());
 				if (toFile().isFile() && pathNew.toFile().isFile()) {
 					try {
 						System.err.print("Fall back: overwrite ");
@@ -666,7 +672,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 						return false;
 					}
 				}
-				System.err.println("succeeded");
+				Debug.print("succeeded\n");
 				return true;
 			}
 		}
@@ -853,5 +859,9 @@ public final class Path implements Comparable<Path>, Externalizable {
 				Path.reusableHashes.push(Integer.valueOf(this.hash));
 			}
 		}
+	}
+
+	public final static Path getDataDirectory() {
+		return Path.getPath(FileSystem.getDataDirectory().split("\\" +  FileSystem.getFileSeparator()));
 	}
 }

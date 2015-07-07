@@ -532,17 +532,22 @@ public class StringBuilder {
 
 	}
 
-	final void handleEvent(final KeyEvent e, int[] cursor) {
+	final int handleEvent(final KeyEvent e, int[] cursor) {
 		if (cursor[0] > length()) {
 			cursor[0] = length();
 		}
 		if (e.isControlDown()) {
 			if (handleControl(e.getKeyCode(), cursor, e.isAltDown())) {
-				return;
+				return 0;
 			}
 		}
 		final int c = e.getKeyCode();
 		switch (c) {
+		case KeyEvent.VK_ENTER:
+			return c;
+		case KeyEvent.VK_ESCAPE:
+			cursor[2] = cursor[0] = cursor[1];
+			return 0;
 		case KeyEvent.VK_HOME:
 			if (e.isShiftDown()) {
 				cursor[1] = 0;
@@ -550,7 +555,7 @@ public class StringBuilder {
 				cursor[0] = 0;
 				cursor[2] = cursor[1] = cursor[0];
 			}
-			return;
+			return 0;
 		case KeyEvent.VK_END:
 			if (e.isShiftDown()) {
 				cursor[2] = length();
@@ -558,7 +563,7 @@ public class StringBuilder {
 				cursor[0] = length();
 				cursor[2] = cursor[1] = cursor[0];
 			}
-			return;
+			return 0;
 		case KeyEvent.VK_LEFT:
 			if (e.isShiftDown()) {
 				if (cursor[1] > 0) {
@@ -570,7 +575,7 @@ public class StringBuilder {
 				}
 				cursor[2] = cursor[1] = cursor[0];
 			}
-			return;
+			return 0;
 		case KeyEvent.VK_RIGHT:
 			if (e.isShiftDown()) {
 				if (cursor[2] < length()) {
@@ -582,26 +587,27 @@ public class StringBuilder {
 				}
 				cursor[2] = cursor[1] = cursor[0];
 			}
-			return;
+			return 0;
 		case KeyEvent.VK_BACK_SPACE:
 			if ((cursor[1] == cursor[2]) && (cursor[0] == 0)) {
-				return;
+				return 0;
 			}
 			--cursor[0];
 			remove(cursor);
 			if (length() < cursor[0]) {
 				++cursor[0];
 			}
-			return;
+			return 0;
 		case KeyEvent.VK_DELETE:
 			remove(cursor);
-			return;
+			return 0;
 		}
 		final char key = e.getKeyChar();
 		if (key == KeyEvent.CHAR_UNDEFINED) {
-			return;
+			return 0;
 		}
 		insert(key, cursor);
+		return 0;
 	}
 
 	final void replace(int pos, int len, final String string) {

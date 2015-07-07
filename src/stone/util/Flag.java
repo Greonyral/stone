@@ -37,6 +37,7 @@ public class Flag {
 
 	private String[] args;
 	private String unknownOption;
+	private boolean dirty = true;
 
 	private final Set<String> enabledFlags = new HashSet<>();
 	private final Map<String, String> help = new HashMap<>();
@@ -83,7 +84,8 @@ public class Flag {
 	 * @return <i>true</i> if <i>flagId</i> is enabled
 	 */
 	public final boolean isEnabled(final String flagId) {
-		parse();
+		if (dirty)
+			parse();
 		return this.enabledFlags.contains(flagId);
 
 	}
@@ -103,7 +105,9 @@ public class Flag {
 	}
 
 	public final boolean parseWOError() {
-		return parse();
+		if (dirty)
+			return parse();
+		return unknownOption == null;
 	}
 
 	/**
@@ -176,6 +180,7 @@ public class Flag {
 	 */
 	public final void registerOption(final String flagId, final String tooltip,
 			char shortFlag, final String longFlag, boolean argExpected) {
+		dirty = true;
 		if (shortFlag != Flag.NoShortFlag) {
 			this.shortToId.put((int) shortFlag, flagId);
 		}
@@ -222,9 +227,12 @@ public class Flag {
 	}
 
 	private final boolean parse() {
-		if ((this.args == null) && (this.unknownOption == null)) {
-			return true;
+		boolean missingPrefix = false;
+		final Set<String> pendingFlags = new HashSet<>();
+		if (!dirty || (this.args == null) && (this.unknownOption == null)) {
+			return this.unknownOption == null;
 		}
+		dirty = false;
 		for (int i = 0, ci = -1; i < this.args.length; i++) {
 			final String id;
 			if ((ci < 0) && this.args[i].startsWith("--")) {
@@ -235,21 +243,52 @@ public class Flag {
 			} else {
 				final char c = this.args[i].charAt(++ci);
 				id = this.shortToId.get((int) c);
+				missingPrefix = true;
 			}
 			if (id == null) {
+				if (missingPrefix) {
+					// disable all flags parsed since missingPrefix-flag has
+					// been enabled
+
+					pendingFlags.clear();
+					missingPrefix = false;
+				}
 				if (this.unknownOption == null) {
 					this.unknownOption = this.args[i];
 				}
 				ci = -1;
+				missingPrefix = false;
 				continue;
 			}
 			final String value;
-			if ((this.state.get(id) & Flag.PRIMITIVE) == 0) {
-				if (this.args[i].length() < (ci + 1)) {
+			final Integer state = this.state.get(id);
+			if (state == null) {
+				if (missingPrefix) {
+					// disable all flags parsed since missingPrefix-flag has
+					// been enabled
+					pendingFlags.clear();
+					missingPrefix = false;
+				}
+				if (this.unknownOption == null) {
+					this.unknownOption = this.args[i];
+				}
+				ci = -1;
+				missingPrefix = false;
+				continue;
+			} else if ((state & Flag.PRIMITIVE) == 0) {
+				if ((this.args[i].length() < (ci + 1))
+						|| (i + 1 == args.length)) {
+					if (missingPrefix) {
+						// disable all flags parsed since missingPrefix-flag has
+						// been enabled
+						pendingFlags.clear();
+						missingPrefix = false;
+					}
 					if (this.unknownOption == null) {
 						this.unknownOption = this.args[i];
 					}
 					ci = -1;
+					missingPrefix = false;
 					continue;
 				}
 				value = this.args[++i];
@@ -257,11 +296,17 @@ public class Flag {
 			} else {
 				value = null;
 			}
-			this.enabledFlags.add(id);
+			if (missingPrefix)
+				pendingFlags.add(id);
+			else
+				this.enabledFlags.add(id);
 			this.values.put(id, value);
 			if (ci >= 0) {
 				if ((ci + 1) == this.args[i].length()) {
 					ci = -1;
+					this.enabledFlags.addAll(pendingFlags);
+					pendingFlags.clear();
+					missingPrefix = false;
 				} else {
 					i--;
 				}
@@ -272,5 +317,9 @@ public class Flag {
 			return true;
 		}
 		return false;
+	}
+
+	public final String[] getArgs() {
+		return args;
 	}
 }

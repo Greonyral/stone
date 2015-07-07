@@ -3,7 +3,6 @@ package stone;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
@@ -19,9 +18,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
-import java.util.zip.ZipEntry;
-
 import stone.io.ExceptionHandle;
 import stone.io.IOHandler;
 import stone.io.OutputStream;
@@ -126,6 +122,20 @@ public class MasterThread extends Thread {
 	 * @param taskPool
 	 */
 	public MasterThread(final StartupContainer os, final TaskPool taskPool) {
+		final Path dataDirectory = StartupContainer.getDatadirectory();
+		if (dataDirectory.exists() && dataDirectory.toFile().isFile()) {
+			// old file on unix
+			// dataDirectory == ~/.SToNe -> rename indirectly
+			final Path tmp = dataDirectory.getParent().resolve(".SToNe.tmp");
+			dataDirectory.renameTo(tmp);
+			dataDirectory.toFile().mkdir();
+			tmp.renameTo(Main.homeSetting);
+		} else if (Path.getPath("~", ".SToNe").exists() && dataDirectory.toFile().isFile()) {
+			// old file on windows
+			// dataDirectory == %appdata% != ~/.SToNe -> rename directly
+			dataDirectory.toFile().mkdir();
+			Path.getPath("~", ".SToNe").renameTo(Main.homeSetting);
+		}
 		this.sc = os;
 		os.setMaster(this);
 		this.taskPool = taskPool;
@@ -207,6 +217,7 @@ public class MasterThread extends Thread {
 				e.printStackTrace();
 			}
 		}
+		
 		this.io.endProgress();
 		this.io.startProgress("Checking installed java", -1);
 		try {
@@ -249,6 +260,12 @@ public class MasterThread extends Thread {
 			}
 			checkAvailibility(moduleSelection);
 			if (isInterrupted()) {
+				return;
+			}
+			if (!this.sc.flags.parseWOError()) {
+				System.err.println(this.sc.flags.unknownOption() + "\n"
+						+ this.sc.flags.printHelp());
+				die(null);
 				return;
 			}
 			final ArrayDeque<Option> options = new ArrayDeque<>();
@@ -327,9 +344,6 @@ public class MasterThread extends Thread {
 			System.out.printf("%s %2d %2d\n", info.name, info.getVersion(),
 					versionNew);
 			return versionNew > info.getVersion();
-		} catch (final MalformedURLException e) {
-			e.printStackTrace();
-			return false;
 		} catch (final IOException e) {
 			if (e.getClass() == java.net.UnknownHostException.class) {
 				if (this.suppressUnknownHost) {
@@ -343,6 +357,9 @@ public class MasterThread extends Thread {
 			}
 			this.io.printError("Failed to contact github to check if module\n"
 					+ info.name + "\n is up to date", false);
+		} catch (final Exception e) {
+			e.printStackTrace();
+			return false;
 		}
 		return false;
 	}
@@ -358,7 +375,7 @@ public class MasterThread extends Thread {
 					"Update complete",
 					"The update completed successfully.\nThe program will restart now.",
 					true);
-			interrupt();
+			interrupt(); // force shutdown
 			this.io.close();
 			if (isFile) {
 				path.renameTo(this.wd);
@@ -374,7 +391,7 @@ public class MasterThread extends Thread {
 						final Class<?> mainClass = ModuleLoader.createLoader()
 								.loadClass(stone.Main.class.getCanonicalName());
 						mainClass.getMethod("main", String[].class).invoke(
-								null, MasterThread.this.sc.flags());
+								null, MasterThread.this.sc.args());
 					} catch (final IllegalAccessException
 							| IllegalArgumentException
 							| InvocationTargetException | NoSuchMethodException
@@ -433,7 +450,10 @@ public class MasterThread extends Thread {
 					this.io.updateProgress(read);
 				}
 				this.io.close(out);
-				unpackModule(target);
+
+				// place downloaded module at the location where the module
+				// loader will find it
+				StartupContainer.registerDownloadedModule(target, module);
 			} finally {
 				in.close();
 				this.io.close(out);
@@ -468,11 +488,7 @@ public class MasterThread extends Thread {
 		if (isInterrupted()) {
 			return null;
 		}
-		if (!this.sc.flags.parseWOError()) {
-			System.err.println(this.sc.flags.unknownOption() + "\n"
-					+ this.sc.flags.printHelp());
-			return null;
-		}
+		this.sc.flags.parseWOError();
 		if (this.sc.flags.isEnabled(stone.Main.HELP_ID)) {
 			System.out.println(this.sc.flags.printHelp());
 			return null;
@@ -482,12 +498,14 @@ public class MasterThread extends Thread {
 			return null;
 		}
 		this.sc.getOptionContainer().setValuesByParsedFlags();
+		final List<String> modules;
 		try {
-			return this.io.selectModules(this.possibleModules);
+			modules = this.io.selectModules(this.possibleModules);
 		} catch (final InterruptedException e1) {
 			// dead code
 			return null;
 		}
+		return modules;
 	}
 
 	private final void loadModules() {
@@ -509,86 +527,29 @@ public class MasterThread extends Thread {
 		if (isInterrupted()) {
 			return null;
 		}
-		if (this.sc.jar) {
-			final JarFile jar = new JarFile(this.wd.toFile());
-			this.io.startProgress("Unpacking running archive", jar.size());
-			final Enumeration<JarEntry> entries = jar.entries();
-			while (entries.hasMoreElements()) {
-				if (isInterrupted()) {
-					jar.close();
+		if (StartupContainer.getDatadirectory().resolve("SToNe.jar").exists()) {
+			final Path tmpArchive = this.tmp.resolve("SToNe.jar");
+			StartupContainer.getDatadirectory().resolve("SToNe.jar")
+					.renameTo(tmpArchive);
+			if (this.sc.jar) {
+				return tmpArchive;
+			} else {
+				unpack(tmpArchive);
+				final Path tmp_ = this.tmp.resolve("stone");
+				final Path modulesPath = this.wd.resolve("stone");
+				final String[] dirs = tmp_.toFile().list();
+				this.io.startProgress("Placing new class files", dirs.length);
+				boolean success = true;
+				for (final String dir : dirs) {
+					success &= tmp_.resolve(dir).renameTo(
+							modulesPath.resolve(dir));
+					this.io.updateProgress();
+				}
+				if (!success) {
+					this.io.printError("Update failed", false);
 					return null;
 				}
-				JarEntry entry = entries.nextElement();
-				while (entry.isDirectory()) {
-					if (!entries.hasMoreElements()) {
-						entry = null;
-						this.io.endProgress();
-						break;
-					}
-					this.io.updateProgress();
-					entry = entries.nextElement();
-				}
-				if (entry == null) {
-					break;
-				}
-				final Path target = this.tmp
-						.resolve(entry.getName().split("/"));
-				if (target.exists()) {
-					this.io.updateProgress();
-					continue;
-				}
-				if (!target.getParent().exists()) {
-					target.getParent().toFile().mkdirs();
-				}
-				final OutputStream out = this.io.openOut(target.toFile());
-				this.io.write(jar.getInputStream(entry), out);
-				this.io.close(out);
-				this.io.updateProgress();
 			}
-			jar.close();
-			final String[] f = this.tmp.toFile().list();
-			this.io.startProgress("Packing new archive", f.length);
-			final ArrayDeque<Task> worklist = new ArrayDeque<>();
-			for (final String s : f) {
-				worklist.add(new Task(s, this.tmp));
-			}
-			final Path target = this.tmp.resolve("new.jar");
-			final OutputStream out = this.io.openOut(target.toFile());
-			final JarOutputStream jarout = new JarOutputStream(out);
-			int size = f.length;
-			while (!worklist.isEmpty()) {
-				final Task t = worklist.pop();
-				if (t.source.toFile().isDirectory()) {
-					final String[] ss = t.source.toFile().list();
-					this.io.setProgressSize(size += ss.length);
-					for (final String s : ss) {
-						worklist.add(new Task(t, s));
-					}
-					this.io.updateProgress();
-				} else {
-					jarout.putNextEntry(new ZipEntry(t.name));
-					this.io.write(this.io.openIn(t.source.toFile()), jarout);
-					jarout.closeEntry();
-					this.io.updateProgress();
-					t.source.delete();
-				}
-			}
-			jarout.close();
-			this.io.close(out);
-			return target;
-		}
-		final Path tmp_ = this.tmp.resolve("stone/modules");
-		final Path modulesPath = this.wd.resolve("stone/modules");
-		final String[] dirs = tmp_.toFile().list();
-		this.io.startProgress("Placing new class files", dirs.length);
-		boolean success = true;
-		for (final String dir : dirs) {
-			success &= tmp_.resolve(dir).renameTo(modulesPath.resolve(dir));
-			this.io.updateProgress();
-		}
-		if (!success) {
-			this.io.printError("Update failed", false);
-			return null;
 		}
 		return this.wd;
 	}
@@ -619,7 +580,7 @@ public class MasterThread extends Thread {
 		m.run();
 	}
 
-	private final void unpackModule(final Path target) {
+	private final void unpack(final Path target) {
 		try {
 			final JarFile jar = new JarFile(target.toFile());
 			this.io.startProgress("Unpacking", jar.size());

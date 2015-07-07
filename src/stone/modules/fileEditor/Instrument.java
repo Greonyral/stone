@@ -7,9 +7,9 @@ import java.util.Set;
 class Instrument {
 
 	private final InstrumentType type;
-	private final Set<Integer> numbers;
+	private final Set<Id> numbers;
 
-	public Instrument(final InstrumentType type, final Set<Integer> numbers) {
+	public Instrument(final InstrumentType type, final Set<Id> numbers) {
 		this.type = type;
 		if (numbers.isEmpty()) {
 			this.numbers = new HashSet<>();
@@ -22,8 +22,8 @@ class Instrument {
 		return this.type.name();
 	}
 
-	public final void print(final StringBuilder sb) {
-		sb.append(NameScheme.printInstrumentName(this.type));
+	public final void print(final StringBuilder sb, final PrintType pt) {
+		sb.append(NameScheme.printInstrumentName(this.type, pt));
 		NameScheme.printInstrumentNumbers(sb, this.numbers);
 	}
 
@@ -32,7 +32,7 @@ class Instrument {
 		final StringBuilder sb = new StringBuilder(this.type.name()
 				.toLowerCase());
 		sb.setCharAt(0, (char) ((sb.charAt(0) + 'A') - 'a'));
-		for (final Integer number : this.numbers) {
+		for (final Id number : this.numbers) {
 			sb.append(" ");
 			sb.append(number);
 		}

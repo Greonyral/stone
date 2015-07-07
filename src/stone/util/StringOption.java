@@ -11,6 +11,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
+import stone.io.KeyEventHandler;
+
 
 /**
  * A Option allowing any type of content
@@ -99,7 +101,7 @@ public final class StringOption extends Option {
 
 	/** */
 	@Override
-	public final void display(final JPanel panel) {
+	public final void display(final JPanel panel, final KeyEventHandler key) {
 		this.textField = new JTextField();
 		final JScrollPane scrollPane = new JScrollPane(this.textField);
 		final JPanel mainPanel = new JPanel();
@@ -132,22 +134,27 @@ public final class StringOption extends Option {
 					this.cursor[0] = StringOption.this.textField
 							.getCaretPosition();
 				}
-				sb.handleEvent(e, this.cursor);
-				if (sb.isEmpty()) {
-					this.cursor[0] = 0;
-					StringOption.this.textField.setText(getTooltip());
-					StringOption.this.textField.setForeground(Color.GRAY);
-				} else {
-					StringOption.this.textField.setText(sb.toString());
-					StringOption.this.textField.setForeground(Color.BLACK);
-				}
-				if (this.cursor[1] != this.cursor[2]) {
-					StringOption.this.textField
-							.setSelectionStart(this.cursor[1]);
-					StringOption.this.textField.setSelectionEnd(this.cursor[2]);
-				} else {
-					StringOption.this.textField
-							.setCaretPosition(this.cursor[0]);
+				final int keyEvent = sb.handleEvent(e, this.cursor);
+				if (keyEvent != 0)
+					key.handleKeyEvent(keyEvent);
+				else {
+					if (sb.isEmpty()) {
+						this.cursor[0] = 0;
+						StringOption.this.textField.setText(getTooltip());
+						StringOption.this.textField.setForeground(Color.GRAY);
+					} else {
+						StringOption.this.textField.setText(sb.toString());
+						StringOption.this.textField.setForeground(Color.BLACK);
+					}
+					if (this.cursor[1] != this.cursor[2]) {
+						StringOption.this.textField
+								.setSelectionStart(this.cursor[1]);
+						StringOption.this.textField
+								.setSelectionEnd(this.cursor[2]);
+					} else {
+						StringOption.this.textField
+								.setCaretPosition(this.cursor[0]);
+					}
 				}
 				e.consume();
 			}

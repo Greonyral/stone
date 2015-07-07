@@ -1,4 +1,4 @@
-.PHONY: all moduleInfo
+.PHONY: all moduleInfo sign_jars
 
 JAVAC=javac -g -cp $(BIN_DIR):lib -sourcepath src -d $(BIN_DIR)
 BIN_DIR=classes
@@ -47,13 +47,13 @@ VC_SRC= \
 VC_CLASSES=$(patsubst src/%, $(BIN_DIR)/%, $(patsubst %.java,%.class,$(VC_SRC)))
 VC_CLASSES_BASE=$(patsubst $(BIN_DIR)/%.class,%,$(VC_CLASSES))
 
-all: classes brute/BruTE.jar hiddenVC normal moduleInfo
+all: classes brute/BruTE.jar hiddenVC normal moduleInfo sign_jars
  
 clean:
 	rm -rf $(BIN_DIR)
 
 purge:
-	rm -rf $(BIN_DIR) SToNe*.jar modules moduleInfo brute/BruTE.jar brute/???
+	rm -rf $(BIN_DIR) SToNe*../build_jar modules moduleInfo brute/BruTE../build_jar brute/???
 
 modules:
 	mkdir -p modules
@@ -61,49 +61,52 @@ modules:
 classes:
 	mkdir -p classes
 
+sign_jars:
+	@./signJars.sh
+
 brute/$(BRUTE_VERSION): brute/$(BRUTE_VERSION).zip
 	unzip -d brute $<
 
 brute/BruTE.jar: brute/$(BRUTE_VERSION)
-	jar cfM0 $@ $(patsubst %,-C brute/$(BRUTE_VERSION) %,drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe)
+	@./build_jar cfM0 $@ "$(patsubst %,-C brute/$(BRUTE_VERSION) %,drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe)"
 	
 
-#jar-archives
+#./build_jar-archives
 modules/AbcCreator.jar: modules $(ABC_CLASSES) brute/BruTE.jar
-	jar cfM $@ -C brute BruTE.jar $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(ABC_CLASSES_BASE)))))
+	@./build_jar cfM $@ "-C brute BruTE.jar $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(ABC_CLASSES_BASE)))))"
 
 modules/SongbookUpdater.jar: modules $(SU_CLASSES)
-	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(SU_CLASSES_BASE)))))
+	@./build_jar cfM $@ "$(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(SU_CLASSES_BASE)))))"
 
 modules/FileEditor.jar: modules $(FE_CLASSES) lib
-	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(FE_CLASSES_BASE)))) -C lib org)
+	@./build_jar cfM $@ "$(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(FE_CLASSES_BASE)))) -C lib org)"
 
 modules/VersionControl.jar: modules $(VC_CLASSES) lib
-	jar cfM $@ $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(VC_CLASSES_BASE)))) -C lib com -C lib org)
+	@./build_jar cfM $@ "$(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(VC_CLASSES_BASE)))) -C lib com -C lib org)"
 
 modules/Main.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	$(JAVAC) src/stone/MasterThread.java
-	echo "url https://github.com/Greonyral/stone/raw/master/" > config.txt
-	echo "mainClass Main" >> config.txt
-	echo "modules" >> config.txt
-	echo "AbcCreator Simple GUI of BruTE" >> config.txt
-	echo "FileEditor Tools to edit abc-files" >> config.txt
-	echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
-	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) -C $(BIN_DIR) stone/io/Icon.png config.txt
+	@echo "url https://github.com/Greonyral/stone/raw/master/" > config.txt
+	@echo "mainClass Main" >> config.txt
+	@echo "modules" >> config.txt
+	@echo "AbcCreator Simple GUI of BruTE" >> config.txt
+	@echo "FileEditor Tools to edit abc-files" >> config.txt
+	@echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
+	@./build_jar cfe $@ "stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) -C $(BIN_DIR) stone/io/Icon.png config.txt"
 
 modules/Main_band.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	$(JAVAC) src/stone/MasterThread.java
-	echo "url https://github.com/Greonyral/stone/raw/master/" > config.txt
-	echo "url_https https://github.com/Greonyral/lotro-songs.git" >> config.txt
+	@echo "url https://github.com/Greonyral/stone/raw/master/" > config.txt
+	@echo "url_https https://github.com/Greonyral/lotro-songs.git" >> config.txt
 
-	echo "url_ssh git@github.com:Greonyral/lotro-songs.git" >> config.txt
-	echo "mainClass Main_band" >> config.txt
-	echo "modules" >> config.txt
-	echo "AbcCreator Simple GUI of BruTE" >> config.txt
-	echo "FileEditor Tools to edit abc-files" >> config.txt
-	echo "VersionControl Simple git-GUI to synchronize songs" >> config.txt
-	echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
-	jar cfe $@ stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) -C $(BIN_DIR) stone/io/Icon.png config.txt
+	@echo "url_ssh git@github.com:Greonyral/lotro-songs.git" >> config.txt
+	@echo "mainClass Main_band" >> config.txt
+	@echo "modules" >> config.txt
+	@echo "AbcCreator Simple GUI of BruTE" >> config.txt
+	@echo "FileEditor Tools to edit abc-files" >> config.txt
+	@echo "VersionControl Simple git-GUI to synchronize songs" >> config.txt
+	@echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
+	@./build_jar cfe $@ "stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) -C $(BIN_DIR) stone/io/Icon.png config.txt"
 
 #targets
 hiddenVC: modules/Main.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/FileEditor.jar

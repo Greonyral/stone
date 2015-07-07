@@ -12,6 +12,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
+import stone.io.KeyEventHandler;
+
 
 /**
  * Option to select a path
@@ -84,7 +86,7 @@ public class PathOption extends Option {
 
 	/** */
 	@Override
-	public final void display(final JPanel panel) {
+	public final void display(final JPanel panel, final KeyEventHandler key) {
 		final JPanel mainPanel = new JPanel();
 		final JTextField textField = new JTextField();
 		final JScrollPane scrollPane = new JScrollPane(textField);

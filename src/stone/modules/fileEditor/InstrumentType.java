@@ -36,4 +36,17 @@ enum InstrumentType {
 	private InstrumentType(final String... keys) {
 		this.keys = keys;
 	}
+
+	public String name(final PrintType pt) {
+		final String name = name().toLowerCase();
+		switch (pt) {
+		case START_UP:
+			return name.toUpperCase().substring(0, 1) + name.substring(1);
+		case NORMAL:
+			return name;
+		case UP:
+			return name.toUpperCase();
+		}
+		return null;
+	}
 }

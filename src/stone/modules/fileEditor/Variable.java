@@ -70,7 +70,7 @@ class Variable extends NameSchemeElement {
 		sb.append(this.value);
 	}
 
-	final void value(final String value) {
+	void value(final String value) {
 		this.value = value;
 	}
 }

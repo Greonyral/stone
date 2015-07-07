@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import stone.util.Time;
+
 
 /**
  * @author Nelphindal
@@ -35,19 +37,18 @@ public class NameScheme {
 		sb.append(idcs);
 	}
 
-	final static StringBuilder printInstrumentName(final InstrumentType type) {
-		final StringBuilder name = new StringBuilder(type.name().toLowerCase());
-		name.setCharAt(0, name.substring(0, 1).toUpperCase().charAt(0));
-		return name;
+	final static String printInstrumentName(final InstrumentType type,
+			final PrintType pt) {
+		return type.name(pt);
 	}
 
 
 	final static void printInstrumentNumbers(final StringBuilder sb,
-			final Set<Integer> numbers) {
+			final Set<Id> numbers) {
 		if (numbers.isEmpty()) {
 			return;
 		}
-		final Iterator<Integer> i = numbers.iterator();
+		final Iterator<Id> i = numbers.iterator();
 		sb.append(" ");
 		sb.append(i.next());
 		while (i.hasNext()) {
@@ -65,23 +66,87 @@ public class NameScheme {
 					NameScheme.printIdx(sb, NameScheme.this.indices.get(track));
 				}
 
-			}, TOTAL_NUM = new Variable("TOTAL_NUM"), TITLE = new Variable(
-					"TITLE"), MOD_DATE = new Variable("MOD_DATE"),
-			INSTRUMENT = new Variable("INSTRUMENT") {
-
-				@Override
-				final void print(final StringBuilder sb, int track) {
-					boolean first = true;
-					for (final Instrument i : NameScheme.this.map.get(track)) {
-						if (!first) {
-							sb.append(", ");
-						} else {
-							first = false;
-						}
-						i.print(sb);
-					}
-				}
 			};
+
+	private final Variable TOTAL_NUM = new Variable("TOTAL_NUM"),
+			TITLE = new Variable("TITLE");
+
+	@Deprecated
+	private final Variable MOD_DATE = new Variable("MOD_DATE");
+
+	private final Variable MOD_YEAR = new Variable("YEAR");
+	private final Variable MOD_MONTH = new Variable("MONTH") {
+
+		@Override
+		void value(final String m) {
+			final char c = m.charAt(0);
+			if (c >= '0' && c <= '9') {
+				final int index = Integer.parseInt(m);
+				value(Time.getShortMonthNames()[index]);
+				return;
+			}
+			super.value(m);
+		}
+	};
+	private final Variable MOD_MONTH_STRING = new Variable("MONTH_STRING") {
+		@Override
+		void value(final String m) {
+			final char c = m.charAt(0);
+			if (c >= '0' && c <= '9') {
+				value(Time.getMonthName(m));
+				return;
+			}
+			super.value(m);
+		}
+	};
+	private final Variable MOD_DAY = new Variable("DAY");
+
+	private final Variable INSTRUMENT = new Variable("INSTRUMENT") {
+
+		@Override
+		final void print(final StringBuilder sb, int track) {
+			boolean first = true;
+			for (final Instrument i : NameScheme.this.map.get(track)) {
+				if (!first) {
+					sb.append(", ");
+				} else {
+					first = false;
+				}
+				i.print(sb, PrintType.NORMAL);
+			}
+		}
+	};
+	private final Variable INSTRUMENT_CAPS = new Variable("INSTRUMENT_CAPS") {
+
+		@Override
+		final void print(final StringBuilder sb, int track) {
+			boolean first = true;
+			for (final Instrument i : NameScheme.this.map.get(track)) {
+				if (!first) {
+					sb.append(", ");
+				} else {
+					first = false;
+				}
+				i.print(sb, PrintType.UP);
+			}
+		}
+	};
+	private final Variable INSTRUMENT_START_UPPER_CASED = new Variable(
+			"INSTRUMENT_START_UPPER_CASED") {
+
+		@Override
+		final void print(final StringBuilder sb, int track) {
+			boolean first = true;
+			for (final Instrument i : NameScheme.this.map.get(track)) {
+				if (!first) {
+					sb.append(", ");
+				} else {
+					first = false;
+				}
+				i.print(sb, PrintType.START_UP);
+			}
+		}
+	};
 	private final Map<String, Variable> variables = buildVariableMap();
 
 	private final ArrayDeque<NameSchemeElement> elements = new ArrayDeque<>();
@@ -124,8 +189,27 @@ public class NameScheme {
 					final String variableTmp = string.substring(pos, ++end);
 					final Variable vTmp = this.variables.get(variableTmp);
 					if (vTmp != null) {
-						v = vTmp;
-						pos = end;
+						char next = string.charAt(end);
+						switch (next) {
+						case '/':
+						case ' ':
+						case '(':
+						case ')':
+						case '$':
+						case '{':
+						case '}':
+						case ']':
+						case '[':
+						case '-':
+						case '.':
+						case ':':
+						case '%':
+							v = vTmp;
+							pos = end;
+							break;
+						default:
+							continue;
+						}
 						break;
 					}
 				} while (true);
@@ -175,7 +259,13 @@ public class NameScheme {
 		map_.put("%total", this.TOTAL_NUM);
 		map_.put("%duration", this.DURATION);
 		map_.put("%mod", this.MOD_DATE);
+		map_.put("%y", this.MOD_YEAR);
+		map_.put("%d", this.MOD_DAY);
+		map_.put("%m", this.MOD_MONTH);
+		map_.put("%b", this.MOD_MONTH_STRING);
 		map_.put("%instrument", this.INSTRUMENT);
+		map_.put("%Instrument", this.INSTRUMENT_START_UPPER_CASED);
+		map_.put("%INSTRUMENT", this.INSTRUMENT_CAPS);
 		return map_;
 	}
 
@@ -203,8 +293,11 @@ public class NameScheme {
 		this.map.putAll(instruments);
 	}
 
-	final void mod(final String mod) {
-		this.MOD_DATE.value(mod);
+	final void mod(final String month, final String day, final String year) {
+		this.MOD_DAY.value(day);
+		this.MOD_MONTH.value(month);
+		this.MOD_MONTH_STRING.value(month);
+		this.MOD_YEAR.value(year);
 	}
 
 	final boolean needsDuration() {

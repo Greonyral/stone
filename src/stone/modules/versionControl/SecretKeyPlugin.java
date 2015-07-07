@@ -28,9 +28,22 @@ public class SecretKeyPlugin extends GUIPlugin {
 		final char[] chars = text.toCharArray();
 		final byte[] key = new byte[chars.length / 2];
 		while (posKey < key.length) {
-			final byte hByte = (byte) chars[posChars++];
-			final byte lByte = (byte) chars[posChars++];
-			key[posKey++] = (byte) ((hByte << 8) | lByte);
+			final int[] bytes = new int[] { chars[posChars++],
+					chars[posChars++] };
+			int byteValue = 0;
+			for (final int byteV : bytes) {
+				byteValue <<= 4;
+				if (byteV >= '0' && byteV <= '9') {
+					byteValue += byteV - '0';
+				} else if (byteV >= 'a' && byteV <= 'f') {
+					byteValue += byteV - 'a' + 10;
+				} else if (byteV >= 'A' && byteV <= 'F') {
+					byteValue += byteV - 'A' + 10;
+				} else
+					throw new IllegalArgumentException();
+			}
+			key[posKey++] = (byte) byteValue;
+
 		}
 		return key;
 	}

@@ -5,6 +5,8 @@ import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import stone.io.KeyEventHandler;
+
 
 /**
  * A class for an option allowing only two values.
@@ -141,7 +143,7 @@ public final class BooleanOption extends Option {
 	}
 
 	@Override
-	final void display(final JPanel panelBoolean) {
+	final void display(final JPanel panelBoolean, final KeyEventHandler keh) {
 		final JCheckBox box = new JCheckBox();
 		box.setText(getDescription());
 		box.setSelected(getValue());

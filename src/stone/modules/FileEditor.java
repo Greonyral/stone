@@ -58,9 +58,9 @@ public class FileEditor implements Module {
 
 	private final static String SECTION = "[fileEditor]";
 
-	private final static int VERSION = 2;
+	private final static int VERSION = 3;
 
-	private static final String DEFAULT_SCHEME = "%title %index/%total [%instrument]$1{ (%duration)}$2{ %mod}";
+	private static final String DEFAULT_SCHEME = "%title %index/%total [%instrument]$1{ (%duration)}$2{ %b %d}";
 
 	final static BooleanOption createChangeNumberingOption(
 			final OptionContainer oc) {

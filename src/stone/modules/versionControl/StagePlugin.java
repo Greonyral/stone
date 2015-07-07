@@ -1,14 +1,14 @@
 package stone.modules.versionControl;
 
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
-
+import java.util.TreeMap;
 import javax.swing.JButton;
 import javax.swing.JEditorPane;
 import javax.swing.JLabel;
@@ -23,7 +23,7 @@ import org.eclipse.jgit.api.Status;
 import stone.MasterThread;
 import stone.io.GUI;
 import stone.io.GUIPlugin;
-import stone.util.Path;
+import stone.modules.VersionControl;
 
 public class StagePlugin extends GUIPlugin {
 
@@ -42,12 +42,10 @@ public class StagePlugin extends GUIPlugin {
 
 		@Override
 		public void mouseEntered(final MouseEvent e) {
-			e.consume();
 		}
 
 		@Override
 		public void mouseExited(final MouseEvent e) {
-			e.consume();
 		}
 
 		@Override
@@ -63,15 +61,17 @@ public class StagePlugin extends GUIPlugin {
 
 	}
 
-	class ChangedFile implements Comparable<ChangedFile> {
+	class ChangedFile {
 
+		private final char changeTypeC;
 		private final String s;
-		private final Path p;
 		private final String changeType;
+		private boolean encrypt;
 
 		final boolean removed;
 
 		ChangedFile(final char c, final String s) {
+			changeTypeC = c;
 			switch (c) {
 			case '+':
 				this.changeType = "<font color=green>+</font>";
@@ -85,45 +85,41 @@ public class StagePlugin extends GUIPlugin {
 				this.changeType = "<font color=red>-</font>";
 				this.removed = true;
 				break;
+			case 'C':
+				this.changeType = "<font color=red>-</font>";
+				this.removed = true;
+				break;
 			default:
 				this.changeType = null;
 				this.removed = false;
 			}
-			this.p = StagePlugin.this.repoRoot.resolve(s.split("/"));
 			this.s = s;
 		}
 
-		@Override
-		public int compareTo(final ChangedFile o) {
-			return this.p.compareTo(o.p);
-		}
-
-		public boolean equals(final ChangedFile o) {
-			return this.p.equals(o);
-		}
-
-		@Override
-		public boolean equals(final Object o) {
-			if (ChangedFile.class.isInstance(o)) {
-				return equals(ChangedFile.class.cast(o));
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			return this.p.hashCode();
-		}
-
 		public Integer length() {
-			return 2 + this.s.length();
+			return (encrypt ? 4 : 2) + this.s.length();
 		}
 
 		@Override
 		public String toString() {
+			if (encrypt)
+				return this.changeType
+						+ " <font color=gray>E</font> <font bgcolor=yellow>"
+						+ this.s + "</font>";
+			if (changeTypeC == 'C') {
+				return this.changeType + " <font color=gray>" + this.s
+						+ "</font>";
+			}
 			return this.changeType + " " + this.s;
 		}
 
+		public void enableEncryption(boolean encrypt) {
+			if (encrypt && !this.encrypt && changeTypeC != '-') {
+				this.encrypt = true;
+			} else if (!encrypt && this.encrypt) {
+				this.encrypt = false;
+			}
+		}
 	}
 
 	class StageActionAddListener implements MouseListener {
@@ -135,12 +131,10 @@ public class StagePlugin extends GUIPlugin {
 
 		@Override
 		public void mouseEntered(final MouseEvent e) {
-			e.consume();
 		}
 
 		@Override
 		public void mouseExited(final MouseEvent e) {
-			e.consume();
 		}
 
 		@Override
@@ -157,21 +151,148 @@ public class StagePlugin extends GUIPlugin {
 			}
 			final String[] files = s.split("[M+-] ");
 			for (int i = 1; i < files.length; i++) {
-				final char c = s.charAt(files[0].length());
-				if (i < (files.length - 1)) {
-					files[i] = files[i].substring(0, files[i].length() - 1);
-					files[0] += " ";
+				final String file;
+				{
+					final String sTmp = files[i].trim();
+					if (sTmp.endsWith(".enc.abc")) {
+						final ChangedFile f = StagePlugin.this.unstagedFiles
+								.remove(sTmp);
+						assert f != null;
+						file = "E " + sTmp.substring(0, sTmp.length() - 8)
+								+ ".abc";
+						StagePlugin.this.unstagedFiles.put(file, f);
+						f.enableEncryption(true);
+					} else {
+						file = sTmp;
+					}
 				}
-				final ChangedFile f = new ChangedFile(c, files[i]);
-				StagePlugin.this.stagedFiles.add(f);
-				StagePlugin.this.unstagedFiles.remove(f);
-				files[0] += c + " " + files[i];
+				ChangedFile f = StagePlugin.this.unstagedFiles.remove(file);
+				if (f == null)
+					throw new NullPointerException();
+				StagePlugin.this.stagedFiles.put(file, f);
 			}
 			StagePlugin.this.left.setSelectionStart(0);
 			StagePlugin.this.left.setSelectionEnd(0);
 			updateLeftAndRight();
 		}
+	}
 
+	class StageActionEncryptListener implements MouseListener {
+
+		private final boolean encrypt;
+
+		StageActionEncryptListener(boolean encrypt) {
+			this.encrypt = encrypt;
+		}
+
+		@Override
+		public void mouseClicked(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseEntered(final MouseEvent e) {
+		}
+
+		@Override
+		public void mouseExited(final MouseEvent e) {
+		}
+
+		@Override
+		public void mousePressed(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseReleased(final MouseEvent e) {
+			e.consume();
+			final String s = StagePlugin.this.right.getSelectedText();
+			if (s == null) {
+				return;
+			}
+			final String[] files = s.split("[M+-] ");
+			for (int i = 1; i < files.length; i++) {
+				final String file0, file1, file2;
+				{
+					String t = files[i].trim();
+					if (t.startsWith("E "))
+						t = t.substring(2);
+					file0 = t;
+				}
+				file1 = "E " + file0;
+				{
+					String t = file1;
+					if (t.endsWith(".enc.abc")) {
+						t = t.substring(0, t.length() - 8);
+						t = t + ".abc";
+					} else if (t.endsWith(".abc")) {
+						t = t.substring(0, t.length() - 4);
+						t = t + ".enc.abc";
+					}
+
+					file2 = t;
+				}
+				ChangedFile f = StagePlugin.this.stagedFiles.remove(file0);
+				if (f != null) {
+					if (f.changeTypeC == 'C') {
+						f = null;
+					} else if (f.encrypt == this.encrypt) {
+						// already at desired state
+						StagePlugin.this.stagedFiles.put(file0, f);
+						continue;
+					}
+				}
+				if (f == null) {
+					f = StagePlugin.this.stagedFiles.remove(file1);
+					if (f != null && f.encrypt == this.encrypt) {
+						StagePlugin.this.stagedFiles.put(file1, f);
+					}
+				}
+				if (f == null) {
+					f = StagePlugin.this.stagedFiles.remove(file2);
+					if (f != null && f.encrypt == this.encrypt) {
+						StagePlugin.this.stagedFiles.put(file2, f);
+						continue;
+					}
+				}
+				if (f == null)
+					throw new NullPointerException();
+				f.enableEncryption(encrypt);
+				if (encrypt && f.encrypt) {
+					if (StagePlugin.this.stagedFiles.containsKey(file2)) {
+						if (StagePlugin.this.stagedFiles.get(file2).changeTypeC == 'C')
+							StagePlugin.this.stagedFiles.put(file0, f);
+						else
+							StagePlugin.this.stagedFiles.put(file2, f);
+					} else {
+						StagePlugin.this.stagedFiles.put(file2, f);
+						if (file2.endsWith(".enc.abc")) {
+							// assume implict encrypted files should not be deleted
+							StagePlugin.this.stagedFiles.put(file0,
+									new ChangedFile('C', file0));
+							StagePlugin.this.missing.add(file0);
+						}
+					}
+				} else if (!encrypt && !f.encrypt) {
+					if (StagePlugin.this.stagedFiles.containsKey(file0))
+						if (StagePlugin.this.stagedFiles.get(file0).changeTypeC == 'C')
+							StagePlugin.this.stagedFiles.put(file0, f);
+						else
+							StagePlugin.this.stagedFiles.put(file2, f);
+					else
+						StagePlugin.this.stagedFiles.put(file0, f);
+				} else {
+					if (StagePlugin.this.stagedFiles.containsKey(file0)) {
+						StagePlugin.this.stagedFiles.put(file2, f);
+					} else {
+						StagePlugin.this.stagedFiles.put(file0, f);
+					}
+				}
+			}
+			StagePlugin.this.left.setSelectionStart(0);
+			StagePlugin.this.left.setSelectionEnd(0);
+			updateLeftAndRight();
+		}
 	}
 
 	class StageActionRemoveListener implements MouseListener {
@@ -205,11 +326,7 @@ public class StagePlugin extends GUIPlugin {
 			}
 			final String[] files = s.split("[M+-] ");
 			for (int i = 1; i < files.length; i++) {
-				final char c = s.charAt(files[0].length());
-				final ChangedFile f = new ChangedFile(c, files[i]);
-				StagePlugin.this.unstagedFiles.add(f);
-				StagePlugin.this.stagedFiles.remove(f);
-				files[0] += c + " " + files[i];
+				// TODO
 			}
 			StagePlugin.this.right.setSelectionStart(0);
 			StagePlugin.this.right.setSelectionEnd(0);
@@ -308,9 +425,9 @@ public class StagePlugin extends GUIPlugin {
 
 	private final List<Integer> offsetRight = new LinkedList<>();
 
-	private final TreeSet<ChangedFile> unstagedFiles = new TreeSet<>();
+	private final TreeMap<String, ChangedFile> unstagedFiles = new TreeMap<>();
 
-	private final TreeSet<ChangedFile> stagedFiles = new TreeSet<>();
+	private final TreeMap<String, ChangedFile> stagedFiles = new TreeMap<>();
 
 	private final JEditorPane left = new JEditorPane();
 
@@ -318,7 +435,6 @@ public class StagePlugin extends GUIPlugin {
 
 	private final MasterThread master;
 	private final Status status;
-	private final Path repoRoot;
 
 	// unstaged files
 	private final Set<String> untracked = new HashSet<>();
@@ -331,23 +447,22 @@ public class StagePlugin extends GUIPlugin {
 
 	private boolean commit;
 
-	public StagePlugin(final Status status, boolean commit, Path repoRoot,
+	public StagePlugin(final Status status, boolean commit,
 			final MasterThread master) {
 		this.commit = commit;
 		this.status = status;
-		this.repoRoot = repoRoot;
 		this.master = master;
 		this.left.setEditable(false);
 		this.right.setEditable(false);
 	}
 
-	public boolean doCommit(final Git gitSession) {
+	public boolean doCommit(final Git gitSession, final VersionControl vc) {
 		try {
 			if (this.master.isInterrupted()) {
 				return false;
 			}
 			if (this.commit) {
-				for (final ChangedFile f : this.unstagedFiles) {
+				for (final ChangedFile f : this.unstagedFiles.values()) {
 					if (this.untracked.remove(f.s) || this.missing.remove(f.s)
 							|| this.modified.remove(f.s)) {
 						continue;
@@ -355,13 +470,26 @@ public class StagePlugin extends GUIPlugin {
 						// TODO unstage
 					}
 				}
-				for (final ChangedFile f : this.stagedFiles) {
+				for (final ChangedFile f : this.stagedFiles.values()) {
 					if (this.untracked.remove(f.s) || this.missing.remove(f.s)
 							|| this.modified.remove(f.s)) {
 						if (f.removed) {
+							if (f.changeTypeC == 'C') {
+								gitSession.rm().addFilepattern(f.s).setCached(true).call();
+							}
 							gitSession.rm().addFilepattern(f.s).call();
 						} else {
-							gitSession.add().addFilepattern(f.s).call();
+							if (f.encrypt) {
+								final String encrypted = vc.encrypt(f.s, null,
+										true);
+								if (encrypted == null) {
+									return false;
+								}
+								gitSession.add().addFilepattern(encrypted)
+										.call();
+							} else {
+								gitSession.add().addFilepattern(f.s).call();
+							}
 						}
 					}
 				}
@@ -377,7 +505,7 @@ public class StagePlugin extends GUIPlugin {
 		this.offsetLeft.clear();
 		this.offsetRight.clear();
 
-		for (final ChangedFile f : this.unstagedFiles) {
+		for (final ChangedFile f : this.unstagedFiles.values()) {
 			if (sb.length() == 0) {
 				sb.append("<html><font face=\"Courier New\">");
 			} else {
@@ -391,7 +519,7 @@ public class StagePlugin extends GUIPlugin {
 		this.left.setText(sb.toString());
 		sb.setLength(0);
 
-		for (final ChangedFile f : this.stagedFiles) {
+		for (final ChangedFile f : this.stagedFiles.values()) {
 			if (sb.length() == 0) {
 				sb.append("<html><font face=\"Courier New\">");
 			} else {
@@ -415,6 +543,8 @@ public class StagePlugin extends GUIPlugin {
 		final JButton okButton = new JButton("OK");
 		final JButton buttonAdd = new JButton(" -> ");
 		final JButton buttonRemove = new JButton(" <- ");
+		final JButton buttonEncrypt = new JButton(" sec ");
+		final JButton buttonPlain = new JButton(" plain ");
 		final SpringLayout layout = new SpringLayout();
 
 		final JScrollPane leftScroll = new JScrollPane(this.left);
@@ -451,8 +581,14 @@ public class StagePlugin extends GUIPlugin {
 				SpringLayout.EAST, buttonAdd);
 
 		if (this.commit) {
-			panel.add(buttonRemove);
+			Font font = buttonEncrypt.getFont();
+			font = font.deriveFont((float) (font.getSize() * 0.8));
+			// panel.add(buttonRemove); // TODO not implemented
 			panel.add(buttonAdd);
+			panel.add(buttonEncrypt);
+			panel.add(buttonPlain);
+			buttonEncrypt.setFont(font);
+			buttonPlain.setFont(font);
 		}
 
 		layout.putConstraint(SpringLayout.WEST, leftScroll, 0,
@@ -488,6 +624,17 @@ public class StagePlugin extends GUIPlugin {
 				(height / 2) - 70, SpringLayout.NORTH, panel);
 		panel.add(abortButton);
 
+		layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, buttonEncrypt,
+				(width / 2), SpringLayout.WEST, panel);
+		layout.putConstraint(SpringLayout.VERTICAL_CENTER, buttonEncrypt, 35,
+				SpringLayout.NORTH, panel);
+
+		layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, buttonPlain,
+				width / 2, SpringLayout.WEST, panel);
+		layout.putConstraint(SpringLayout.NORTH, buttonPlain, 0,
+				SpringLayout.SOUTH, buttonEncrypt);
+
+
 		panel.add(new JLabel(
 				"                                                               Changed files           ---          Files to be included in next commit"));
 		panel.setMaximumSize(new Dimension(width, height));
@@ -496,7 +643,8 @@ public class StagePlugin extends GUIPlugin {
 
 		// do the logic
 		this.left
-				.setToolTipText("unstaged files - differences between current state and last commit. Next commit unaffected by these files");
+				.setToolTipText("unstaged files - differences between current state and last commit. "
+						+ "Next commit unaffected by these files");
 		this.right.setToolTipText("staged files - will be part of next commit");
 
 		// unstaged files
@@ -508,25 +656,93 @@ public class StagePlugin extends GUIPlugin {
 		this.changed.addAll(this.status.getChanged());
 		this.removed.addAll(this.status.getRemoved());
 
+		final Set<String> filteredOut = new HashSet<>();
+		boolean clean = true;
+
 		for (final String s : this.untracked) {
-			this.unstagedFiles.add(new ChangedFile('+', s));
+			if (s.endsWith(".abc")) {
+				final ChangedFile c = new ChangedFile('+', s);
+				clean = false;
+				this.unstagedFiles.put(s, c);
+			} else {
+				filteredOut.add(s);
+			}
 		}
 		for (final String s : this.modified) {
-			this.unstagedFiles.add(new ChangedFile('M', s));
+			if (s.endsWith(".abc")) {
+				final ChangedFile c = new ChangedFile('M', s);
+				clean = false;
+				this.unstagedFiles.put(s, c);
+			} else {
+				filteredOut.add(s);
+			}
 		}
 		for (final String s : this.missing) {
-			this.unstagedFiles.add(new ChangedFile('-', s));
+			if (s.endsWith(".abc")) {
+				final ChangedFile c = new ChangedFile('-', s);
+				clean = false;
+				this.unstagedFiles.put(s, c);
+			} else {
+				filteredOut.add(s);
+			}
 		}
 
 		for (final String s : this.added) {
-			this.stagedFiles.add(new ChangedFile('+', s));
+			if (s.endsWith(".abc")) {
+				final ChangedFile c = new ChangedFile('+', s);
+				clean = false;
+				if (s.endsWith(".enc.abc")) {
+					c.enableEncryption(true);
+					this.stagedFiles.put("E " + s.substring(0, s.length() - 8)
+							+ ".abc", c);
+				} else
+					this.stagedFiles.put(s, c);
+			} else {
+				filteredOut.add(s);
+			}
 		}
 		for (final String s : this.changed) {
-			this.stagedFiles.add(new ChangedFile('M', s));
+			if (s.endsWith(".abc")) {
+				clean = false;
+				final ChangedFile c = new ChangedFile('M', s);
+				clean = false;
+				if (s.endsWith(".enc.abc")) {
+					c.enableEncryption(true);
+					this.stagedFiles.put("E " + s.substring(0, s.length() - 8)
+							+ ".abc", c);
+				} else
+					this.stagedFiles.put(s, c);
+			} else {
+				filteredOut.add(s);
+			}
 		}
 		for (final String s : this.removed) {
-			this.stagedFiles.add(new ChangedFile('-', s));
+			if (s.endsWith(".abc")) {
+				clean = false;
+				final ChangedFile c = new ChangedFile('-', s);
+				clean = false;
+				if (s.endsWith(".enc.abc")) {
+					c.enableEncryption(true);
+					this.stagedFiles.put("E " + s, c);
+				} else
+					this.stagedFiles.put("E " + s.substring(0, s.length() - 8)
+							+ ".abc", c);
+			} else {
+				filteredOut.add(s);
+			}
 		}
+
+		if (clean) {
+			return true;
+		}
+
+		this.untracked.removeAll(filteredOut);
+		this.modified.removeAll(filteredOut);
+		this.missing.removeAll(filteredOut);
+		this.added.removeAll(filteredOut);
+		this.changed.removeAll(filteredOut);
+		this.removed.removeAll(filteredOut);
+
 		updateLeftAndRight();
 
 		if (this.commit) {
@@ -534,14 +750,15 @@ public class StagePlugin extends GUIPlugin {
 					this.offsetLeft));
 			this.right.addMouseListener(new StageMouseListener(this.right,
 					this.offsetRight));
-
-			buttonAdd.addMouseListener(new StageActionAddListener());
 		}
-		// TODO whenever unstage works enable the button
-		// buttonRemove.addMouseListener(new StageActionRemoveListener());
 
 		okButton.addMouseListener(new ButtonMouseListener(true));
 		abortButton.addMouseListener(new ButtonMouseListener(false));
+
+		buttonAdd.addMouseListener(new StageActionAddListener());
+		buttonRemove.addMouseListener(new StageActionRemoveListener());
+		buttonEncrypt.addMouseListener(new StageActionEncryptListener(true));
+		buttonPlain.addMouseListener(new StageActionEncryptListener(false));
 
 		lockResize();
 		repack(panel.getSize());

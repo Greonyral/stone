@@ -1,6 +1,9 @@
 package stone.modules;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -18,7 +21,6 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
@@ -41,15 +43,9 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.JschConfigSessionFactory;
-import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.SshSessionFactory;
-import org.eclipse.jgit.transport.SshTransport;
-import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
-import org.eclipse.jgit.util.FS;
 
 import stone.Config;
 import stone.MasterThread;
@@ -71,9 +67,6 @@ import stone.util.OptionContainer;
 import stone.util.Path;
 import stone.util.StringOption;
 
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 
 /**
  * The class handling all interaction with the jgit library
@@ -82,7 +75,7 @@ import com.jcraft.jsch.Session;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 10;
+	private final static int VERSION = 11;
 
 	private final static String SECTION = Main.VC_SECTION;
 
@@ -423,7 +416,8 @@ public final class VersionControl implements Module {
 				}
 				config.save();
 			}
-		} catch (final JGitInternalException | IOException | GitAPIException e) {
+		} catch (final JGitInternalException | IOException | GitAPIException
+				| InterruptedException e) {
 			this.io.handleException(ExceptionHandle.CONTINUE, e);
 			return;
 		}
@@ -444,7 +438,7 @@ public final class VersionControl implements Module {
 	 * there.
 	 */
 	private final void checkForLocalChanges(final Git gitSession)
-			throws IOException, GitAPIException {
+			throws IOException, GitAPIException, InterruptedException {
 		final Status status = gitSession.status().call();
 		stone.util.Debug.print("modified: %s\n" + "untracked: %s\n"
 				+ "missing: %s\n" + "added: %s\n" + "changed: %s\n"
@@ -453,9 +447,9 @@ public final class VersionControl implements Module {
 				status.getAdded().toString(), status.getChanged().toString(),
 				status.getRemoved().toString());
 		final StagePlugin stage = new StagePlugin(status,
-				this.COMMIT.getValue(), this.repoRoot, this.master);
+				this.COMMIT.getValue(), this.master);
 		this.io.handleGUIPlugin(stage);
-		if (stage.doCommit(gitSession)) {
+		if (stage.doCommit(gitSession, this)) {
 			final RevCommit commitRet = commit(gitSession);
 
 			this.io.printMessage(
@@ -558,7 +552,7 @@ public final class VersionControl implements Module {
 			}
 
 			this.io.endProgress();
-		} catch (final GitAPIException | IOException e) {
+		} catch (final GitAPIException | IOException | InterruptedException e) {
 			this.repoRoot.resolve(".git").delete();
 			this.io.handleException(ExceptionHandle.CONTINUE, e);
 			return;
@@ -663,24 +657,28 @@ public final class VersionControl implements Module {
 		treeParserOld.stopWalk();
 		treeParserNew.stopWalk();
 
-		// TODO test decrypt
 		for (final String created : encodedCreated) {
 			gitSession.checkout().addPath(created).setStartPoint(commitNew)
 					.call();
-			encrypt(created, created.substring(4).replace(".abc", ".enc.abc"),
-					false);
+			encrypt(created, created.substring(4), false);
 		}
 		for (final String deleted : encodedDeleted) {
+			this.repoRoot.resolve(deleted).delete();
 			this.repoRoot.resolve(deleted.substring(4)).delete();
-			this.repoRoot.resolve(
-					deleted.substring(4).replace(".abc", ".enc.abc")).delete();
 		}
 		return sbHead.append(sbBody.toString()).toString();
 
 	}
 
-	private final void encrypt(final String source, final String target,
+	public final String encrypt(final String source, final String target,
 			boolean encrypt) {
+		if (target == null)
+			if (encrypt)
+				return encrypt(source,
+						"enc/" + source.substring(0, source.length() - 8)
+								+ ".abc", true);
+			else
+				throw new IllegalArgumentException("target is null");
 		final AESEngine engine = new AESEngine();
 		final String savedKey = this.main.getConfigValue(Main.VC_SECTION,
 				VersionControl.AES_KEY, null);
@@ -734,9 +732,10 @@ public final class VersionControl implements Module {
 				engine.processBlock(bufferIn, 0, bufferOut, 0);
 				this.io.write(streamOut, bufferOut);
 			}
+			return target;
 		} catch (final IOException e) {
 			e.printStackTrace();
-			return;
+			return null;
 		} finally {
 			this.io.close(streamIn);
 			this.io.close(streamOut);
@@ -777,99 +776,63 @@ public final class VersionControl implements Module {
 	}
 
 	private final ObjectId getRemoteHead(final Git gitSession)
-			throws InvalidRemoteException, TransportException, GitAPIException {
-		final String refS = "refs/heads/" + this.BRANCH.value();
-		final FetchCommand fetch = gitSession
-				.fetch()
-				.setRefSpecs(
-						new RefSpec(refS + ":refs/remotes/origin/"
-								+ this.BRANCH.value()))
-				.setProgressMonitor(getProgressMonitor());
-		if (this.USE_SSH.getValue()) {
-			final String url = this.GIT_URL_SSH.value();
-			final String[] split = url.replace("ssh://", "").split(":", 2);
-			if (split.length == 2) {
-				final Path configFile = Path.getPath("~", ".ssh", "config");
-				String hostname = "github.com", user = "git", id = "id_rsa";
-				if (configFile.exists()) {
-					final InputStream in = this.io.openIn(configFile.toFile());
-					while (true) {
-						try {
-							String line = in.readLine();
-							if (line == null) {
-								break;
-							}
-							if (line.equalsIgnoreCase("HOST " + split[0])) {
-								line = in.readLine();
-								while (line != null) {
-									final String[] ls = line.split(" ", 2);
-									final String key = ls[0].toLowerCase();
-									final String value = ls[1];
-									if (key.equals("hostname")) {
-										hostname = value;
-									} else if (key.equals("user")) {
-										user = value;
-									} else if (key.equals("identityfile")) {
-										id = value;
-									} else if (key.equals("host")) {
-										break;
-									}
-									line = in.readLine();
-								}
-								break;
-							}
-						} catch (final IOException e) {
-							this.io.handleException(ExceptionHandle.CONTINUE, e);
-							return null;
-						} finally {
-							this.io.close(in);
-						}
-					}
-					final Path idFile = Path.getPath("~", ".ssh", id);
-					if (!idFile.exists()) {
-						this.io.printError("Missing file for ssh connection",
-								false);
-						this.master.interrupt();
-						return null;
-					}
-					final String userFinal = user, hostnameFinal = hostname;
-					final SshSessionFactory sshSessionFactory = new JschConfigSessionFactory() {
+			throws InvalidRemoteException, TransportException, GitAPIException,
+			IOException, InterruptedException {
+		if (!this.USE_SSH.getValue()) {
+			final String refS = "refs/heads/" + this.BRANCH.value();
+			final FetchCommand fetch = gitSession
+					.fetch()
+					.setRefSpecs(
+							new RefSpec(refS + ":refs/remotes/origin/"
+									+ this.BRANCH.value()))
+					.setProgressMonitor(getProgressMonitor());
 
-						@Override
-						protected void configure(final Host host,
-								final Session session) {
-							// do nothing
-							Debug.print("Configure\nhost %s\n", host);
-						}
 
-						@Override
-						protected JSch createDefaultJSch(FS fs)
-								throws JSchException {
-							final JSch defaultJSch = super
-									.createDefaultJSch(fs);
-							defaultJSch.addIdentity(idFile.toString());
-							return defaultJSch;
-						}
-					};
-					fetch.setTransportConfigCallback(new TransportConfigCallback() {
-
-						@Override
-						public void configure(final Transport transport) {
-							final SshTransport sshTransport = (SshTransport) transport;
-							sshTransport
-									.setSshSessionFactory(sshSessionFactory);
-
-						}
-					});
-					// TODO adjust url
-				}
+			final Ref ref = fetch.call().getAdvertisedRef(refS);
+			if (ref == null) {
+				return null;
 			}
+			return ref.getObjectId();
+		} else {
+			final File f = this.repoRoot.resolve(".git", "FETCH_HEAD").toFile();
+			final InputStream in;
+			final byte[] buffer = new byte[40];
+			final ObjectId id;
+			if (executeNativeGit("git", "fetch", "origin") != 0) {
+				return null;
+			}
+			in = this.io.openIn(f);
+			in.read(buffer);
+			this.io.close(in);
+			id = ObjectId.fromString(new String(buffer));
+			return id;
 		}
-		final Ref ref = fetch.call().getAdvertisedRef(refS);
-		if (ref == null) {
-			return null;
+	}
+
+	private int executeNativeGit(final String... cmd) throws IOException,
+			InterruptedException {
+		final Process p = Runtime.getRuntime().exec(cmd, null,
+				repoRoot.toFile());
+		final BufferedReader rOut = new BufferedReader(new InputStreamReader(
+				p.getInputStream()));
+		final BufferedReader rErr = new BufferedReader(new InputStreamReader(
+				p.getErrorStream()));
+		final int exit = p.waitFor();
+		while (true) {
+			final String line = rOut.readLine();
+			if (line == null) {
+				break;
+			}
+			System.out.println(line);
 		}
-		return ref.getObjectId();
+		while (true) {
+			final String line = rErr.readLine();
+			if (line == null) {
+				break;
+			}
+			System.err.println(line);
+		}
+		return exit;
 	}
 
 	private final void gotoBand(final Git gitSession) {
@@ -893,7 +856,7 @@ public final class VersionControl implements Module {
 				return;
 			}
 			checkForLocalChanges(gitSession);
-		} catch (final IOException | GitAPIException e) {
+		} catch (final IOException | GitAPIException | InterruptedException e) {
 			this.io.handleException(ExceptionHandle.CONTINUE, e);
 		}
 	}
@@ -1153,23 +1116,32 @@ public final class VersionControl implements Module {
 	/*
 	 * do the upload of commits
 	 */
-	private final void push(final Git gitSession) throws GitAPIException {
-		final PushCommand push = gitSession.push();
-		final RefSpec ref = new RefSpec("refs/heads/"
-				+ this.main.getConfigValue(VersionControl.SECTION, "branch",
-						"master"));
-		push.setRefSpecs(ref).setProgressMonitor(getProgressMonitor());
+	private final void push(final Git gitSession) throws GitAPIException,
+			IOException, InterruptedException {
 		if (!this.USE_SSH.getValue()) {
+			final PushCommand push = gitSession.push();
+			final RefSpec ref = new RefSpec("refs/heads/"
+					+ this.main.getConfigValue(VersionControl.SECTION,
+							"branch", "master"));
+			push.setRefSpecs(ref).setProgressMonitor(getProgressMonitor());
+
 			final CredentialsProvider login = new UsernamePasswordCredentialsProvider(
 					this.USERNAME.value(), this.PWD.value());
 			push.setCredentialsProvider(login);
+
+			push.call();
+		} else {
+			if (executeNativeGit("git", "push", "origin", BRANCH.value() + ":"
+					+ BRANCH.value()) != 0) {
+				this.io.printMessage(null, "Push (upload) failed", true);
+				return;
+			}
 		}
-		push.call();
 		this.io.printMessage(null, "Push (upload) finished successfully", true);
 	}
 
 	private final void reset(final Git gitSession) throws GitAPIException,
-			IOException {
+			IOException, InterruptedException {
 		if (this.RESET.getValue()) {
 			// set options to default
 			this.GIT_URL_HTTPS.value(Config.getInstance().getValue(
@@ -1267,7 +1239,7 @@ public final class VersionControl implements Module {
 				return;
 			}
 			Debug.print("Remote head: %s\n", remoteHead.getName());
-		} catch (final TransportException e) {
+		} catch (final TransportException | InterruptedException e) {
 			this.io.printError(
 					"Failed to contact github.com.\nCheck if you have internet access and try again.",
 					false);

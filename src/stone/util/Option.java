@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
 import stone.io.GUI;
+import stone.io.KeyEventHandler;
 
 
 /**
@@ -131,10 +132,10 @@ public abstract class Option {
 	 * @param activeGui
 	 */
 	public final void displayWithGUI(final JPanel rootPanel,
-			final stone.io.GUIInterface activeGui) {
+			final stone.io.GUIInterface activeGui, final KeyEventHandler key) {
 		this.panel = rootPanel;
 		this.gui = activeGui;
-		display(rootPanel);
+		display(rootPanel, key);
 	}
 
 	/**
@@ -232,7 +233,7 @@ public abstract class Option {
 		}
 	}
 
-	abstract void display(final JPanel rootPanel);
+	abstract void display(final JPanel rootPanel, final KeyEventHandler keh);
 
 	void setByFlagValue(String value) {
 		this.value(value);
