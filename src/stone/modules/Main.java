@@ -27,7 +27,7 @@ public class Main implements Module {
 	private static final int MAX_LENGTH_INFO = 80;
 
 
-	private static final int VERSION = 21;
+	private static final int VERSION = 22;
 
 	/**
 	 * The name to be used for naming the config-file and the title.
@@ -334,9 +334,20 @@ public class Main implements Module {
 						io.close();
 						throw e;
 					}
+				else
+					try {
+						sc.finishInit(flags); // sync barrier 1
+						sc.parseDone(); // sync barrier 2
+					} catch (final Exception e) {
+						Main.homeSetting.delete();
+						Main.this.taskPool.getMaster().interrupt();
+						io.close();
+						throw e;
+					}
 			}
 
 		});
+
 		Thread.currentThread().setName("Worker-0");
 		workerRun.run();
 	}
