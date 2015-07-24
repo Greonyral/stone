@@ -1,14 +1,20 @@
 package stone.util;
 
-import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
+/**
+ * {@link WeakReference} refering to a {@link Path} object.
+ * @author Nelphindal
+ *
+ */
 public class PathReference extends WeakReference<Path> {
 
-	private static ReferenceQueue<Path> queue = new ReferenceQueue<>();
-
-	public PathReference(Path referent) {
-		super(referent, queue);
+	/**
+	 * Creates a new [@link PathReference}
+	 * @param referent {@link Path} object the new weak reference will refer to
+	 */
+	public PathReference(final Path referent) {
+		super(referent);
 	}
 
 	@Override

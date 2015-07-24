@@ -1,9 +1,10 @@
 .PHONY: all moduleInfo sign_jars
 
-JAVAC=javac -g -cp $(BIN_DIR):lib -sourcepath src -d $(BIN_DIR)
+JAVAC=@javac -g -cp $(BIN_DIR):lib -sourcepath src -d $(BIN_DIR)
 BIN_DIR=classes
 
-BRUTE_VERSION=20b
+BRUTE_VERSION=21b
+BRUTE_FILES=drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe
 
 MAIN_SRC_FILES=Container Event Main MasterThread ModuleLoader \
  Config OptionSetup StartupContainer Task ThreadState ModuleInfo \
@@ -24,15 +25,31 @@ ABC_CLASSES=$(patsubst src/%, $(BIN_DIR)/%, $(patsubst %.java,%.class,$(ABC_SRC)
 ABC_CLASSES_BASE=$(patsubst $(BIN_DIR)/%.class,%,$(ABC_CLASSES))
 
 SU_SRC_FILES=SongbookUpdater
-SU_SRC_DIR=songData
+#SU_SRC_DIR=
 SU_SRC= \
  $(patsubst %,src/stone/modules/%.java, $(SU_SRC_FILES)) \
- $(shell find $(patsubst %,src/stone/modules/%,$(SU_SRC_DIR)) -name "*.java")
+# $(shell find $(patsubst %,src/stone/modules/%,$(SU_SRC_DIR)) -name "*.java")
 SU_CLASSES=$(patsubst src/%, $(BIN_DIR)/%, $(patsubst %.java,%.class,$(SU_SRC)))
 SU_CLASSES_BASE=$(patsubst $(BIN_DIR)/%.class,%,$(SU_CLASSES))
 
+SD_SRC_FILES=SongData
+SD_SRC_DIR=songData
+SD_SRC= \
+ $(patsubst %,src/stone/modules/%.java, $(SD_SRC_FILES)) \
+ $(shell find $(patsubst %,src/stone/modules/%,$(SD_SRC_DIR)) -name "*.java")
+SD_CLASSES=$(patsubst src/%, $(BIN_DIR)/%, $(patsubst %.java,%.class,$(SD_SRC)))
+SD_CLASSES_BASE=$(patsubst $(BIN_DIR)/%.class,%,$(SD_CLASSES))
+
+BR_SRC_FILES=BruTE
+#SD_SRC_DIR=songData
+BR_SRC= \
+ $(patsubst %,src/stone/modules/%.java, $(BR_SRC_FILES)) \
+# $(shell find $(patsubst %,src/stone/modules/%,$(BR_SRC_DIR)) -name "*.java")
+BR_CLASSES=$(patsubst src/%, $(BIN_DIR)/%, $(patsubst %.java,%.class,$(BR_SRC)))
+BR_CLASSES_BASE=$(patsubst $(BIN_DIR)/%.class,%,$(BR_CLASSES))
+
 FE_SRC_FILES=FileEditor
-FE_SRC_DIR=songData fileEditor
+FE_SRC_DIR=fileEditor
 FE_SRC= \
  $(patsubst %,src/stone/modules/%.java, $(FE_SRC_FILES)) \
  $(shell find $(patsubst %,src/stone/modules/%,$(FE_SRC_DIR)) -name "*.java")
@@ -47,13 +64,16 @@ VC_SRC= \
 VC_CLASSES=$(patsubst src/%, $(BIN_DIR)/%, $(patsubst %.java,%.class,$(VC_SRC)))
 VC_CLASSES_BASE=$(patsubst $(BIN_DIR)/%.class,%,$(VC_CLASSES))
 
-all: classes brute/BruTE.jar hiddenVC normal moduleInfo sign_jars
- 
+all: classes wipeJars hiddenVC normal moduleInfo sign_jars
+
 clean:
 	rm -rf $(BIN_DIR)
 
 purge:
 	rm -rf $(BIN_DIR) SToNe*../build_jar modules moduleInfo brute/BruTE../build_jar brute/???
+
+wipeJars:
+	rm -rf *.jar modules/* moduleInfo/*
 
 modules:
 	mkdir -p modules
@@ -67,13 +87,9 @@ sign_jars:
 brute/$(BRUTE_VERSION): brute/$(BRUTE_VERSION).zip
 	unzip -d brute $<
 
-brute/BruTE.jar: brute/$(BRUTE_VERSION)
-	@./build_jar cfM0 $@ "$(patsubst %,-C brute/$(BRUTE_VERSION) %,drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe)"
-	
-
 #./build_jar-archives
-modules/AbcCreator.jar: modules $(ABC_CLASSES) brute/BruTE.jar
-	@./build_jar cfM $@ "-C brute BruTE.jar $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(ABC_CLASSES_BASE)))))"
+modules/AbcCreator.jar: modules $(ABC_CLASSES)
+	@./build_jar cfM $@ " $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(ABC_CLASSES_BASE)))))"
 
 modules/SongbookUpdater.jar: modules $(SU_CLASSES)
 	@./build_jar cfM $@ "$(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(SU_CLASSES_BASE)))))"
@@ -92,7 +108,8 @@ modules/Main.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	@echo "AbcCreator Simple GUI of BruTE" >> config.txt
 	@echo "FileEditor Tools to edit abc-files" >> config.txt
 	@echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
-	@./build_jar cfe $@ "stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) -C $(BIN_DIR) stone/io/Icon.png config.txt"
+	@./build_jar cfe $@ "stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class)\
+        -C $(BIN_DIR) stone/io/Icon.png config.txt"
 
 modules/Main_band.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	$(JAVAC) src/stone/MasterThread.java
@@ -106,13 +123,23 @@ modules/Main_band.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	@echo "FileEditor Tools to edit abc-files" >> config.txt
 	@echo "VersionControl Simple git-GUI to synchronize songs" >> config.txt
 	@echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
-	@./build_jar cfe $@ "stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class) -C $(BIN_DIR) stone/io/Icon.png config.txt"
+	@./build_jar cfe $@ "stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class)\
+        -C $(BIN_DIR) stone/io/Icon.png config.txt"
+
+#dummy modules
+modules/SongData.jar: modules $(SD_CLASSES)
+	@./build_jar cfM $@ "$(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(SD_CLASSES_BASE)))))"
+
+modules/BruTE.jar: modules $(BR_CLASSES) brute/$(BRUTE_VERSION)
+	@./build_jar cfM $@ "$(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(BR_CLASSES_BASE)))))" brute brute/$(BRUTE_VERSION) "$(BRUTE_FILES)"
+	
+#$(patsubst brute/$(BRUTE_VERSION)/%,-C brute/$(BRUTE_VERSION) %,\
 
 #targets
-hiddenVC: modules/Main.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/FileEditor.jar
+hiddenVC: modules/Main.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/FileEditor.jar modules/BruTE.jar modules/SongData.jar
 	cp $< SToNe_hiddenVC.jar
 
-normal: modules/Main_band.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/VersionControl.jar modules/FileEditor.jar 
+normal: modules/Main_band.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/VersionControl.jar modules/FileEditor.jar modules/SongData.jar modules/BruTE.jar
 	cp $< SToNe.jar
 
 moduleInfo: $(BIN_DIR)/stone/updater/CreateBuilds.class
@@ -122,9 +149,9 @@ moduleInfo: $(BIN_DIR)/stone/updater/CreateBuilds.class
 $(BIN_DIR)/stone/io/Icon.png: Icon.png
 	cp $< $@
 
-########################
-#    classes           #
-########################
+#########################
+#	classes		#
+#########################
 $(BIN_DIR)/stone/%.class: src/stone/%.java
 	$(JAVAC) $<
 
@@ -148,6 +175,9 @@ $(BIN_DIR)/stone/modules/FileEditor.class:
 $(BIN_DIR)/stone/modules/AbcCreator.class: src/stone/modules/AbcCreator.java src/stone/modules/abcCreator/*.java src/stone/modules/midiData/*.java $(BIN_DIR)/stone/modules/Module.class
 	$(JAVAC) $< src/stone/modules/abcCreator/*.java src/stone/modules/midiData/*.java
 
+$(BIN_DIR)/stone/modules/SongData.class: src/stone/modules/SongData.java $(BIN_DIR)/stone/modules/Module.class
+	$(JAVAC) $< src/stone/modules/abcCreator/*.java
+
 #util
 $(BIN_DIR)/stone/util/%.class: src/stone/util/*.java src/stone/MasterThread.java
-	$(JAVAC) $^ 
+	$(JAVAC) $^

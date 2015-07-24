@@ -21,12 +21,15 @@ public class OptionContainer {
 
 	/**
 	 * Creates a new option container. All options will be backed up to given
-	 * flags
+	 * flags.
 	 * 
 	 * @param flags
+	 *           instance of @{link Flag} to synchronize to
 	 * @param main
+	 *            instance of @{link Main} to synchronize to
 	 */
-	public OptionContainer(final Flag flags, final Main main) {
+	public OptionContainer(@SuppressWarnings("hiding") final Flag flags,
+			@SuppressWarnings("hiding") final Main main) {
 		this.flags = flags;
 		this.main = main;
 	}
@@ -45,6 +48,8 @@ public class OptionContainer {
 	 *            a unique printable string to register at flags or
 	 *            {@link stone.util.Flag#NoLongFlag} to enable this option
 	 * @param argExpected
+	 *            passed to {@link Flag} to specify if <i>this</i> option
+	 *            consists of a key-value-pair
 	 * @param option
 	 *            the Option to be registered
 	 * @see Flag#registerOption(String, String, char, String, boolean)
@@ -62,9 +67,10 @@ public class OptionContainer {
 	}
 
 	/**
-	 * Copies given values into the values registered at this container
+	 * Copies given values into the values registered at this container.
 	 * 
 	 * @param values
+	 *            map containing key-value-pairs for setting underlying flags
 	 */
 	public final void copyValues(final Map<String, String> values) {
 		this.flags.setValue(values);

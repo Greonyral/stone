@@ -18,6 +18,8 @@ import stone.MasterThread;
 import stone.io.AbstractInputStream;
 import stone.io.IOHandler;
 import stone.io.OutputStream;
+import stone.modules.SongData;
+import stone.util.Debug;
 import stone.util.FileSystem;
 import stone.util.Path;
 
@@ -26,19 +28,21 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 
 	class ByteStreamIn implements DeserializeContainer, Runnable {
 
+		@SuppressWarnings("hiding")
 		private final AtomicInteger id = new AtomicInteger();
 		private final DeserialTask end = new DeserialTask();
+		@SuppressWarnings("hiding")
 		private final Path idx;
 
 		private int serialSongs;
 
 
-		ByteStreamIn(final Path idx) {
+		ByteStreamIn(@SuppressWarnings("hiding") final Path idx) {
 			this.idx = idx;
 		}
 
 		@Override
-		public final SongData parse(final byte[] bytes) throws IOException {
+		public final SongDataEntry parse(final byte[] bytes) throws IOException {
 			final InputStream is = new ByteArrayInputStream(bytes);
 			final long mod;
 			final Path path;
@@ -64,8 +68,8 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 				}
 				return parse(bytes);
 			}
-			voices = SongDataContainer.readExternal(is, this);
-			return new SongData(path, voices, mod);
+			voices = SongData.readExternal(is, this);
+			return new SongDataEntry(path, voices, mod);
 		}
 
 		@Override
@@ -100,23 +104,21 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 
 		@Override
 		public final void run() {
+			@SuppressWarnings("hiding")
 			final int id = this.id.getAndIncrement();
 			if (id == 1) {
-				try {
-					unpack();
-					Deserializer_0.this.streams.add(this.end);
-					Deserializer_0.this.io.startProgress(
-							"Parsing results from last run", this.serialSongs);
-					Deserializer_0.this.io.updateProgress(this.serialSongs
-							- Deserializer_0.this.streams.size());
-				} catch (final IOException e) {
-					e.printStackTrace();
-				}
+				unpack();
+				Deserializer_0.this.streams.add(this.end);
+				Deserializer_0.this.io.startProgress(
+						"Parsing results from last run", this.serialSongs);
+				Deserializer_0.this.io.updateProgress(this.serialSongs
+						- Deserializer_0.this.streams.size());
 			} else if (id == 0) {
 				try {
 					unpackPaths();
 					run();
 				} catch (final IOException e) {
+					Debug.print("Failed to unpack: %s\n", e.getMessage());
 				}
 			}
 			synchronized (Deserializer_0.this.idMapIn) {
@@ -124,6 +126,7 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 					try {
 						Deserializer_0.this.idMapIn.wait();
 					} catch (final InterruptedException e) {
+						return;
 					}
 				}
 
@@ -137,7 +140,7 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 						break;
 					}
 					task.run();
-					final SongData sd = task.getResult();
+					final SongDataEntry sd = task.getResult();
 					if (sd != null) {
 						Deserializer_0.this.sdc.getDirTree().put(sd);
 					}
@@ -166,7 +169,8 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 			return mod;
 		}
 
-		private final void unpack() throws IOException {
+		private final void unpack() {
+			@SuppressWarnings("hiding")
 			final Map<String, AbstractInputStream> streams = Deserializer_0.this.io
 					.openInZip(this.idx);
 			if (streams == null) {
@@ -188,6 +192,7 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 					.openInZip(this.idx);
 			final InputStream in = inMap == null ? null : inMap
 					.get(Deserializer_0.this.pathIdMapIn.getFilename());
+			@SuppressWarnings("hiding")
 			final Map<Integer, Path> idMapIn;
 			try {
 				idMapIn = Path.readExternals(in);
@@ -205,7 +210,9 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 	class ByteStreamOut implements SerializeConainer, ObjectOutput,
 			stone.util.Path.PathAwareObjectOutput {
 
+		@SuppressWarnings("hiding")
 		private final int id = Deserializer_0.this.id.incrementAndGet();
+		@SuppressWarnings("hiding")
 		private final IOHandler io = Deserializer_0.this.io;
 		private OutputStream out;
 
@@ -221,6 +228,7 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 
 		@Override
 		public final int getId(final Path path) throws InterruptedException {
+			@SuppressWarnings("hiding")
 			final Integer id;
 			synchronized (Deserializer_0.this.idMapOut) {
 				id = Deserializer_0.this.idMapOut.get(path);
@@ -304,7 +312,7 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 				writeMod(mod);
 				song.writeExternals(this);
 				writeIntRE(Deserializer_0.this.idMapOut.get(song));
-				SongDataContainer.writeExternal(voices, this);
+				SongData.writeExternal(voices, this);
 				success = true;
 			} finally {
 				this.io.close(this.out);
@@ -358,7 +366,7 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 
 		@Override
 		public final void writeInt(int v) throws IOException {
-
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
@@ -444,8 +452,8 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 
 	private final static int MOD_LEN = 6;
 
-	protected Deserializer_0(final SongDataContainer sdc,
-			final MasterThread master) {
+	protected Deserializer_0(@SuppressWarnings("hiding") final SongData sdc,
+			@SuppressWarnings("hiding") final MasterThread master) {
 		super(sdc);
 		this.master = master;
 		this.pathIdMapIn = this.idx.getParent().resolve("path.map");
@@ -500,7 +508,7 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 
 	@Override
 	protected final void crawlDone_() {
-
+		return;
 	}
 
 
@@ -520,7 +528,7 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 	}
 
 	@Override
-	protected final void generateStream(final SongData data) throws IOException {
+	protected final void generateStream(final SongDataEntry data) throws IOException {
 		data.serialize(this);
 	}
 }

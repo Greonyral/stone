@@ -25,6 +25,7 @@ public class StreamPrinter implements Runnable {
 	 * @param stdErr
 	 *            <i>true</i> if the output shall be printed to stdout
 	 */
+	@SuppressWarnings("hiding")
 	public StreamPrinter(final InputStream stream, final StringBuilder builder,
 			boolean stdErr) {
 		this.stream = stream;
@@ -57,6 +58,7 @@ public class StreamPrinter implements Runnable {
 		} while (true);
 	}
 
+	/** Prints result to related stdout/stderr */
 	protected void action() {
 		(this.stdErr ? System.err : System.out).print(this.builder.toString());
 	}

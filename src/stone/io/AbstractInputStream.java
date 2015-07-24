@@ -3,15 +3,39 @@ package stone.io;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * A buffered {@link InputStream}.
+ * 
+ * @author Nelphindal
+ * 
+ */
 public abstract class AbstractInputStream extends InputStream {
 
+	/**
+	 * buffer
+	 */
 	protected final byte[] _buffer;
 
+	/**
+	 * {@link IOHandler} used for various features of extending classes.
+	 */
 	protected IOHandler io;
-	
+
+	/**
+	 * offset in {@link #_buffer}
+	 */
 	protected int _offset = 0;
+	/**
+	 * length of {@link #_buffer}
+	 */
 	protected int _length = -1;
 
+	/**
+	 * Creates a new object using given buffer
+	 * 
+	 * @param buffer
+	 *            buffer to use for {@link #_buffer}
+	 */
 	public AbstractInputStream(final byte[] buffer) {
 		this._buffer = buffer;
 	}
@@ -21,6 +45,7 @@ public abstract class AbstractInputStream extends InputStream {
 	 * 
 	 * @return <i>true</i> if <i>this</i> stream reached the end of file
 	 * @throws IOException
+	 *             exception thrown by {@link #fillBuff()}
 	 */
 	public final boolean EOFreached() throws IOException {
 		if (this._length < this._offset) {
@@ -31,7 +56,7 @@ public abstract class AbstractInputStream extends InputStream {
 		}
 		if (this._length == 0) {
 			if (this.io != null) {
-				this.io.endProgress();
+				this.io.endProgress("Reading done");
 				this.io = null;
 			}
 			return true;
@@ -119,15 +144,36 @@ public abstract class AbstractInputStream extends InputStream {
 	}
 
 	/**
-	 * Resets the stream to start
+	 * Sets available bytes in buffer to 0. Implementing classes may alter
+	 * behavior.
 	 */
 	@Override
-	public void reset() {
+	public synchronized void reset() {
 		this._length = -1;
 	}
+	
+	/**
+	 * Unsupported operation.
+	 * @param readlimit ignored
+	 */
+	@Override
+	public final synchronized void mark(int readlimit) {
+		return;
+	}
 
+	/**
+	 * Fills {@link #_buffer} and sets {@link #_length} and {@link #_offset}
+	 * accordingly.
+	 * 
+	 * @throws IOException if accessing the underlying stream fails
+	 */
 	protected abstract void fillBuff() throws IOException;
 
+	/**
+	 * Like {@link #fillBuff()} but uses given stream to fill the buffer.
+	 * @param stream {@link java.io.InputStream} to read from
+	 * @throws IOException if accessing the given stream fails
+	 */
 	protected final void fillBuffByStream(final java.io.InputStream stream)
 			throws IOException {
 		final int buffered;
@@ -145,6 +191,14 @@ public abstract class AbstractInputStream extends InputStream {
 		}
 	}
 
+	/**
+	 * Tries to read as many bytes as needed to fill given buffer.
+	 * 
+	 * @param buffer buffer to fill
+	 * @param offset start index of <i>buffer</i> to fill
+	 * @param length maximum number of bytes to fill into <i>buffer</i>
+	 * @return numbers of bytes copied to <i>buffer</i>
+	 */
 	protected final int fillExternalBuffer(final byte[] buffer, int offset,
 			int length) {
 		final int remIntBuffer = this._length - this._offset;

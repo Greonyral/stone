@@ -21,7 +21,7 @@ class EmptyMidiInstrumentDropTarget implements
 	private final DropTargetContainer<JPanel, JPanel, JPanel> container;
 
 	EmptyMidiInstrumentDropTarget(
-			final DropTargetContainer<JPanel, JPanel, JPanel> container) {
+			@SuppressWarnings("hiding") final DropTargetContainer<JPanel, JPanel, JPanel> container) {
 		this.container = container;
 	}
 

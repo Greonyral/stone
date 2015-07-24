@@ -1,7 +1,5 @@
 package stone;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -31,9 +29,18 @@ public class StartupContainer {
 	}
 
 	/**
+	 * 
+	 * @see FileSystem
+	 * @return the parsed output of {@link FileSystem#getDataDirectory()}
+	 */
+	public final static Path getDatadirectory() {
+		return dataDirectory;
+	}
+
+	/**
 	 * Asks the ModuleLoader to load given module
 	 * 
-	 * @param module
+	 * @param module {@link Module} to load
 	 * @return the Class of loaded Module or <i> null</i> if the module could
 	 *         not been found.
 	 */
@@ -53,9 +60,9 @@ public class StartupContainer {
 	private TaskPool taskPool;
 
 	boolean initDone;
-
 	final boolean jar;
 	final Path workingDirectory;
+
 	private IOHandler io;
 
 	private MasterThread master;
@@ -66,21 +73,31 @@ public class StartupContainer {
 
 	private Main main;
 
-	private final Map<String, Container> containerMap = new HashMap<>();
-
 
 	private int wait = 2;
-
 	private static final ClassLoader loader = StartupContainer.class
 			.getClassLoader();
-	private final static Path dataDirectory = Path.getDataDirectory().resolve(FileSystem.type == FileSystem.OSType.UNIX ? ".SToNe" : "SToNe");
+
+	private final static Path dataDirectory = Path.getDataDirectory().resolve(
+			FileSystem.type == FileSystem.OSType.UNIX ? ".SToNe" : "SToNe");
+
+	/**
+	 * Informs the module manager about downloaded archive.
+	 * @param downloadedArchive {@link Path} of downloaded archive
+	 * @param moduleName Name of containing {@link Module}
+	 */
+	public final static void registerDownloadedModule(
+			final Path downloadedArchive, final String moduleName) {
+		if (moduleName.startsWith("Main")) {
+			registerDownloadedModule(downloadedArchive, "SToNe");
+		} else {
+			final Path target = dataDirectory.resolve(moduleName + ".jar");
+			downloadedArchive.renameTo(target);
+		}
+	}
 
 	private StartupContainer() {
-		try {
-			this.io = new IOHandler(Main.TOOLNAME);
-		} catch (final InterruptedException e) {
-			e.printStackTrace();
-		}
+		this.io = new IOHandler(Main.TOOLNAME);
 		boolean jar_ = false;
 		Path workingDirectory_ = null;
 		try {
@@ -98,9 +115,16 @@ public class StartupContainer {
 	}
 
 	/**
-	 * @param io
+	 * @return the parameters of running program
 	 */
-	public final void createFinalIO(final IOHandler io) {
+	public Object args() {
+		return this.flags.getArgs();
+	}
+
+	/**
+	 * @param io {@link IOHandler} to use
+	 */
+	public final void createFinalIO(@SuppressWarnings("hiding") final IOHandler io) {
 		this.io = io;
 	}
 
@@ -118,41 +142,10 @@ public class StartupContainer {
 	 * Calling this method will provide the parsed command line arguments to any
 	 * module.
 	 * 
-	 * @param flags
+	 * @param flags {@link Flag} to use
 	 */
-	public final void finishInit(final Flag flags) {
+	public final void finishInit(@SuppressWarnings("hiding") final Flag flags) {
 		this.flags = flags;
-	}
-
-	/**
-	 * 
-	 * @param s
-	 *            idenifier of desired Container. It has to be the class-name.
-	 * @return a Container or <i>null</i> if the Container failed to load.
-	 */
-	public final Container getContainer(final String s) {
-		final Container container = this.containerMap.get(s);
-		if (container == null) {
-			try {
-				@SuppressWarnings("unchecked")
-				final Class<Container> containerClass = (Class<Container>) StartupContainer.loader
-						.loadClass(s);
-				Container containerNew;
-				containerNew = (Container) containerClass.getMethod("create",
-						getClass()).invoke(null, this);
-				this.containerMap.put(s, containerNew);
-				return containerNew;
-			} catch (final InvocationTargetException e) {
-				e.getCause().printStackTrace();
-			} catch (final IllegalAccessException | IllegalArgumentException
-					| NoSuchMethodException | SecurityException
-					| ClassNotFoundException e) {
-				e.printStackTrace();
-				return null;
-			}
-
-		}
-		return container;
 	}
 
 	/**
@@ -213,16 +206,16 @@ public class StartupContainer {
 	/**
 	 * Sets the instance of the main-module.
 	 * 
-	 * @param main
+	 * @param main {@link Main} to use
 	 */
-	public final void setMain(final Main main) {
+	public final void setMain(@SuppressWarnings("hiding") final Main main) {
 		this.main = main;
 	}
 
 	/**
-	 * @param master
+	 * @param master {@link MasterThread} to use
 	 */
-	public final void setMaster(final MasterThread master) {
+	public final void setMaster(@SuppressWarnings("hiding") final MasterThread master) {
 		this.master = master;
 	}
 
@@ -267,23 +260,5 @@ public class StartupContainer {
 			}
 		}
 		return params;
-	}
-
-	public final static Path getDatadirectory() {
-		return dataDirectory;
-	}
-
-	public final static void registerDownloadedModule(
-			final Path downloadedArchive, final String moduleName) {
-		if (moduleName.startsWith("Main"))
-			registerDownloadedModule(downloadedArchive, "SToNe");
-		else {
-			final Path target = dataDirectory.resolve(moduleName + ".jar");
-			downloadedArchive.renameTo(target);
-		}
-	}
-
-	public Object args() {
-		return flags.getArgs();
 	}
 }

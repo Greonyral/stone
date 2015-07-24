@@ -17,18 +17,40 @@ import javax.swing.JToggleButton;
 public abstract class ReleaseListener implements MouseListener {
 
 	private final ReleaseMouseListenerParams params;
-
+	/** set to value of constructor call */
 	protected final AbcMapPlugin abcMapPlugin;
+	/** set to value of constructor call */
 	protected final JToggleButton splitButton;
+	/** set to value of constructor call */
 	protected final JButton globalParamsButton;
-	protected final JButton testButton, loadButton;
-	protected final JPanel panel, panelCenter, globalMenu;
+	/** set to value of constructor call */
+	protected final JButton testButton;
+	/** set to value of constructor call */
+	protected final JButton loadButton;
+	/** set to value of constructor call */
+	protected final JPanel panel;
+	/** set to value of constructor call */
+	protected final JPanel panelCenter;
+	/** set to value of constructor call */
+	protected final JPanel globalMenu;
 
+	/**
+	 * clones a already created <i>listener</i>
+	 * 
+	 * @param listener
+	 *            -
+	 */
 	protected ReleaseListener(final ReleaseListener listener) {
 		this(listener.params);
 	}
 
-	protected ReleaseListener(final ReleaseMouseListenerParams params) {
+	/**
+	 * @param params
+	 *            container setting all necessary objects to call for triggered
+	 *            action
+	 */
+	protected ReleaseListener(
+			@SuppressWarnings("hiding") final ReleaseMouseListenerParams params) {
 		this.params = params;
 		this.abcMapPlugin = params.plugin();
 		this.panel = params.panel();

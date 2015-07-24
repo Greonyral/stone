@@ -2,12 +2,26 @@ package stone.util;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Spliterator;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
+/**
+ * @author Nelphindal
+ * 
+ *         A implementation of {@link Map} using linked lists.
+ * @param <K>
+ *            Key
+ * @param <V>
+ *            Value
+ */
 public class LinkedMap<K, V> implements Map<K, V> {
 
 	class Entry {
@@ -15,6 +29,7 @@ public class LinkedMap<K, V> implements Map<K, V> {
 		private V value;
 		private Entry next;
 
+		@SuppressWarnings("hiding")
 		Entry(final K key, final V value) {
 			this.key = key;
 			this.value = value;
@@ -64,7 +79,150 @@ public class LinkedMap<K, V> implements Map<K, V> {
 
 	@Override
 	public Set<java.util.Map.Entry<K, V>> entrySet() {
-		throw new UnsupportedOperationException();
+		return new Set<java.util.Map.Entry<K, V>>() {
+
+			@Override
+			public boolean removeIf(
+					Predicate<? super java.util.Map.Entry<K, V>> filter) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Stream<java.util.Map.Entry<K, V>> stream() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Stream<java.util.Map.Entry<K, V>> parallelStream() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void forEach(
+					Consumer<? super java.util.Map.Entry<K, V>> action) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public int size() {
+				return LinkedMap.this.size();
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return LinkedMap.this.isEmpty();
+			}
+
+			@Override
+			public boolean contains(Object o) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Iterator<java.util.Map.Entry<K, V>> iterator() {
+				return new Iterator<java.util.Map.Entry<K, V>>() {
+
+					private Entry ptr = head;
+
+					@Override
+					public boolean hasNext() {
+						return ptr != null;
+					}
+
+					@Override
+					public java.util.Map.Entry<K, V> next() {
+						final K key = ptr.key;
+						final V value = ptr.value;
+						ptr = ptr.next;
+						return new Map.Entry<K, V>() {
+
+							@Override
+							public K getKey() {
+								return key;
+							}
+
+							@Override
+							public V getValue() {
+								return value;
+							}
+
+							@Override
+							public V setValue(@SuppressWarnings("hiding") V value) {
+								throw new UnsupportedOperationException();
+							}
+
+
+						};
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+
+					}
+
+					@Override
+					public void forEachRemaining(
+							Consumer<? super java.util.Map.Entry<K, V>> action) {
+						throw new UnsupportedOperationException();
+
+					}
+
+				};
+			}
+
+			@Override
+			public Object[] toArray() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public <T> T[] toArray(T[] a) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public boolean add(java.util.Map.Entry<K, V> e) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public boolean remove(Object o) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public boolean containsAll(Collection<?> c) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public boolean addAll(
+					Collection<? extends java.util.Map.Entry<K, V>> c) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public boolean retainAll(Collection<?> c) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public boolean removeAll(Collection<?> c) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void clear() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Spliterator<java.util.Map.Entry<K, V>> spliterator() {
+				throw new UnsupportedOperationException();
+			}
+
+		};
 	}
 
 	@Override
@@ -81,6 +239,12 @@ public class LinkedMap<K, V> implements Map<K, V> {
 		return e.value;
 	}
 
+	/**
+	 * Unsupported
+	 * 
+	 * @throws UnsupportedOperationException
+	 *             whenever called
+	 */
 	@Override
 	public V getOrDefault(final Object key, final V defaultValue) {
 		throw new UnsupportedOperationException();
@@ -117,17 +281,15 @@ public class LinkedMap<K, V> implements Map<K, V> {
 			this.head = this.tail = newEntry;
 			this.lookUpMap.put(key, this.tail);
 			return null;
-		} else {
-			final Entry oldEntry = this.lookUpMap.put(key, newEntry);
-			if (oldEntry == null) {
-				this.tail.next = newEntry;
-				this.tail = this.tail.next;
-				return null;
-			} else {
-				oldEntry.value = value;
-				return oldEntry.value;
-			}
 		}
+		final Entry oldEntry = this.lookUpMap.put(key, newEntry);
+		if (oldEntry == null) {
+			this.tail.next = newEntry;
+			this.tail = this.tail.next;
+			return null;
+		}
+		oldEntry.value = value;
+		return oldEntry.value;
 	}
 
 	@Override

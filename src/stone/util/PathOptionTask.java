@@ -15,6 +15,7 @@ final class PathOptionTask implements Runnable {
 	private final PathOption pathOption;
 	private final JTextField textField;
 
+	@SuppressWarnings("hiding")
 	PathOptionTask(final PathOption pathOption, final JTextField textField) {
 		this.pathOption = pathOption;
 		this.textField = textField;

@@ -23,7 +23,7 @@ final class TestButtonMouseListener extends ReleaseListener {
 				}
 			}
 			if (this.abcMapPlugin.state.upToDate) {
-				this.abcMapPlugin.state.io.endProgress();
+				this.abcMapPlugin.state.io.endProgress("Creating abc");
 			}
 			this.abcMapPlugin.state.upToDate = false;
 			this.abcMapPlugin.state.running = true;

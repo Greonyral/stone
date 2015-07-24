@@ -10,16 +10,22 @@ import stone.io.GUIPlugin;
 
 
 /**
- * Plugin to select a key
+ * {@link GUIPlugin} to select a key
  * 
  * @author Nelphindal
  */
 public class SecretKeyPlugin extends GUIPlugin {
 
+	/** */
+	public SecretKeyPlugin() {
+		super("");
+	}
+
+
 	/**
 	 * Decodes <i>text</i> a hexdump to the according byte array
 	 * 
-	 * @param text
+	 * @param text string containing the key
 	 * @return decoded text for use as key
 	 */
 	public final static byte[] decode(final String text) {
@@ -33,14 +39,15 @@ public class SecretKeyPlugin extends GUIPlugin {
 			int byteValue = 0;
 			for (final int byteV : bytes) {
 				byteValue <<= 4;
-				if (byteV >= '0' && byteV <= '9') {
+				if ((byteV >= '0') && (byteV <= '9')) {
 					byteValue += byteV - '0';
-				} else if (byteV >= 'a' && byteV <= 'f') {
-					byteValue += byteV - 'a' + 10;
-				} else if (byteV >= 'A' && byteV <= 'F') {
-					byteValue += byteV - 'A' + 10;
-				} else
+				} else if ((byteV >= 'a') && (byteV <= 'f')) {
+					byteValue += (byteV - 'a') + 10;
+				} else if ((byteV >= 'A') && (byteV <= 'F')) {
+					byteValue += (byteV - 'A') + 10;
+				} else {
 					throw new IllegalArgumentException();
+				}
 			}
 			key[posKey++] = (byte) byteValue;
 

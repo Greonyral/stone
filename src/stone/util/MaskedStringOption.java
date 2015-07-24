@@ -32,7 +32,7 @@ public final class MaskedStringOption extends Option {
 	/**
 	 * Creates a new MaskedStringOption.
 	 * 
-	 * @param optionContainer
+	 * @param optionContainer instance of {@link OptionContainer} to use
 	 * @param name
 	 *            a unique identifier for this option to register at
 	 *            OptionContainer
@@ -58,6 +58,7 @@ public final class MaskedStringOption extends Option {
 	 *            and
 	 *            {@link stone.modules.Main#setConfigValue(String, String, String)}
 	 */
+	@SuppressWarnings("hiding")
 	public MaskedStringOption(final OptionContainer optionContainer,
 			final String name, final String toolTip,
 			final String guiDescription, char shortFlag, final String longFlag,
@@ -70,7 +71,7 @@ public final class MaskedStringOption extends Option {
 
 	/** */
 	@Override
-	public final void display(final JPanel panel, final KeyEventHandler key) {
+	public final void display(final JPanel panel, @SuppressWarnings("hiding") final KeyEventHandler key) {
 		final JPanel mainPanel = new JPanel();
 		final JPanel buttonPanel = new JPanel();
 		final JTextField textField = new JTextField();
@@ -108,8 +109,9 @@ public final class MaskedStringOption extends Option {
 				}
 				final int keyEvent = MaskedStringOption.this.content
 						.handleEvent(e, this.cursor);
-				if (keyEvent != 0)
+				if (keyEvent != 0) {
 					key.handleKeyEvent(keyEvent);
+				}
 				printValue(textField);
 				if (this.cursor[1] != this.cursor[2]) {
 					textField.setSelectionStart(this.cursor[1]);

@@ -58,10 +58,18 @@ public class Flag {
 	}
 
 	/**
+	 * @return last argument of {@link #parse(String[])}
+	 */
+	public final String[] getArgs() {
+		return this.args;
+	}
+
+	/**
 	 * Returns the value assigned currently in <i>this</i> instance for given
 	 * <i>flagId</i>.
 	 * 
 	 * @param flagId
+	 *            identifying name of a switch
 	 * @return assigned value
 	 */
 	public final String getValue(final String flagId) {
@@ -81,11 +89,13 @@ public class Flag {
 	 * Checks if given <i>flagId</i> was parsed or set to be enabled.
 	 * 
 	 * @param flagId
+	 *            identifying name of a switch
 	 * @return <i>true</i> if <i>flagId</i> is enabled
 	 */
 	public final boolean isEnabled(final String flagId) {
-		if (dirty)
+		if (this.dirty) {
 			parse();
+		}
 		return this.enabledFlags.contains(flagId);
 
 	}
@@ -97,17 +107,24 @@ public class Flag {
 	 *            parameters to parse
 	 * @return <i>true</i> if <i>args</i> were valid and parsing successful
 	 */
-	public final boolean parse(final String[] args) {
+	public final boolean parse(@SuppressWarnings("hiding") final String[] args) {
 		this.args = args;
 		this.unknownOption = null;
 		parse();
 		return this.unknownOption == null;
 	}
 
+	/**
+	 * Processes argument of {@link #parse(String[])} again
+	 * 
+	 * @return <i>true</i> if <i>args</i> were valid and parsing successful
+	 * @see #parse(String[])
+	 */
 	public final boolean parseWOError() {
-		if (dirty)
+		if (this.dirty) {
 			return parse();
-		return unknownOption == null;
+		}
+		return this.unknownOption == null;
 	}
 
 	/**
@@ -180,7 +197,7 @@ public class Flag {
 	 */
 	public final void registerOption(final String flagId, final String tooltip,
 			char shortFlag, final String longFlag, boolean argExpected) {
-		dirty = true;
+		this.dirty = true;
 		if (shortFlag != Flag.NoShortFlag) {
 			this.shortToId.put((int) shortFlag, flagId);
 		}
@@ -206,7 +223,8 @@ public class Flag {
 	 * @param values
 	 *            map with set of pairs of flagId, value
 	 */
-	public final void setValue(final Map<String, String> values) {
+	public final void setValue(
+			@SuppressWarnings("hiding") final Map<String, String> values) {
 		this.values.putAll(values);
 		this.enabledFlags.addAll(values.keySet());
 	}
@@ -215,6 +233,7 @@ public class Flag {
 	 * Sets a specific flagId to hold given value.
 	 * 
 	 * @param flagId
+	 *            an unique id to identify this option
 	 * @param value
 	 *            new value
 	 */
@@ -222,6 +241,10 @@ public class Flag {
 		this.values.put(flagId, value);
 	}
 
+	/**
+	 * @return the part of the given <i>args</i> by {@link #parse(String[])}
+	 *         which created the first error
+	 */
 	public final String unknownOption() {
 		return "Unknown Option " + this.unknownOption;
 	}
@@ -229,10 +252,11 @@ public class Flag {
 	private final boolean parse() {
 		boolean missingPrefix = false;
 		final Set<String> pendingFlags = new HashSet<>();
-		if (!dirty || (this.args == null) && (this.unknownOption == null)) {
+		if (!this.dirty
+				|| ((this.args == null) && (this.unknownOption == null))) {
 			return this.unknownOption == null;
 		}
-		dirty = false;
+		this.dirty = false;
 		for (int i = 0, ci = -1; i < this.args.length; i++) {
 			final String id;
 			if ((ci < 0) && this.args[i].startsWith("--")) {
@@ -261,6 +285,7 @@ public class Flag {
 				continue;
 			}
 			final String value;
+			@SuppressWarnings("hiding")
 			final Integer state = this.state.get(id);
 			if (state == null) {
 				if (missingPrefix) {
@@ -277,7 +302,7 @@ public class Flag {
 				continue;
 			} else if ((state & Flag.PRIMITIVE) == 0) {
 				if ((this.args[i].length() < (ci + 1))
-						|| (i + 1 == args.length)) {
+						|| ((i + 1) == this.args.length)) {
 					if (missingPrefix) {
 						// disable all flags parsed since missingPrefix-flag has
 						// been enabled
@@ -296,10 +321,11 @@ public class Flag {
 			} else {
 				value = null;
 			}
-			if (missingPrefix)
+			if (missingPrefix) {
 				pendingFlags.add(id);
-			else
+			} else {
 				this.enabledFlags.add(id);
+			}
 			this.values.put(id, value);
 			if (ci >= 0) {
 				if ((ci + 1) == this.args[i].length()) {
@@ -317,9 +343,5 @@ public class Flag {
 			return true;
 		}
 		return false;
-	}
-
-	public final String[] getArgs() {
-		return args;
 	}
 }

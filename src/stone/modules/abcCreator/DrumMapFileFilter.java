@@ -11,7 +11,7 @@ public class DrumMapFileFilter extends stone.util.PathOptionFileFilter {
 	/**
 	 * Checks if given file is a directory and contains at least one map.
 	 * 
-	 * @param f
+	 * @param f -
 	 * @return <i>true</i> on positive result.
 	 */
 	public static final boolean check(final File f) {

@@ -140,7 +140,7 @@ final class MidiParserImpl extends MidiParser {
 			}
 		} finally {
 			this.io.close(in);
-			this.io.endProgress();
+			this.io.endProgress("Map created");
 		}
 	}
 
@@ -204,11 +204,11 @@ final class MidiParserImpl extends MidiParser {
 					(int) ((durationTrack * 60) % 60),
 					(int) ((durationTrack * 60 * 1000) % 1000));
 		}
-		this.io.endProgress();
+		this.io.endProgress("Midi decoded");
 	}
 
 	@Override
-	protected final void prepareMidi(final Path midi) throws Exception {
+	protected final void prepareMidi(@SuppressWarnings("hiding") final Path midi) throws Exception {
 		final InputStream in = this.io.openIn(midi.toFile());
 		try {
 			in.read(this.midiHeaderBufferBytes);

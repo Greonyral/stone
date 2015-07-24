@@ -56,13 +56,11 @@ public final class Scanner implements Runnable {
 	private final Deserializer sdd;
 
 	/**
-	 * @param io
-	 * @param queue
-	 * @param master
-	 * @param out
-	 * @param tree
-	 * @param songsFound
+	 * @param master -
+	 * @param sdd -
+	 * @param tree -
 	 */
+	@SuppressWarnings("hiding")
 	public Scanner(MasterThread master, final Deserializer sdd,
 			final DirTree tree) {
 		this.io = sdd.getIO();
@@ -79,8 +77,8 @@ public final class Scanner implements Runnable {
 		}
 	}
 
-	private final SongData getVoices(final ModEntry song) {
-		final SongData songdata = this.tree.get(song.getKey());
+	private final SongDataEntry getVoices(final ModEntry song) {
+		final SongDataEntry songdata = this.tree.get(song.getKey());
 		if ((songdata == null)
 				|| (songdata.getLastModification() != song.getValue())) {
 			final Path songFile = song.getKey();
@@ -171,7 +169,7 @@ public final class Scanner implements Runnable {
 					this.io.printError(String.format("Warning: %-50s %s", song
 							.getKey().toString(), "has no voices"), true);
 				}
-				final SongData sd = SongData.create(song, voices);
+				final SongDataEntry sd = SongDataEntry.create(song, voices);
 				synchronized (song) {
 					this.tree.put(sd);
 				}
@@ -192,7 +190,7 @@ public final class Scanner implements Runnable {
 		if (song == null) {
 			return false;
 		}
-		final SongData voices = getVoices(song);
+		final SongDataEntry voices = getVoices(song);
 		try {
 			this.sdd.serialize(voices);
 		} catch (final IOException e) {

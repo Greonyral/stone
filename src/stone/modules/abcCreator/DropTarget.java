@@ -10,9 +10,9 @@ import javax.swing.JPanel;
 
 /**
  * @author Nelphindal
- * @param <C>
- * @param <D>
- * @param <T>
+ * @param <C> -
+ * @param <D> -
+ * @param <T> -
  */
 public interface DropTarget<C extends Container, D extends Container, T extends Container>
 		extends Comparable<DropTarget<?, ?, ?>>, Iterable<DragObject<C, D, T>> {

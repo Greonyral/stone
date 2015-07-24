@@ -7,12 +7,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import stone.MasterThread;
 import stone.StartupContainer;
 import stone.io.ExceptionHandle;
 import stone.io.IOHandler;
-import stone.io.InputStream;
 import stone.io.OutputStream;
-import stone.modules.songData.SongDataContainer;
 import stone.util.Debug;
 import stone.util.Option;
 import stone.util.Path;
@@ -25,19 +24,18 @@ import stone.util.Path;
  */
 public final class SongbookUpdater implements Module {
 
-	private final static int VERSION = 7;
-	private final static String USER = "UserPreferences.ini";
+	private final static int VERSION = 8;
 
 	private final IOHandler io;
-	private final SongDataContainer container;
+	
+	private final Main main;
 
+	private final MasterThread master;
+
+	private final static String USER = "UserPreferences.ini";
 	/** %HOME%\The Lord of The Rings Online */
 	private final Path pluginDataPath;
 	private final Path songbookPlugindataPath;
-	private final Main main;
-
-	private final Thread master;
-
 	/**
 	 * Constructor for building versionInfo
 	 */
@@ -45,36 +43,19 @@ public final class SongbookUpdater implements Module {
 		this.io = null;
 		this.master = null;
 		this.main = null;
-		this.pluginDataPath = null;
 		this.songbookPlugindataPath = null;
-		this.container = null;
+		this.pluginDataPath = null;
+		
 	}
 
 	/**
 	 * Constructor as needed by being a Module
 	 * 
-	 * @param sc
-	 * @throws InterruptedException
+	 * @param sc -
 	 */
-	public SongbookUpdater(final StartupContainer sc)
-			throws InterruptedException {
-		this.io = null;
-		this.master = null;
-		this.pluginDataPath = null;
-		this.songbookPlugindataPath = null;
-		this.main = sc.getMain();
-		this.container = null;
-	}
-
-	/**
-	 * Creates a new instance and uses previously registered options
-	 * 
-	 * @param sc
-	 * @param old
-	 */
-	private SongbookUpdater(final StartupContainer sc, final SongbookUpdater old) {
+	public SongbookUpdater(final StartupContainer sc) {
 		this.io = sc.getIO();
-		this.main = old.main;
+		this.main = sc.getMain();
 		final String home = sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
 				Main.PATH_KEY, null);
 		final Path basePath = Path.getPath(home.split("/"));
@@ -82,8 +63,6 @@ public final class SongbookUpdater implements Module {
 		this.songbookPlugindataPath = this.pluginDataPath
 				.resolve("SongbookUpdateData");
 		this.master = sc.getMaster();
-		this.container = (SongDataContainer) sc
-				.getContainer(SongDataContainer.class.getCanonicalName());
 	}
 
 	/** */
@@ -101,7 +80,7 @@ public final class SongbookUpdater implements Module {
 	/** */
 	@Override
 	public final SongbookUpdater init(final StartupContainer sc) {
-		return new SongbookUpdater(sc, this);
+		return new SongbookUpdater(sc);
 	}
 
 	@Override
@@ -139,16 +118,21 @@ public final class SongbookUpdater implements Module {
 		if (this.master.isInterrupted()) {
 			return;
 		}
+		master.getModule("SongData").run();
 		updateSongbookData();
 	}
-
-	/*
-	 * creates the file needed for Songbook-plugin
-	 */
-	private final void updateSongbookData() {
+	
+	private void updateSongbookData() {
+		if (this.master.isInterrupted()) {
+			return;
+		}
+		/*
+		 * creates the file needed for Songbook-plugin
+		 */
 		final long start = System.currentTimeMillis();
 		final Set<String> profiles = new HashSet<>();
-
+		final stone.modules.SongData data = (stone.modules.SongData) master.getModule("SongData");
+		
 		if (!this.pluginDataPath.exists()) {
 			if (!this.pluginDataPath.toFile().mkdir()) {
 				this.io.printMessage(null,
@@ -157,22 +141,21 @@ public final class SongbookUpdater implements Module {
 			}
 			return;
 		}
-		final File userIni = this.pluginDataPath.getParent()
-				.resolve(SongbookUpdater.USER).toFile();
+		final File userIni = this.pluginDataPath.getParent().resolve(USER)
+				.toFile();
 		if (!userIni.exists()) {
 			this.io.printMessage(
 					"UserPreferences.ini not found",
 					"\""
 							+ Main.formatMaxLength(
-									this.pluginDataPath.getParent(),
-									SongbookUpdater.USER)
+									this.pluginDataPath.getParent(), USER)
 							+ "\"\n"
 							+ "not found. Check if the path is correct or start LoTRO and login to create it.\n"
 							+ "The tool is using the file to get your account names.\n"
 							+ "\nScan aborted.", true);
 			return;
 		}
-		final InputStream in = this.io.openIn(userIni);
+		final stone.io.InputStream in = this.io.openIn(userIni);
 		if (userIni.length() != 0) {
 			do {
 				try {
@@ -197,7 +180,7 @@ public final class SongbookUpdater implements Module {
 			} while (true);
 		}
 		this.io.close(in);
-		this.container.fill();
+
 		if (this.master.isInterrupted()) {
 			return;
 		}
@@ -207,8 +190,8 @@ public final class SongbookUpdater implements Module {
 
 		// write master plugindata and updateFileNew
 		this.io.startProgress("Writing " + masterPluginData.getName(),
-				this.container.size());
-		this.container.writeNewSongbookData(masterPluginData);
+				data.size());
+		data.writeNewSongbookData(masterPluginData);
 
 		this.io.startProgress("", profiles.size());
 		Debug.print("%2d profiles found:\n", profiles.size());
@@ -240,12 +223,18 @@ public final class SongbookUpdater implements Module {
 			this.io.updateProgress();
 		}
 		masterPluginData.delete();
-		this.io.endProgress();
+		this.io.endProgress("");
 		final long end = System.currentTimeMillis();
 		Debug.print("needed %s for updating songbook with %d song(s)",
-				stone.util.Time.delta(end - start), this.container.size());
+				stone.util.Time.delta(end - start), data.size());
 		this.io.printMessage(null,
 				"Update of your songbook is complete.\nAvailable songs: "
-						+ this.container.size(), true);
+						+ data.size(), true);
+		
+	}
+
+	@Override
+	public final void dependingModules(final Set<String> set) {
+		set.add("SongData");
 	}
 }

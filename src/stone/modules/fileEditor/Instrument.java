@@ -9,6 +9,7 @@ class Instrument {
 	private final InstrumentType type;
 	private final Set<Id> numbers;
 
+	@SuppressWarnings("hiding")
 	public Instrument(final InstrumentType type, final Set<Id> numbers) {
 		this.type = type;
 		if (numbers.isEmpty()) {

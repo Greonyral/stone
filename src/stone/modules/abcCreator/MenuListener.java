@@ -17,7 +17,7 @@ abstract class MenuListener extends ReleaseListener implements ChangeListener {
 	private final AbstractButton button;
 
 	protected MenuListener(final ReleaseListener listener,
-			final AbstractButton button) {
+			@SuppressWarnings("hiding") final AbstractButton button) {
 		super(listener);
 		this.button = button;
 	}

@@ -23,6 +23,7 @@ public enum ExceptionHandle {
 
 	private final boolean suppress, abort;
 
+	@SuppressWarnings("hiding")
 	private ExceptionHandle(boolean suppress, boolean abort) {
 		this.suppress = suppress;
 		this.abort = abort;

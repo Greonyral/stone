@@ -8,6 +8,7 @@ final class TC_Listener<C extends Container, D extends Container, T extends Cont
 
 	private final DropTargetContainer<C, D, T> targetC;
 
+	@SuppressWarnings("hiding")
 	public TC_Listener(final DropTargetContainer<C, D, T> targetC,
 			final DragAndDropPlugin<C, D, T>.State state) {
 		super(state);

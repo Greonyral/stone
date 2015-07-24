@@ -23,7 +23,7 @@ public class CreateBuilds {
 	 * 
 	 * @param args
 	 *            ignored
-	 * @throws IOException
+	 * @throws IOException -
 	 */
 	public final static void main(final String[] args) throws IOException {
 		final URL url = CreateBuilds.class.getClassLoader().getResource(

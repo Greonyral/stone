@@ -4,6 +4,7 @@ final class NoteOnEvent extends MidiEvent {
 	private final byte k, v, channel;
 	private final int format;
 
+	@SuppressWarnings("hiding")
 	NoteOnEvent(byte k, byte v, byte channel, int delta, int format) {
 		super(delta, EventType.NOTE_ON);
 		this.k = k;

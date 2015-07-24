@@ -8,12 +8,30 @@ import java.util.concurrent.atomic.AtomicInteger;
 import stone.MasterThread;
 import stone.io.AbstractInputStream;
 import stone.io.IOHandler;
+import stone.modules.SongData;
 import stone.util.Path;
 
-abstract class Deserializer {
+/**
+ * The data read from previous runs is stored in an archice. This class helps to
+ * retrieve the stored information
+ * 
+ * @author Nelphindal
+ * 
+ */
+abstract public class Deserializer {
+	/**
+	 * File to give the hint of used version
+	 */
 	protected static final String VERSION_ID_FILE = "sdd";
 
-	public final static Deserializer init(final SongDataContainer sdc,
+	/**
+	 * @param sdc
+	 *            container to call back to register read data
+	 * @param master
+	 *            -
+	 * @return created instance
+	 */
+	public final static Deserializer init(final SongData sdc,
 			final MasterThread master) {
 		final Path idx = getIdx(sdc.getRoot());
 		final IOHandler io = sdc.getIOHandler();
@@ -76,10 +94,16 @@ abstract class Deserializer {
 		return idx;
 	}
 
-	protected final Path root, idx;
+	/** root of {@link #sdc} */
+	protected final Path root;
+	/** file containing the information to read */
+	protected final Path idx;
 
+	/** {@link IOHandler} to use to open streams */
 	protected final IOHandler io;
-	protected final SongDataContainer sdc;
+	/** container to call back to register read data */
+	protected final SongData sdc;
+
 	private final ArrayDeque<ModEntry> queue = new ArrayDeque<>();
 	private final AtomicInteger songsFound = new AtomicInteger();
 
@@ -87,24 +111,43 @@ abstract class Deserializer {
 
 	private boolean crawlDone = false, deserialDone = false;
 
-	protected Deserializer(final SongDataContainer sdc) {
+	/**
+	 * Creates a new instance
+	 * 
+	 * @param sdc
+	 *            container to call back to register read data
+	 */
+	protected Deserializer(@SuppressWarnings("hiding") final SongData sdc) {
 		this.sdc = sdc;
 		this.root = sdc.getRoot();
 		this.io = sdc.getIOHandler();
 		this.idx = getIdx(this.root);
 	}
 
+	/**
+	 * Terminates all processes invoked by {@link #deserialize()}
+	 */
 	public final void abort() {
 		abort_();
-		this.io.endProgress();
+		this.io.endProgress("aborted");
 	}
 
+	/**
+	 * Informs that a song with given properties have been found and the related
+	 * data of the deserialization process may be kept
+	 * 
+	 * @param song
+	 *            a found song
+	 */
 	public final void addToQueue(final ModEntry song) {
 		this.queue.add(song);
 		notifyAll();
 		this.songsFound.incrementAndGet();
 	}
 
+	/**
+	 * Informs that no more calls of {@link #addToQueue(ModEntry)} will happen
+	 */
 	public final synchronized void crawlDone() {
 		if (this.crawlDone) {
 			return;
@@ -118,6 +161,13 @@ abstract class Deserializer {
 		}
 	}
 
+	/**
+	 * Reads completely compressed files to retrieve saved data from previous
+	 * run
+	 * 
+	 * @throws IOException
+	 *             if an I/O-Error occurs
+	 */
 	public final void deserialize() throws IOException {
 		deserialize_();
 		synchronized (this) {
@@ -135,23 +185,49 @@ abstract class Deserializer {
 		}
 	}
 
+	/**
+	 * Informs that reading part of {@link #deserialize()} is done
+	 */
 	public final void finish() {
 		finish_();
-		this.io.endProgress();
+		this.io.endProgress("Reading finished");
 	}
 
-	public Runnable getDeserialTask() {
-		return null;
-	}
+	/**
+	 * 
+	 * Implementing classes have to implement this method. A task shall be
+	 * returned which can implement {@link DeserializeContainer}
+	 * 
+	 * @return a task which {@link Runnable#run()} will deserialize on part of
+	 *         outstanding work
+	 */
+	public abstract Runnable getDeserialTask();
 
+	/**
+	 * This method is identical to calling {@link SongData#getIOHandler} upon
+	 * {@link #sdc}
+	 * 
+	 * @return {@link IOHandler} to use
+	 */
 	public final IOHandler getIO() {
 		return this.io;
 	}
 
+	/**
+	 * This method is identical to calling {@link SongData#getRoot} upon
+	 * {@link #sdc}
+	 * 
+	 * @return the base of relative paths of used {@link SongData}
+	 */
 	public final Path getRoot() {
 		return this.root;
 	}
 
+	/**
+	 * Gets next element to work on
+	 * 
+	 * @return element to work on
+	 */
 	public final ModEntry pollFromQueue() {
 		while (this.queue.isEmpty()) {
 			if (this.crawlDone) {
@@ -166,11 +242,27 @@ abstract class Deserializer {
 		return this.queue.remove();
 	}
 
+	/**
+	 * Checks if queue filled by {@link #addToQueue(ModEntry)} and depleted by
+	 * {@link #pollFromQueue()} is empty. It will stay empty if
+	 * {@link #crawlDone()} has been invoked
+	 * 
+	 * @return <i>true</i> if underlying queue is empty
+	 */
 	public final boolean queueIsEmpty() {
 		return this.queue.isEmpty();
 	}
 
-	public final void serialize(final SongData data) throws IOException {
+	/**
+	 * Converts given data to a stream of bytes to retrieve same information on
+	 * next run
+	 * 
+	 * @param data
+	 *            informatin to save
+	 * @throws IOException
+	 *             if an I/O-Error occurs
+	 */
+	public final void serialize(final SongDataEntry data) throws IOException {
 		generateStream(data);
 		this.songsParsed.incrementAndGet();
 		boolean update = false;
@@ -190,19 +282,47 @@ abstract class Deserializer {
 		}
 	}
 
+	/**
+	 * 
+	 * @return number of entries found
+	 */
 	public final int songsFound() {
 		return this.songsFound.get();
 	}
 
+	/**
+	 * Implements {@link #abort()}
+	 */
 	protected abstract void abort_();
 
+	/**
+	 * Implements {@link #crawlDone()}
+	 */
 	protected abstract void crawlDone_();
 
+	/**
+	 * Reads completely compressed files to retrieve saved data from previous
+	 * run
+	 * 
+	 * @throws IOException
+	 *             if an I/O-Error occurs
+	 */
 	protected abstract void deserialize_() throws IOException;
 
+	/**
+	 * Informs that reading part of {@link #deserialize()} is done
+	 */
 	protected abstract void finish_();
 
-	protected abstract void generateStream(final SongData data)
+	/**
+	 * Implements {@link #serialize(SongDataEntry)}
+	 * 
+	 * @param data
+	 *            information to store
+	 * @throws IOException
+	 *             if an I/O-Error occurs
+	 */
+	protected abstract void generateStream(final SongDataEntry data)
 			throws IOException;
 
 }

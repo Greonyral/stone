@@ -19,7 +19,7 @@ public final class BooleanOption extends Option {
 	private BooleanChangeListener listener;
 
 	/**
-	 * @param optionContainer
+	 * @param optionContainer instance of {@link OptionContainer} to use
 	 * @param name
 	 *            a unique identifier for this option to register at
 	 *            OptionContainer
@@ -48,6 +48,7 @@ public final class BooleanOption extends Option {
 	 *            the default value for
 	 *            {@link stone.modules.Main#getConfigValue(String, String, String)}
 	 */
+	@SuppressWarnings("hiding")
 	public BooleanOption(final OptionContainer optionContainer,
 			final String name, final String toolTip,
 			final String guiDescription, char shortFlag, final String longFlag,
@@ -100,16 +101,16 @@ public final class BooleanOption extends Option {
 	/**
 	 * Sets a listener to notify when value of this option changes.
 	 * 
-	 * @param listener
+	 * @param listener {@link BooleanChangeListener} to notify whenever the state changes
 	 */
-	public final void setListener(final BooleanChangeListener listener) {
+	public final void setListener(@SuppressWarnings("hiding") final BooleanChangeListener listener) {
 		this.listener = listener;
 	}
 
 	/**
 	 * sets the value represented by <i>this</i> to b
 	 * 
-	 * @param b
+	 * @param b new state of <i>this</i>
 	 */
 	public final void setValue(boolean b) {
 		value(Boolean.valueOf(b).toString());
@@ -126,7 +127,7 @@ public final class BooleanOption extends Option {
 
 	/** */
 	@Override
-	public final void value(final String value) {
+	public final void value(@SuppressWarnings("hiding") final String value) {
 		if (this.key == null) {
 			this.value = value;
 		} else {
@@ -138,7 +139,7 @@ public final class BooleanOption extends Option {
 	}
 
 	@Override
-	protected final void setByFlagValue(final String value) {
+	protected final void setByFlagValue(@SuppressWarnings("hiding") final String value) {
 		setValue(true);
 	}
 

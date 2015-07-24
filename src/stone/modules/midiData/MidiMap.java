@@ -33,6 +33,7 @@ public class MidiMap {
 		final int key, volumne, track;
 		final double start, end;
 
+		@SuppressWarnings("hiding")
 		Note(int key, double start, double end, int volumne, int track) {
 			this.key = key;
 			this.volumne = volumne;
@@ -151,18 +152,18 @@ public class MidiMap {
 		this.notes.addAll(clone.notes);
 	}
 
-	MidiMap(final MidiParser parser) {
+	MidiMap(@SuppressWarnings("hiding") final MidiParser parser) {
 		this.parser = parser;
 	}
 
 	/**
 	 * Adds a note to this map
 	 * 
-	 * @param track
-	 * @param key
-	 * @param start
-	 * @param end
-	 * @param volumne
+	 * @param track -
+	 * @param key -
+	 * @param start -
+	 * @param end -
+	 * @param volumne -
 	 */
 	public final void addNote(int track, int key, double start, double end,
 			int volumne) {
@@ -210,8 +211,8 @@ public class MidiMap {
 	/**
 	 * Gets all notes which started to play at time on track id.
 	 * 
-	 * @param id
-	 * @param time
+	 * @param id -
+	 * @param time -
 	 * @return a list of notes.
 	 */
 	public final List<Note> get(int id, double time) {
@@ -225,7 +226,7 @@ public class MidiMap {
 	/**
 	 * Gets all notes which started to play at time
 	 * 
-	 * @param time
+	 * @param time -
 	 * @return a map of notes. Index is the track where the notes are played.
 	 */
 	public final Map<Integer, List<Note>> getNotes(double time) {
@@ -235,7 +236,7 @@ public class MidiMap {
 	/**
 	 * Sets all options of mainPanel to display this map.
 	 * 
-	 * @param mainPanel
+	 * @param mainPanel -
 	 */
 	public final void init(final JPanel mainPanel) {
 		// System.out.println(parser.getDuration());
@@ -250,7 +251,7 @@ public class MidiMap {
 	/**
 	 * Paints this map on previously set panel.
 	 * 
-	 * @param g
+	 * @param g -
 	 */
 	public final void paint(final Graphics g) {
 		g.clearRect(0, 0, this.d.width, this.d.height);

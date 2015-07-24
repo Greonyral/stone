@@ -3,7 +3,7 @@ package stone.util;
 final class IntegerPointer {
 	private int i;
 
-	IntegerPointer(int i) {
+	IntegerPointer(@SuppressWarnings("hiding") int i) {
 		this.i = i;
 	}
 

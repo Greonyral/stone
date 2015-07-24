@@ -26,6 +26,7 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 	private JPanel panelOption;
 	private static final Font font = Font.decode("Arial bold 9");
 
+	@SuppressWarnings("hiding")
 	DO_Listener(final DragObject<C, D, T> object,
 			final DragAndDropPlugin<C, D, T>.State state,
 			final BruteParams<?>[] params, final DndPluginCaller<C, D, T> caller) {
@@ -181,7 +182,7 @@ final class DO_Listener<C extends Container, D extends Container, T extends Cont
 		synchronized (this.state) {
 			if (this.state.upToDate) {
 				this.state.upToDate = false;
-				this.state.io.endProgress();
+				this.state.io.endProgress("");
 			}
 		}
 		this.object.getTargetContainer().removeAllLinks(this.object);

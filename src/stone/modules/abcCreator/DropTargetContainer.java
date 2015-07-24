@@ -6,9 +6,9 @@ import java.util.Set;
 
 /**
  * @author Nelphindal
- * @param <C>
- * @param <D>
- * @param <T>
+ * @param <C> -
+ * @param <D> -
+ * @param <T> -
  */
 public interface DropTargetContainer<C extends Container, D extends Container, T extends Container>
 		extends Iterable<DropTarget<C, D, T>> {
@@ -22,8 +22,6 @@ public interface DropTargetContainer<C extends Container, D extends Container, T
 	/**
 	 * Creates a new DropTarget and initializes it,
 	 * 
-	 * @param comp
-	 *            the component to be used to display created DropTarget
 	 * @return the created DropTarget
 	 */
 	DropTarget<C, D, T> createNewTarget();

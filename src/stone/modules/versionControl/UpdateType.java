@@ -24,6 +24,7 @@ public enum UpdateType {
 
 	private final String p0, p1;
 
+	@SuppressWarnings("hiding")
 	private UpdateType(final String p0, final String p1) {
 		this.p0 = p0;
 		this.p1 = p1;

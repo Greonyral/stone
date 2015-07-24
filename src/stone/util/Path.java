@@ -22,14 +22,36 @@ import java.util.TreeMap;
 
 /**
  * Represents paths relative to a certain base or absolute, specified by
- * FileSystem
+ * FileSystem.
+ * 
+ * @author Nelphindal
  */
 public final class Path implements Comparable<Path>, Externalizable {
 
+	/**
+	 * Interface needed by {@link Path#writeExternals(PathAwareObjectOutput)}
+	 * 
+	 * @author Nelphindal
+	 * 
+	 */
 	public interface PathAwareObjectOutput {
 
+		/**
+		 * @param path
+		 * @return id created by {@link #registerId(Path, String)}
+		 * @throws InterruptedException
+		 */
 		int getId(final Path path) throws InterruptedException;
 
+		/**
+		 * Invokes actual write process of
+		 * {@link Path#writeExternals(PathAwareObjectOutput)}
+		 * 
+		 * @param parent
+		 *            directory
+		 * @param filename
+		 *            filename contained by <i>parent</i>
+		 */
 		void registerId(final Path parent, final String filename);
 
 	}
@@ -47,10 +69,20 @@ public final class Path implements Comparable<Path>, Externalizable {
 			"java.io.tmpdir").split("\\" + FileSystem.getFileSeparator()));
 
 	/**
+	 * @return parsed Path of {@link FileSystem#getDataDirectory()}
+	 */
+	public final static Path getDataDirectory() {
+		return Path.getPath(FileSystem.getDataDirectory().split(
+				"\\" + FileSystem.getFileSeparator()));
+	}
+
+	/**
 	 * Parses the given string <i>name</i> and returns a path representing the
-	 * corresponding path.
+	 * corresponding path. The resulting path will be separated resulting to
+	 * given <i>name</i> on its array components.
 	 * 
 	 * @param name
+	 *            components of path to create
 	 * @return the parsed path
 	 */
 	public final static Path getPath(final String... name) {
@@ -69,9 +101,11 @@ public final class Path implements Comparable<Path>, Externalizable {
 				p = p.getRootMapPathFunc(name[idx]);
 			}
 			return p;
-		} else if (FileSystem.type == FileSystem.OSType.WINDOWS && base.startsWith("%") && base.endsWith("%")) {
+		} else if ((FileSystem.type == FileSystem.OSType.WINDOWS)
+				&& base.startsWith("%") && base.endsWith("%")) {
 			final Map<String, String> env = System.getenv();
-			final String path = env.get(base.substring(1, base.length() - 1).toUpperCase());
+			final String path = env.get(base.substring(1, base.length() - 1)
+					.toUpperCase());
 			return getPath(path.split("\\" + FileSystem.getFileSeparator()));
 		} else {
 			p = Path.rootMap.get(base);
@@ -92,6 +126,8 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * corresponding path.
 	 * 
 	 * @param url
+	 *            {@link URL} to parse. leading jar: and file: will be
+	 *            truncated.
 	 * @return the parsed path
 	 */
 	public final static Path getPath(final URL url) {
@@ -177,6 +213,17 @@ public final class Path implements Comparable<Path>, Externalizable {
 		}
 	}
 
+	/**
+	 * Reads from given {@link InputStream} and generates the resulting
+	 * {@link Path} object.
+	 * 
+	 * @param in
+	 *            {@link InputStream} to read from. The stream my contain only
+	 *            one encoded {@link Path} object.
+	 * @return parsed Path
+	 * @throws IOException
+	 *             exception thrown by <i>in</i>
+	 */
 	public final static Path readExternal(final InputStream in)
 			throws IOException {
 		int length = 0;
@@ -193,6 +240,18 @@ public final class Path implements Comparable<Path>, Externalizable {
 		return Path.getPath(new String(bytes, FileSystem.UTF8).split("/"));
 	}
 
+	/**
+	 * Reads from given {@link InputStream} and generates the resulting
+	 * {@link Path} object.
+	 * 
+	 * @param in
+	 *            {@link InputStream} to read from. The stream my contain only
+	 *            encoded {@link Path} objects with leading bytes for encoded
+	 *            {@link Integer} to use for the map key.
+	 * @return parsed {@link Map} of {@link Integer} and {@link Path} objects
+	 * @throws IOException
+	 *             exception thrown by <i>in</i>
+	 */
 	public final static Map<Integer, Path> readExternals(final InputStream in)
 			throws IOException {
 		final Map<Integer, Path> map = new HashMap<>();
@@ -351,7 +410,8 @@ public final class Path implements Comparable<Path>, Externalizable {
 	/**
 	 * creates new path with parent != root
 	 */
-	private Path(final Path parent, final String name) {
+	private Path(@SuppressWarnings("hiding") final Path parent,
+			final String name) {
 		this.filename = name;
 		this.parent = parent;
 		if (parent.parent == null) {
@@ -497,10 +557,6 @@ public final class Path implements Comparable<Path>, Externalizable {
 		if (Path.delete(toFile())) {
 			return true;
 		}
-		if (this.file.exists()) {
-			System.err.println("Failed to delete " + this.pathStr
-					+ " - It will be deleted after terminating");
-		}
 		return false;
 	}
 
@@ -542,6 +598,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 
 	/**
 	 * @param layer
+	 *            the n-th component of <i>this</i> {@link Path} object
 	 * @return the part of this path
 	 */
 	public final String getComponentAt(int layer) {
@@ -565,7 +622,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * Returns the number of components of <i>this</i> path. "/" will return 0
 	 * and "/foo/bar" will return 2.
 	 * 
-	 * @return the number of components of i>this</i> path
+	 * @return the number of components of <i>this</i> path
 	 */
 	public final int getNameCount() {
 		return this.filename == null ? 0 : this.dirs.length + 1;
@@ -582,7 +639,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 	}
 
 	/**
-					 */
+           */
 	@Override
 	public final int hashCode() {
 		return this.hash;
@@ -596,6 +653,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 
 	/**
 	 * @param base
+	 *            {@link Path} to which <i>this</i> object shall be relative
 	 * @return the string for which base.resolve() would return this
 	 */
 	public final String relativize(final Path base) {
@@ -643,15 +701,17 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @see File#renameTo(File)
 	 */
 	public final boolean renameTo(final Path pathNew) {
-		if (pathNew == this)
+		if (pathNew == this) {
 			return false;
+		}
 		if (!pathNew.getParent().exists()) {
 			if (!pathNew.getParent().toFile().mkdirs()) {
 				return false;
 			}
 		} else if (pathNew.exists()) {
 			if (!pathNew.toFile().delete()) {
-				Debug.print("Failed to delte existing file %s\n", pathNew.toString());
+				Debug.print("Failed to delte existing file %s\n",
+						pathNew.toString());
 				if (toFile().isFile() && pathNew.toFile().isFile()) {
 					try {
 						System.err.print("Fall back: overwrite ");
@@ -768,8 +828,15 @@ public final class Path implements Comparable<Path>, Externalizable {
 		out.write(bytes);
 	}
 
-	public final void writeExternals(final PathAwareObjectOutput out)
-			throws IOException {
+	/**
+	 * Writes <i>this</i> object embedded into a stream mapping a file
+	 * hierarchy. The resulting output can be parsed back by
+	 * {@link #readExternals(InputStream)}.
+	 * 
+	 * @param out
+	 *            instance of {@link PathAwareObjectOutput} taking care of creating the output
+	 */
+	public final void writeExternals(final PathAwareObjectOutput out) {
 		if (this.parent != null) {
 			int parentId;
 			try {
@@ -859,9 +926,5 @@ public final class Path implements Comparable<Path>, Externalizable {
 				Path.reusableHashes.push(Integer.valueOf(this.hash));
 			}
 		}
-	}
-
-	public final static Path getDataDirectory() {
-		return Path.getPath(FileSystem.getDataDirectory().split("\\" +  FileSystem.getFileSeparator()));
 	}
 }

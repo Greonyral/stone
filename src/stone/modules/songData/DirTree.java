@@ -8,44 +8,67 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import stone.util.Path;
 
-
-final class DirTree {
+/**
+ * Data structure to store {#link SongDataEntry} and to sort them by the
+ * directory structure
+ * 
+ * @author Nelphindal
+ * 
+ */
+public final class DirTree {
 
 	private final String name;
 	private final AtomicInteger size = new AtomicInteger(0);
 	final Path base;
 	final TreeMap<String, DirTree> directories = new TreeMap<>();
-	final TreeMap<String, SongData> files = new TreeMap<>();
+	final TreeMap<String, SongDataEntry> files = new TreeMap<>();
 	final DirTree parent;
 
-	public DirTree(final Path base) {
+	/**
+	 * Creates a new {@link DirTree}
+	 * 
+	 * @param base
+	 *            {@link Path} to which all paths will be relative to
+	 */
+	public DirTree(@SuppressWarnings("hiding") final Path base) {
 		this.parent = null;
 		this.name = null;
 		this.base = base;
 	}
 
-	private DirTree(final DirTree parent, final String name) {
+	private DirTree(@SuppressWarnings("hiding") final DirTree parent,
+			@SuppressWarnings("hiding") final String name) {
 		this.base = parent.base;
 		this.parent = parent;
 		this.name = name;
 	}
 
+	/**
+	 * @param path
+	 *            directory
+	 * @return a set of directory located directly within <i>path</i>
+	 */
 	public final Set<String> getDirs(final Path path) {
 		return walkTo(path).directories.keySet();
 	}
 
+	/**
+	 * @param path
+	 *            directory
+	 * @return a set of regular files located directly within <i>path</i>
+	 */
 	public final Set<String> getFiles(final Path path) {
 		return walkTo(path).files.keySet();
 	}
 
-	private final void add(final SongData songdata) {
+	private final void add(final SongDataEntry songdata) {
 		final Path path = songdata.getPath();
 		final DirTree t = walkTo(path.getParent());
 		if (t == null) {
 			return;
 		}
 		synchronized (t) {
-			final SongData sd = t.files.get(path.getFilename());
+			final SongDataEntry sd = t.files.get(path.getFilename());
 			if (sd == null) {
 				t.files.put(path.getFilename(), songdata);
 			} else if (sd.getLastModification() < songdata
@@ -70,7 +93,11 @@ final class DirTree {
 		return this.parent.buildPath().resolve(this.name);
 	}
 
-	final Iterator<Path> dirsIterator() {
+	/**
+	 * 
+	 * @return {@link Iterator} iterating over all directories containing at least one stored regular file
+	 */
+	public final Iterator<Path> dirsIterator() {
 		return new Iterator<Path>() {
 			private DirTree currentTree = walkTo(DirTree.this.base);
 			private Iterator<String> iter = this.currentTree.directories
@@ -113,7 +140,11 @@ final class DirTree {
 		};
 	}
 
-	final Iterator<Path> filesIterator() {
+	/**
+	 * 
+	 * @return {@link Iterator} iterating over all stored regular files.
+	 */
+	public final Iterator<Path> filesIterator() {
 		return new Iterator<Path>() {
 
 			private DirTree currentTree = walkTo(DirTree.this.base);
@@ -168,7 +199,13 @@ final class DirTree {
 		};
 	}
 
-	final SongData get(final Path path) {
+	/**
+	 * 
+	 * @param path
+	 *            of a regular file
+	 * @return stored information
+	 */
+	public final SongDataEntry get(final Path path) {
 		final DirTree tree = walkTo(path.getParent());
 		synchronized (tree) {
 			return tree.files.get(path.getFilename());
@@ -180,18 +217,26 @@ final class DirTree {
 		return new int[] { target.directories.size(), target.files.size() };
 	}
 
-	final int getFilesCount() {
+	/**
+	 * 
+	 * @return stored files
+	 */
+	public final int getFilesCount() {
 		return this.size.get();
 	}
 
-	final Path getRoot() {
+	/**
+	 * 
+	 * @return {@link Path} to which all returned paths are relative to
+	 */
+	public final Path getRoot() {
 		if (this.parent != null) {
 			return this.parent.getRoot();
 		}
 		return this.base;
 	}
 
-	final void put(final SongData songData) {
+	final void put(final SongDataEntry songData) {
 		add(songData);
 	}
 

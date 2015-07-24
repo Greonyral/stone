@@ -15,9 +15,10 @@ public abstract class MidiEvent {
 	/**
 	 * Creates a new event, with delta milliseconds offset to previous event
 	 * 
-	 * @param delta
-	 * @param type
+	 * @param delta decoded delta ticks
+	 * @param type midi event
 	 */
+	@SuppressWarnings("hiding")
 	protected MidiEvent(int delta, final EventType type) {
 		this.delta = delta;
 		this.type = type;

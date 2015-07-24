@@ -5,7 +5,12 @@ import java.util.ArrayDeque;
 import stone.util.Debug;
 import stone.util.Path;
 
-class Crawler implements Runnable {
+/**
+ * A task to search recursively and compare file with found data by a {@link Deserializer}
+ * @author Nelphindal
+ *
+ */
+public class Crawler implements Runnable {
 
 	private final ArrayDeque<Path> wl = new ArrayDeque<>();
 	private final Deserializer sdd;
@@ -14,7 +19,11 @@ class Crawler implements Runnable {
 
 	private final java.util.concurrent.atomic.AtomicInteger threads = new java.util.concurrent.atomic.AtomicInteger();
 
-	public Crawler(final Deserializer sdd) {
+	/**
+	 * Creates a new crealer
+	 * @param sdd instance of {@link Deserializer} to use 
+	 */
+	public Crawler(@SuppressWarnings("hiding") final Deserializer sdd) {
 		this.wl.add(sdd.getRoot());
 		this.sdd = sdd;
 	}
@@ -32,11 +41,13 @@ class Crawler implements Runnable {
 				this.wl.notifyAll();
 			}
 			return;
-		} finally {
-
 		}
 	}
 
+	/**
+	 * Checks if all Crawlers terminated
+	 * @return <i>true</i> if crawling is done
+	 */
 	public final synchronized boolean terminated() {
 		return this.terminated;
 	}

@@ -1,6 +1,7 @@
 package stone.modules;
 
 import java.util.List;
+import java.util.Set;
 
 import stone.util.Option;
 
@@ -39,4 +40,10 @@ public interface Module {
 	 * Executes this module
 	 */
 	void run();
+	
+	/**
+	 * Adds modules on which this module depends to given set 
+	 * @param set {@link Set} to add dependent modules to
+	 */
+	void dependingModules(Set<String> set);
 }

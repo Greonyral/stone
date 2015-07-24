@@ -17,7 +17,7 @@ class ParamMap {
 	private final static Map<MidiInstrumentDropTarget, Track> instrumentToTrackMap = new HashMap<>();
 
 	public final static Track parseParams(
-			final MidiInstrumentDropTarget instrument, final String[] params)
+			@SuppressWarnings("hiding") final MidiInstrumentDropTarget instrument, final String[] params)
 			throws Exception {
 
 		final Integer id;
@@ -90,7 +90,7 @@ class ParamMap {
 		return t;
 	}
 
-	public static final void setTracks(final Map<Integer, ?> trackMap) {
+	public static final void setTracks(@SuppressWarnings("hiding") final Map<Integer, ?> trackMap) {
 		ParamMap.trackMap.clear();
 		for (final Map.Entry<Integer, ?> entry : trackMap.entrySet()) {
 			ParamMap.trackMap.put(

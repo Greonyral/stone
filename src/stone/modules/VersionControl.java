@@ -32,6 +32,7 @@ import org.eclipse.jgit.api.errors.UnmergedPathsException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
+import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.ObjectId;
@@ -67,7 +68,6 @@ import stone.util.OptionContainer;
 import stone.util.Path;
 import stone.util.StringOption;
 
-
 /**
  * The class handling all interaction with the jgit library
  * 
@@ -75,7 +75,7 @@ import stone.util.StringOption;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 11;
+	private final static int VERSION = 12;
 
 	private final static String SECTION = Main.VC_SECTION;
 
@@ -173,8 +173,8 @@ public final class VersionControl implements Module {
 	/**
 	 * Creates a new instance
 	 * 
-	 * @param sc
-	 * @throws InterruptedException
+	 * @param sc -
+	 * @throws InterruptedException -
 	 */
 	public VersionControl(final StartupContainer sc)
 			throws InterruptedException {
@@ -272,6 +272,87 @@ public final class VersionControl implements Module {
 				Main.VC_SECTION, Main.REPO_KEY, "band").split("/"));
 	}
 
+	/**
+	 * 
+	 * @param source input
+	 * @param target output
+	 * @param encrypt encrypt else decrypt
+	 * @return <i>target</i>
+	 */
+	public final String encrypt(final String source, final String target,
+			boolean encrypt) {
+		if (target == null) {
+			if (encrypt) {
+				return encrypt(source,
+						"enc/" + source.substring(0, source.length() - 8)
+								+ ".abc", true);
+			}
+			throw new IllegalArgumentException("target is null");
+		}
+		final AESEngine engine = new AESEngine();
+		final String savedKey = this.main.getConfigValue(Main.VC_SECTION,
+				VersionControl.AES_KEY, null);
+		final byte[] key;
+		if (savedKey == null) {
+			final SecretKeyPlugin secretKeyPlugin = new SecretKeyPlugin();
+			this.io.handleGUIPlugin(secretKeyPlugin);
+			key = secretKeyPlugin.getKey();
+			this.main.setConfigValue(Main.VC_SECTION, VersionControl.AES_KEY,
+					secretKeyPlugin.getValue());
+		} else {
+			key = SecretKeyPlugin.decode(savedKey);
+		}
+		final KeyParameter keyParam;
+		keyParam = new KeyParameter(key);
+		if (savedKey == null) {
+			this.main.flushConfig();
+		}
+		final Path input = this.repoRoot.resolve(source.split("/"));
+		final Path output = this.repoRoot.resolve(target.split("/"));
+		if (input.equals(output)) {
+			final Path tmp = Path.getTmpDirOrFile("");
+			encrypt(source, tmp.toString(), encrypt);
+			input.delete();
+			tmp.toFile().renameTo(input.toFile());
+		}
+
+		output.getParent().toFile().mkdirs();
+		final byte[] bufferIn = new byte[engine.getBlockSize()];
+		final byte[] bufferOut = new byte[engine.getBlockSize()];
+		final InputStream streamIn = this.io.openIn(input.toFile());
+		final OutputStream streamOut = this.io.openOut(output.toFile());
+		engine.init(encrypt, keyParam);
+		streamIn.registerProgressMonitor(this.io);
+		if (encrypt) {
+			this.io.setProgressTitle("Encrypting " + output.getFilename());
+		} else {
+			this.io.setProgressTitle("Decrypting " + output.getFilename());
+		}
+		try {
+			while (true) {
+				final int read;
+				if ((read = streamIn.read(bufferIn)) < 0) {
+					break;
+				}
+				if ((read < bufferIn.length) && encrypt) {
+					for (int i = read; i < bufferIn.length; i++) {
+						bufferIn[i] = ' ';
+					}
+				}
+				engine.processBlock(bufferIn, 0, bufferOut, 0);
+				this.io.write(streamOut, bufferOut);
+			}
+			return target;
+		} catch (final IOException e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			this.io.close(streamIn);
+			this.io.close(streamOut);
+			this.io.endProgress("");
+		}
+	}
+
 	/** */
 	@Override
 	public final List<Option> getOptions() {
@@ -320,7 +401,7 @@ public final class VersionControl implements Module {
 					repoRoot_
 							+ "\nand all its contents will be deleted. You can\n"
 							+ "answer with NO and delete only the data used for git",
-					this.io.getGUI(), false);
+					this.io.getGUI(), false, "");
 			synchronized (this.io) {
 				this.io.handleGUIPlugin(plugin);
 			}
@@ -446,7 +527,8 @@ public final class VersionControl implements Module {
 				.getUntracked().toString(), status.getMissing().toString(),
 				status.getAdded().toString(), status.getChanged().toString(),
 				status.getRemoved().toString());
-		final StagePlugin stage = new StagePlugin(status,
+		final DirCache cache =  gitSession.getRepository().readDirCache();
+		final StagePlugin stage = new StagePlugin(status, cache,
 				this.COMMIT.getValue(), this.master);
 		this.io.handleGUIPlugin(stage);
 		if (stage.doCommit(gitSession, this)) {
@@ -463,7 +545,7 @@ public final class VersionControl implements Module {
 			return;
 		}
 		update(gitSession);
-		if (this.COMMIT.getValue()) {
+		if (stage.doCommit(gitSession, this)) {
 			push(gitSession);
 		}
 	}
@@ -474,7 +556,7 @@ public final class VersionControl implements Module {
 				Main.formatMaxLength(this.repoRoot, null, "The directory ",
 						" does not exist or is no git-repository.\n")
 						+ "It can take a while to create it. Continue?",
-				this.io.getGUI(), false);
+				this.io.getGUI(), false, "Checking out");
 		this.io.handleGUIPlugin(plugin);
 		this.start = System.currentTimeMillis();
 		if (!plugin.get()) {
@@ -551,7 +633,7 @@ public final class VersionControl implements Module {
 				this.io.updateProgress(1);
 			}
 
-			this.io.endProgress();
+			this.io.endProgress("Checkout done");
 		} catch (final GitAPIException | IOException | InterruptedException e) {
 			this.repoRoot.resolve(".git").delete();
 			this.io.handleException(ExceptionHandle.CONTINUE, e);
@@ -670,77 +752,30 @@ public final class VersionControl implements Module {
 
 	}
 
-	public final String encrypt(final String source, final String target,
-			boolean encrypt) {
-		if (target == null)
-			if (encrypt)
-				return encrypt(source,
-						"enc/" + source.substring(0, source.length() - 8)
-								+ ".abc", true);
-			else
-				throw new IllegalArgumentException("target is null");
-		final AESEngine engine = new AESEngine();
-		final String savedKey = this.main.getConfigValue(Main.VC_SECTION,
-				VersionControl.AES_KEY, null);
-		final byte[] key;
-		if (savedKey == null) {
-			final SecretKeyPlugin secretKeyPlugin = new SecretKeyPlugin();
-			this.io.handleGUIPlugin(secretKeyPlugin);
-			key = secretKeyPlugin.getKey();
-			this.main.setConfigValue(Main.VC_SECTION, VersionControl.AES_KEY,
-					secretKeyPlugin.getValue());
-		} else {
-			key = SecretKeyPlugin.decode(savedKey);
-		}
-		final KeyParameter keyParam;
-		keyParam = new KeyParameter(key);
-		if (savedKey == null) {
-			this.main.flushConfig();
-		}
-		final Path input = this.repoRoot.resolve(source.split("/"));
-		final Path output = this.repoRoot.resolve(target.split("/"));
-		if (input.equals(output)) {
-			final Path tmp = Path.getTmpDirOrFile("");
-			encrypt(source, tmp.toString(), encrypt);
-			input.delete();
-			tmp.toFile().renameTo(input.toFile());
-		}
-
-		output.getParent().toFile().mkdirs();
-		final byte[] bufferIn = new byte[engine.getBlockSize()];
-		final byte[] bufferOut = new byte[engine.getBlockSize()];
-		final InputStream streamIn = this.io.openIn(input.toFile());
-		final OutputStream streamOut = this.io.openOut(output.toFile());
-		engine.init(encrypt, keyParam);
-		streamIn.registerProgressMonitor(this.io);
-		if (encrypt) {
-			this.io.setProgressTitle("Encrypting " + output.getFilename());
-		} else {
-			this.io.setProgressTitle("Decrypting " + output.getFilename());
-		}
-		try {
-			while (true) {
-				final int read;
-				if ((read = streamIn.read(bufferIn)) < 0) {
-					break;
-				}
-				if ((read < bufferIn.length) && encrypt) {
-					for (int i = read; i < bufferIn.length; i++) {
-						bufferIn[i] = ' ';
-					}
-				}
-				engine.processBlock(bufferIn, 0, bufferOut, 0);
-				this.io.write(streamOut, bufferOut);
+	private int executeNativeGit(final String... cmd) throws IOException,
+			InterruptedException {
+		final Process p = Runtime.getRuntime().exec(cmd, null,
+				this.repoRoot.toFile());
+		final BufferedReader rOut = new BufferedReader(new InputStreamReader(
+				p.getInputStream()));
+		final BufferedReader rErr = new BufferedReader(new InputStreamReader(
+				p.getErrorStream()));
+		final int exit = p.waitFor();
+		while (true) {
+			final String line = rOut.readLine();
+			if (line == null) {
+				break;
 			}
-			return target;
-		} catch (final IOException e) {
-			e.printStackTrace();
-			return null;
-		} finally {
-			this.io.close(streamIn);
-			this.io.close(streamOut);
-			this.io.endProgress();
+			System.out.println(line);
 		}
+		while (true) {
+			final String line = rErr.readLine();
+			if (line == null) {
+				break;
+			}
+			System.err.println(line);
+		}
+		return exit;
 	}
 
 	private final ProgressMonitor getProgressMonitor() {
@@ -755,7 +790,7 @@ public final class VersionControl implements Module {
 
 			@Override
 			public final void endTask() {
-				monitor.endProgress();
+				monitor.endProgress("");
 			}
 
 			@Override
@@ -793,46 +828,19 @@ public final class VersionControl implements Module {
 				return null;
 			}
 			return ref.getObjectId();
-		} else {
-			final File f = this.repoRoot.resolve(".git", "FETCH_HEAD").toFile();
-			final InputStream in;
-			final byte[] buffer = new byte[40];
-			final ObjectId id;
-			if (executeNativeGit("git", "fetch", "origin") != 0) {
-				return null;
-			}
-			in = this.io.openIn(f);
-			in.read(buffer);
-			this.io.close(in);
-			id = ObjectId.fromString(new String(buffer));
-			return id;
 		}
-	}
-
-	private int executeNativeGit(final String... cmd) throws IOException,
-			InterruptedException {
-		final Process p = Runtime.getRuntime().exec(cmd, null,
-				repoRoot.toFile());
-		final BufferedReader rOut = new BufferedReader(new InputStreamReader(
-				p.getInputStream()));
-		final BufferedReader rErr = new BufferedReader(new InputStreamReader(
-				p.getErrorStream()));
-		final int exit = p.waitFor();
-		while (true) {
-			final String line = rOut.readLine();
-			if (line == null) {
-				break;
-			}
-			System.out.println(line);
+		final File f = this.repoRoot.resolve(".git", "FETCH_HEAD").toFile();
+		final InputStream in;
+		final byte[] buffer = new byte[40];
+		final ObjectId id;
+		if (executeNativeGit("git", "fetch", "origin") != 0) {
+			return null;
 		}
-		while (true) {
-			final String line = rErr.readLine();
-			if (line == null) {
-				break;
-			}
-			System.err.println(line);
-		}
-		return exit;
+		in = this.io.openIn(f);
+		in.read(buffer);
+		this.io.close(in);
+		id = ObjectId.fromString(new String(buffer));
+		return id;
 	}
 
 	private final void gotoBand(final Git gitSession) {
@@ -970,7 +978,7 @@ public final class VersionControl implements Module {
 			// clean up
 			gitSession.branchDelete().setForce(true)
 					.setBranchNames(tmpBranchName, "stash").call();
-			this.io.endProgress();
+			this.io.endProgress("Branch deleted");
 		}
 	}
 
@@ -1055,6 +1063,8 @@ public final class VersionControl implements Module {
 							}
 							gitSession.add().addFilepattern(add).call();
 							break;
+						default:
+							break;
 						}
 					}
 				}
@@ -1091,7 +1101,7 @@ public final class VersionControl implements Module {
 					.setName(this.BRANCH.value()).call();
 			gitSession.checkout().setName(this.BRANCH.value()).call();
 			gitSession.branchDelete().setBranchNames(tmpBranchName).call();
-			this.io.endProgress();
+			this.io.endProgress("Merge done");
 			return true;
 		} catch (final GitAPIException e) {
 			e.printStackTrace();
@@ -1131,8 +1141,8 @@ public final class VersionControl implements Module {
 
 			push.call();
 		} else {
-			if (executeNativeGit("git", "push", "origin", BRANCH.value() + ":"
-					+ BRANCH.value()) != 0) {
+			if (executeNativeGit("git", "push", "origin", this.BRANCH.value()
+					+ ":" + this.BRANCH.value()) != 0) {
 				this.io.printMessage(null, "Push (upload) failed", true);
 				return;
 			}
@@ -1163,47 +1173,46 @@ public final class VersionControl implements Module {
 					this.io.printError("Reset failed", true);
 				}
 				return;
-			} else {
-				// remove lock
-				this.repoRoot.resolve(".git", "index.lock").delete();
-
-				gitSession
-						.getRepository()
-						.getConfig()
-						.setString("remote", "origin", "url",
-								this.GIT_URL_HTTPS.value());
-				gitSession.getRepository().getConfig().save();
-				final Set<String> refs = gitSession.getRepository()
-						.getAllRefs().keySet();
-				if (!refs.contains("refs/heads/" + this.BRANCH.value())) {
-					this.io.printMessage("Specified branch missing in config",
-							"Branch \"" + this.BRANCH.value()
-									+ "\" does not exist.\n"
-									+ "Resetting to default \"master\".", true);
-					this.BRANCH.value("master");
-					final InputStream in = this.io.openIn(this.repoRoot
-							.resolve(".git", "HEAD").toFile());
-					final String localHead;
-					if (in == null) {
-						localHead = "refs/heads/master";
-						final OutputStream out = this.io.openOut(this.repoRoot
-								.resolve(".git", "HEAD").toFile());
-						out.write("ref: refs/heads/master");
-						this.io.close(out);
-					} else {
-						localHead = in.readLine().replace("ref: ", "");
-						this.io.close(in);
-					}
-					if (this.repoRoot.resolve(localHead.split("/")).exists()) {
-						this.io.printError(
-								"Reset failed\n"
-										+ "The tool could not rebuild missing repository information",
-								false);
-						return;
-					}
-				}
-				remoteHead = getRemoteHead(gitSession);
 			}
+			// remove lock
+			this.repoRoot.resolve(".git", "index.lock").delete();
+
+			gitSession
+					.getRepository()
+					.getConfig()
+					.setString("remote", "origin", "url",
+							this.GIT_URL_HTTPS.value());
+			gitSession.getRepository().getConfig().save();
+			final Set<String> refs = gitSession.getRepository()
+					.getAllRefs().keySet();
+			if (!refs.contains("refs/heads/" + this.BRANCH.value())) {
+				this.io.printMessage("Specified branch missing in config",
+						"Branch \"" + this.BRANCH.value()
+								+ "\" does not exist.\n"
+								+ "Resetting to default \"master\".", true);
+				this.BRANCH.value("master");
+				final InputStream in = this.io.openIn(this.repoRoot
+						.resolve(".git", "HEAD").toFile());
+				final String localHead;
+				if (in == null) {
+					localHead = "refs/heads/master";
+					final OutputStream out = this.io.openOut(this.repoRoot
+							.resolve(".git", "HEAD").toFile());
+					out.write("ref: refs/heads/master");
+					this.io.close(out);
+				} else {
+					localHead = in.readLine().replace("ref: ", "");
+					this.io.close(in);
+				}
+				if (this.repoRoot.resolve(localHead.split("/")).exists()) {
+					this.io.printError(
+							"Reset failed\n"
+									+ "The tool could not rebuild missing repository information",
+							false);
+					return;
+				}
+			}
+			remoteHead = getRemoteHead(gitSession);
 
 
 			// set to remote head
@@ -1222,7 +1231,7 @@ public final class VersionControl implements Module {
 			// create and checkout active branch
 			gitSession.branchCreate().setName(this.BRANCH.value()).call();
 			gitSession.checkout().setName(this.BRANCH.value()).call();
-			this.io.endProgress();
+			this.io.endProgress("Reset done");
 		}
 	}
 
@@ -1264,8 +1273,7 @@ public final class VersionControl implements Module {
 
 		boolean success = true;
 
-		final RevCommit commitRoot = CommitComparator.init(walk, gitSession,
-				this.io).getParent(commitLocal, commitRemote);
+		final RevCommit commitRoot = CommitComparator.init(walk, this.io).getParent(commitLocal, commitRemote);
 		if (commitRoot == null) {
 			historyRewritten(gitSession, commitLocal, commitRemote, walk);
 			diffString = null;
@@ -1291,5 +1299,10 @@ public final class VersionControl implements Module {
 		} else {
 			this.io.printMessage(null, "Update completed succesully", true);
 		}
+	}
+
+	@Override
+	public void dependingModules(final Set<String> set) {
+		return;
 	}
 }

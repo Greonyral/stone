@@ -2,6 +2,7 @@ package stone.io;
 
 import java.awt.Image;
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
@@ -27,10 +28,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
 
 import stone.MasterThread;
 import stone.StartupContainer;
+import stone.util.Debug;
 import stone.util.FileSystem;
 import stone.util.Option;
 import stone.util.Path;
@@ -47,19 +50,6 @@ public class IOHandler {
 	private static final String openJDK = "OpenJDK Runtime Environment";
 	private static final String oracleKey = "Recommended Version";
 
-	private final HashSet<WeakReference<Closeable>> openStreams;
-
-	private final ProgressMonitor progressMonitor;
-
-	private final ArrayDeque<String> logStack;
-
-	private final GUIInterface gui;
-	private boolean closed = false;
-
-	final GUI guiReal;
-
-	final MasterThread master;
-
 	private static Method getDestroyMethod() {
 		try {
 			return GUIInterface.class.getMethod("destroy");
@@ -69,15 +59,25 @@ public class IOHandler {
 		}
 	}
 
+	private final HashSet<WeakReference<Closeable>> openStreams;
+
+	private final ProgressMonitor progressMonitor;
+
+	private final ArrayDeque<String> logStack;
+	private final GUIInterface gui;
+
+	private boolean closed = false;
+
+	final GUI guiReal;
+
+	final MasterThread master;
+
 	/**
 	 * Creates a new IO-Handler
 	 * 
 	 * @param sc
 	 *            the object container containing all necessary startup
 	 *            information
-	 * @param iconFile
-	 *            the name of the icon within the jar-archive or the path
-	 *            relative to the workingDirectory
 	 */
 	public IOHandler(final StartupContainer sc) {
 		this.master = sc.getMaster();
@@ -87,7 +87,8 @@ public class IOHandler {
 			/** */
 			private static final long serialVersionUID = 1L;
 
-			protected GUIProxy(final InvocationHandler h) {
+			protected GUIProxy(
+					@SuppressWarnings("hiding") final InvocationHandler h) {
 				super(h);
 			}
 
@@ -108,7 +109,7 @@ public class IOHandler {
 			public Object invoke(final Object proxy, final Method method,
 					final Object[] args) throws Throwable {
 				if (IOHandler.this.master.isInterrupted()
-						&& !method.equals(interruptMethod)) {
+						&& !method.equals(this.interruptMethod)) {
 					if (Thread.currentThread() != IOHandler.this.master) {
 						throw new InterruptedException();
 					}
@@ -132,9 +133,8 @@ public class IOHandler {
 	 * 
 	 * @param name
 	 *            title to be shown with the GUI
-	 * @throws InterruptedException
 	 */
-	public IOHandler(final String name) throws InterruptedException {
+	public IOHandler(final String name) {
 		this.gui = new GUI(name);
 		this.guiReal = null;
 		this.progressMonitor = null;
@@ -193,6 +193,13 @@ public class IOHandler {
 		}
 	}
 
+	/**
+	 * Checks whether version of running JRE is greater or equal to most recent
+	 * JRE version.
+	 * 
+	 * @throws IOException
+	 *             if an error occurs while checking version
+	 */
 	public final void checkJRE() throws IOException {
 		final String versionStringInstalled = System
 				.getProperty("java.version");
@@ -249,7 +256,7 @@ public class IOHandler {
 	public final void close() {
 		synchronized (this) {
 			if (!this.closed) {
-				endProgress();
+				endProgress("terminating");
 				if (this.gui != null) {
 					this.gui.destroy();
 				}
@@ -305,10 +312,12 @@ public class IOHandler {
 	}
 
 	/**
-	 * Compresses given files to given zipFile
+	 * Compresses given files to given <i>zipFile</i>
 	 * 
 	 * @param zipFile
+	 *            {@link ZipFile} to create
 	 * @param files
+	 *            future entries of created <i>zipFile</i>
 	 */
 	public final void compress(final File zipFile, final File... files) {
 		ZipCompression.compress(zipFile, this, files);
@@ -318,6 +327,7 @@ public class IOHandler {
 	 * Sets the progress message and units for 100%.
 	 * 
 	 * @param message
+	 *            short message displayed during the displayed progress
 	 * @param size
 	 *            units representing 100%
 	 * @see ProgressMonitor#beginTaskPreservingProgress(String, int)
@@ -328,10 +338,11 @@ public class IOHandler {
 
 	/**
 	 * Terminates currently displayed progress
+	 * @param text displayed if {@link GUIPlugin#display(JPanel)} returns <i>false</i>
 	 */
-	public final void endProgress() {
+	public final void endProgress(final String text) {
 		if (this.progressMonitor != null) {
-			this.progressMonitor.endProgress();
+			this.progressMonitor.endProgress(text);
 		}
 	}
 
@@ -342,6 +353,11 @@ public class IOHandler {
 		return this.gui;
 	}
 
+	/**
+	 * 
+	 * @return the icon within the jar-archive or the path relative to the
+	 *         workingDirectory used for the GUI.
+	 */
 	public final Image getIcon() {
 		return this.guiReal.getIcon();
 	}
@@ -351,6 +367,7 @@ public class IOHandler {
 	 * options
 	 * 
 	 * @param options
+	 *            to be displayed otpions
 	 */
 	public final void getOptions(final Collection<Option> options) {
 		this.gui.getOptions(options);
@@ -369,7 +386,9 @@ public class IOHandler {
 	 * Process given exception in specified manner.
 	 * 
 	 * @param handle
+	 *            strategy to use
 	 * @param exception
+	 *            caught exception
 	 */
 	public final void handleException(final ExceptionHandle handle,
 			final Exception exception) {
@@ -390,15 +409,17 @@ public class IOHandler {
 	 * 
 	 * @see GUIInterface#runPlugin(GUIPlugin)
 	 * @param plugin
+	 *            plugin to perform on the GUI
 	 */
 	public final void handleGUIPlugin(final GUIPlugin plugin) {
 		this.gui.runPlugin(plugin);
 	}
 
 	/**
-	 * Process given throwable and aborts the program
+	 * Prints trace of given {@link Throwable} and aborts the program
 	 * 
 	 * @param throwable
+	 *            any {@link Throwable} caught during the program
 	 */
 	public final void handleThrowable(final Throwable throwable) {
 		throwable.printStackTrace();
@@ -411,6 +432,7 @@ public class IOHandler {
 	 * encoding for reading
 	 * 
 	 * @param file
+	 *            {@link File} to read from
 	 * @return the opened stream or <i>null</i> if an error occured
 	 */
 	public final InputStream openIn(final File file) {
@@ -421,6 +443,7 @@ public class IOHandler {
 	 * Opens a new stream associated to given charset as encoding for reading
 	 * 
 	 * @param file
+	 *            {@link File} to read from
 	 * @param cs
 	 *            charset to use for encoding
 	 * @return the opened stream or <i>null</i> if an error occured
@@ -432,6 +455,11 @@ public class IOHandler {
 		return stream;
 	}
 
+	/**
+	 * @param zipFile
+	 *            {@link File} to read from
+	 * @return map of entry names and their streams
+	 */
 	public final Map<String, AbstractInputStream> openInZip(
 			final stone.util.Path zipFile) {
 		if (!zipFile.exists()) {
@@ -444,6 +472,7 @@ public class IOHandler {
 			try {
 				zipTmp = new ZipFile(zipFile.toFile());
 			} catch (final Exception e) {
+				Debug.print("%s\n", e.getMessage());
 			}
 			zip = zipTmp;
 			if (zip == null) {
@@ -461,12 +490,14 @@ public class IOHandler {
 					this.openStreams.add(new WeakReference<Closeable>(in));
 					map.put(e.getName(), in);
 				} catch (final IOException ioe) {
+					Debug.print("%s\n", ioe.getMessage());
 				}
 			}
 		}
 		try {
 			zip.close();
 		} catch (final IOException e) {
+			Debug.print("%s\n", e.getMessage());
 		}
 		return map;
 	}
@@ -476,6 +507,7 @@ public class IOHandler {
 	 * encoding for writing
 	 * 
 	 * @param file
+	 *            {@link File} to write into
 	 * @return the opened stream or <i>null</i> if an error occurred
 	 */
 	public final synchronized OutputStream openOut(final File file) {
@@ -494,7 +526,9 @@ public class IOHandler {
 	 * writing
 	 * 
 	 * @param file
+	 *            {@link File} to write into
 	 * @param cs
+	 *            charset to use for encoding
 	 * @return the opened stream or <i>null</i> if an error occurred
 	 */
 	public final synchronized OutputStream openOut(final File file,
@@ -555,6 +589,7 @@ public class IOHandler {
 	 * Prints an error Message
 	 * 
 	 * @param errorMsg
+	 *            message to display
 	 * @param stack
 	 *            <i>true</i> if the message shall be writen only to log and
 	 *            printed later
@@ -584,32 +619,38 @@ public class IOHandler {
 	}
 
 	/**
+	 * Shows a dialog to select a single file
+	 * 
 	 * @param title
+	 *            message shown as heading during the dialog
 	 * @param startDir
+	 *            initial directory to work on
 	 * @param filter
+	 *            filter to use
 	 * @return the selected file or <i>null</i> if canceled or interrupted
+	 * @param text displayed if {@link GUIPlugin#display(JPanel)} returns <i>false</i>
 	 */
 	public final Path selectFile(final String title, final File startDir,
-			final FileFilter filter) {
+			final FileFilter filter, final String text) {
 		final FileSelectionGUIPlugin selector = new FileSelectionGUIPlugin(
-				title, startDir, filter);
+				title, startDir, filter, text);
 		handleGUIPlugin(selector);
 		return selector.getSelection();
 	}
 
 	/**
 	 * @param modules
+	 *            list of available modules
 	 * @return a subset of given <i>modules</i> selected to be run. <i>null</i>
 	 *         if interrupted
-	 * @throws InterruptedException
 	 */
-	public final List<String> selectModules(final List<String> modules)
-			throws InterruptedException {
+	public final List<String> selectModules(final List<String> modules) {
 		return this.gui.selectModules(modules);
 	}
 
 	/**
 	 * @param length
+	 *            new size of displayed progress
 	 */
 	public final void setProgressSize(int length) {
 		this.progressMonitor.setProgressSize(length);
@@ -659,22 +700,27 @@ public class IOHandler {
 	}
 
 	/**
-	 * writes all content from in to out, and closes the inputStream afterwards
+	 * writes all content from in to out, and closes the {@link java.io.InputStream} <i>in</i> afterwards
 	 * 
 	 * @param in
+	 *            stream to read from
 	 * @param out
+	 *            stream to write to
 	 */
 	public final void write(final java.io.InputStream in,
 			final java.io.OutputStream out) {
-		final byte[] buffer = new byte[16000];
+		final int bufSize = 8192;
+		final byte[] buffer = new byte[bufSize];
+		final BufferedInputStream reader = new BufferedInputStream(in, buffer.length);
+		final BufferedOutputStream writer = new BufferedOutputStream(out, buffer.length);
 		try {
 			while (true) {
-				final int len = in.read(buffer);
-				if (len < 0) {
+				int read = reader.read(buffer, 0, bufSize);
+				if (read < 0)
 					break;
-				}
-				out.write(buffer, 0, len);
+				writer.write(buffer, 0, read);
 			}
+			writer.flush();
 		} catch (final IOException e) {
 			handleException(ExceptionHandle.TERMINATE, e);
 		} finally {
@@ -719,9 +765,13 @@ public class IOHandler {
 	 * <i>offset</i> to <i>out</i>.
 	 * 
 	 * @param out
+	 *            stream to write to
 	 * @param bytes
+	 *            buffer to read from
 	 * @param offset
+	 *            first byte in <i>buffer</i> to write
 	 * @param length
+	 *            bytes to write
 	 */
 	public final void write(final OutputStream out, byte[] bytes, int offset,
 			int length) {
@@ -736,7 +786,9 @@ public class IOHandler {
 	 * Writes bytes encoding <i>string</i> to <i>out</i>.
 	 * 
 	 * @param string
+	 *            output to write
 	 * @param out
+	 *            stream to write to
 	 * @see #write(OutputStream, byte[])
 	 */
 	public final void write(final OutputStream out, final String string) {
@@ -747,7 +799,9 @@ public class IOHandler {
 	 * Writes bytes encoding <i>string</i> to <i>out</i> and appends CRLF.
 	 * 
 	 * @param string
+	 *            output to write
 	 * @param out
+	 *            stream to write to
 	 * @see #write(OutputStream, byte[])
 	 */
 	public final void writeln(final OutputStream out, final String string) {

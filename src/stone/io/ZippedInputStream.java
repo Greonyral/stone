@@ -20,11 +20,13 @@ public final class ZippedInputStream extends AbstractInputStream {
 	/**
 	 * Generates a new InputStream reading from given file
 	 * 
-	 * @param file
+	 * @param zip
 	 *            file to read from
-	 * @param cs
-	 *            charset used for encoding
+	 * @param entry
+	 *            name of entry to read from
 	 * @throws IOException
+	 *             if an I/O error has occurred or if a ZIP format error has
+	 *             occurred
 	 */
 	public ZippedInputStream(final ZipFile zip, final ZipEntry entry)
 			throws IOException {
@@ -44,9 +46,9 @@ public final class ZippedInputStream extends AbstractInputStream {
 	/**
 	 * Not supported
 	 * 
-	 * @param n
+	 * @param n ignored
 	 * @return nothing, throws UnsupportedOperationException
-	 * @throws UnsupportedOperationException
+	 * @throws UnsupportedOperationException any time this method is called
 	 */
 	@Override
 	public final long skip(long n) {
@@ -64,6 +66,7 @@ public final class ZippedInputStream extends AbstractInputStream {
 		try {
 			this._zip.close();
 		} catch (final IOException e) {
+			// Silently disregard the thrown exception
 		}
 	}
 }

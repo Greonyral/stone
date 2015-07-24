@@ -34,6 +34,7 @@ public class MidiInstrumentDropTarget implements
 		private final int i;
 		private final String key;
 
+		@SuppressWarnings("hiding")
 		ParamListener(ActivePanelContainer shared, JPanel mapPanel, int i,
 				String key) {
 			this.shared = shared;
@@ -88,7 +89,7 @@ public class MidiInstrumentDropTarget implements
 	private final int number;
 	final Map<String, Integer> params = new HashMap<>();
 
-	MidiInstrumentDropTarget(final MidiInstrument midiInstrument, int id) {
+	MidiInstrumentDropTarget(@SuppressWarnings("hiding") final MidiInstrument midiInstrument, int id) {
 		this.midiInstrument = midiInstrument;
 		this.number = id;
 		this.panel = new JPanel();
@@ -105,7 +106,7 @@ public class MidiInstrumentDropTarget implements
 	}
 
 	/**
-	 * @param o
+	 * @param o -
 	 * @return an integer according to the comparison of <i>this</i> and
 	 *         <i>o</i>
 	 */
@@ -266,8 +267,8 @@ public class MidiInstrumentDropTarget implements
 	/**
 	 * Helper function to clear out all instruments playing object
 	 * 
-	 * @param object
-	 * @param empty
+	 * @param object -
+	 * @param empty -
 	 */
 	protected final void clearTargets(
 			final DragObject<JPanel, JPanel, JPanel> object,

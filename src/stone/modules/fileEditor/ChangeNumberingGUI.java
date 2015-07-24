@@ -12,11 +12,12 @@ import stone.util.Path;
 public final class ChangeNumberingGUI extends FileEditorPlugin {
 
 	/**
-	 * @param fileEditor
-	 * @param root
+	 * @param fileEditor -
+	 * @param root -
+	 * @param text message to be displayed at end of plugin
 	 */
-	public ChangeNumberingGUI(final FileEditor fileEditor, final Path root) {
-		super(fileEditor, root);
+	public ChangeNumberingGUI(@SuppressWarnings("hiding") final FileEditor fileEditor, final Path root, final String text) {
+		super(fileEditor, root, text);
 	}
 
 

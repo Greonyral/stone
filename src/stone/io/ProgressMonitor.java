@@ -19,7 +19,7 @@ public class ProgressMonitor {
 	 * @param gui
 	 *            GUI to use or <i>null</i> if output shall be done on stdout
 	 */
-	public ProgressMonitor(final GUIInterface gui) {
+	public ProgressMonitor(@SuppressWarnings("hiding") final GUIInterface gui) {
 		this.gui = gui;
 	}
 
@@ -65,10 +65,11 @@ public class ProgressMonitor {
 
 	/**
 	 * Ends the task
+	 * @param text passed to {@link GUIInterface#endProgress(String)}
 	 */
-	public final void endProgress() {
+	public final void endProgress(final String text) {
 		if (this.init) {
-			this.gui.endProgress();
+			this.gui.endProgress(text);
 			System.out.println();
 		}
 		this.init = false;

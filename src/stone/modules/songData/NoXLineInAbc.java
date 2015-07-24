@@ -5,6 +5,7 @@ import stone.util.Path;
 
 final class NoXLineInAbc extends AbtractEoWInAbc {
 
+	@SuppressWarnings("hiding")
 	public NoXLineInAbc(final Path song, int line) {
 		super(song, line);
 	}

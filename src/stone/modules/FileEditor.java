@@ -40,7 +40,6 @@ import stone.modules.fileEditor.NameScheme;
 import stone.modules.fileEditor.NumberingGUI;
 import stone.modules.fileEditor.SongChangeData;
 import stone.modules.fileEditor.UniformSongsGUI;
-import stone.modules.songData.SongDataContainer;
 import stone.util.BooleanOption;
 import stone.util.Flag;
 import stone.util.Option;
@@ -54,11 +53,12 @@ import stone.util.StringOption;
  * 
  * @author Nelphindal
  */
+
 public class FileEditor implements Module {
 
 	private final static String SECTION = "[fileEditor]";
 
-	private final static int VERSION = 3;
+	private final static int VERSION = 4;
 
 	private static final String DEFAULT_SCHEME = "%title %index/%total [%instrument]$1{ (%duration)}$2{ %b %d}";
 
@@ -115,13 +115,13 @@ public class FileEditor implements Module {
 
 	private final MasterThread master;
 
-	private final SongDataContainer container;
-
 	private final Map<Path, SongChangeData> changes = new HashMap<>();
 
 	private NameScheme scheme;
 
 	private final Main main;
+
+	private final Module songdata;
 
 	/**
 	 * Constructor for building versionInfo
@@ -129,25 +129,25 @@ public class FileEditor implements Module {
 	public FileEditor() {
 		this.io = null;
 		this.master = null;
-		this.container = null;
 		this.MOD_DATE = null;
 		this.CHANGE_TITLE = null;
 		this.CHANGE_NUMBERING = null;
 		this.UNIFORM_SONGS = null;
 		this.SONG_SCHEME = null;
 		this.main = null;
+		this.songdata = null;
 	}
 
 	/**
 	 * Creates a new instance and uses previously registered options
 	 * 
+	 * 
 	 * @param sc
+	 *            container providing runtime dependent information
 	 */
 	public FileEditor(final StartupContainer sc) {
 		this.io = sc.getIO();
 		this.master = sc.getMaster();
-		this.container = (SongDataContainer) sc
-				.getContainer(SongDataContainer.class.getCanonicalName());
 		this.MOD_DATE = FileEditor.createModDateOption(sc.getOptionContainer());
 		this.CHANGE_TITLE = FileEditor.createChangeTitleOption(sc
 				.getOptionContainer());
@@ -158,22 +158,23 @@ public class FileEditor implements Module {
 		this.SONG_SCHEME = FileEditor.createSongSchemeOption(sc
 				.getOptionContainer());
 		this.main = sc.getMain();
+		songdata = master.getModule("SongData");
 	}
 
 	/**
-	 * @param currentDir
+	 * @param currentDir currently processed directory
 	 * @return directories at given directory
 	 */
 	public final String[] getDirs(final Path currentDir) {
-		return this.container.getDirs(currentDir);
+		return ((stone.modules.SongData) songdata).getDirs(currentDir);
 	}
 
 	/**
-	 * @param currentDir
+	 * @param currentDir currently processed directory
 	 * @return files at given directory
 	 */
 	public final String[] getFiles(final Path currentDir) {
-		return this.container.getSongs(currentDir);
+		return ((SongData) this.songdata).getSongs(currentDir);
 	}
 
 	@Override
@@ -216,16 +217,16 @@ public class FileEditor implements Module {
 		}
 		try {
 			if (this.UNIFORM_SONGS.getValue()) {
-				this.container.fill();
+				((SongData) songdata).fill();
 				final FileEditorPlugin plugin = new UniformSongsGUI(this,
-						this.container.getRoot());
+						((SongData) songdata).getRoot(), "Applying");
 				this.io.handleGUIPlugin(plugin);
 				uniformSongs(plugin.getSelection());
 			}
 			if (this.CHANGE_TITLE.getValue()) {
-				this.container.fill();
+				((SongData) songdata).fill();
 				final FileEditorPlugin plugin = new ChangeTitleGUI(this,
-						this.container.getRoot());
+						((SongData) songdata).getRoot(), "Changing title");
 				this.io.handleGUIPlugin(plugin);
 				changeTitle(plugin.getSelection());
 			}
@@ -233,9 +234,9 @@ public class FileEditor implements Module {
 				return;
 			}
 			if (this.CHANGE_NUMBERING.getValue()) {
-				this.container.fill();
+				((SongData) songdata).fill();
 				final FileEditorPlugin plugin = new ChangeNumberingGUI(this,
-						this.container.getRoot());
+						((SongData) songdata).getRoot(), "Editing file");
 				this.io.handleGUIPlugin(plugin);
 				changeNumbering(plugin.getSelection());
 			}
@@ -258,7 +259,7 @@ public class FileEditor implements Module {
 		final TreeSet<Path> selectionFiles = selectFilesOnly(selection);
 		for (final Path song : selectionFiles) {
 			final SongChangeData data = get(song);
-			final NumberingGUI plugin = new NumberingGUI(data, this.io);
+			final NumberingGUI plugin = new NumberingGUI(data, this.io, "Renumbering");
 			if (this.master.isInterrupted()) {
 				return;
 			}
@@ -278,7 +279,7 @@ public class FileEditor implements Module {
 			final SongChangeData scd = get(file);
 			final EditorPlugin plugin = new EditorPlugin(scd.getTitle(),
 					"Chance title of "
-							+ file.relativize(this.container.getRoot()));
+							+ file.relativize(((SongData) songdata).getRoot()), "Changing title");
 			this.io.handleGUIPlugin(plugin);
 			scd.setTitle(plugin.get());
 		}
@@ -345,7 +346,7 @@ public class FileEditor implements Module {
 			return change;
 		}
 		final SongChangeData data = new SongChangeData(
-				this.container.getVoices(file), this.main);
+				((SongData) songdata).getVoices(file), this.main);
 		this.changes.put(file, data);
 		return data;
 	}
@@ -359,7 +360,7 @@ public class FileEditor implements Module {
 	}
 
 	private final void resetModDate() {
-		final Path repo = this.container.getRoot()
+		final Path repo = ((SongData) songdata).getRoot()
 				.resolve(
 						this.main.getConfigValue(Main.VC_SECTION,
 								Main.REPO_KEY, "band"));
@@ -402,13 +403,13 @@ public class FileEditor implements Module {
 		while (!queue.isEmpty()) {
 			final Path p = queue.remove();
 			if (p.toFile().isDirectory()) {
-				for (final String dir : this.container.getDirs(p)) {
+				for (final String dir : ((SongData) songdata).getDirs(p)) {
 					if (dir.equals("..")) {
 						continue;
 					}
 					queue.add(p.resolve(dir));
 				}
-				for (final String song : this.container.getSongs(p)) {
+				for (final String song : ((SongData) songdata).getSongs(p)) {
 					selectionFiles.add(p.resolve(song));
 				}
 			} else {
@@ -431,6 +432,11 @@ public class FileEditor implements Module {
 			scd.uniform(this.io, getNameScheme());
 			this.io.updateProgress();
 		}
-		this.io.endProgress();
+		this.io.endProgress("name scheme applied");
+	}
+
+	@Override
+	public final void dependingModules(final Set<String> set) {
+		set.add("SongData");
 	}
 }

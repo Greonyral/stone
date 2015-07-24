@@ -108,16 +108,15 @@ public final class Time {
 			final long years = days / 365;
 			return years + " year" + (years == 1 ? "" : "s") + " and "
 					+ (days % 365) + " day" + ((days % 365) == 1 ? "" : "s");
-		} else {
-			final long weeks = days / 7;
-			if (weeks == 0) {
-				return days + " day" + (days == 1 ? "" : "s") + " and "
-						+ (hours % 24) + " hour"
-						+ ((hours % 24) == 1 ? "" : "s");
-			}
-			return weeks + " week" + (weeks == 1 ? "" : "s") + " and "
-					+ (days % 7) + " day" + ((days % 7) == 1 ? "" : "s");
 		}
+		final long weeks = days / 7;
+		if (weeks == 0) {
+			return days + " day" + (days == 1 ? "" : "s") + " and "
+					+ (hours % 24) + " hour"
+					+ ((hours % 24) == 1 ? "" : "s");
+		}
+		return weeks + " week" + (weeks == 1 ? "" : "s") + " and "
+				+ (days % 7) + " day" + ((days % 7) == 1 ? "" : "s");
 	}
 
 	/**

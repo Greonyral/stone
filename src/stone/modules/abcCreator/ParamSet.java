@@ -65,4 +65,9 @@ final class ParamSet {
 	final void put(final BruteParams<?> param, final String string) {
 		this.params.put(param, string);
 	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode();
+	}
 }

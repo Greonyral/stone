@@ -34,7 +34,7 @@ public class PathOption extends Option {
 	 * Creates a new PathOption and registers it at the OptionContainer
 	 * 
 	 * @param optionContainer
-	 *            the OptionContainer created on startup
+	 *            the {@link OptionContainer} created on startup
 	 * @param taskPool
 	 *            the TaskPool created on startup
 	 * @param name
@@ -71,6 +71,7 @@ public class PathOption extends Option {
 	 *            * @see stone.util.OptionContainer#addOption(String, String,
 	 *            char, String, boolean, Option)
 	 */
+	@SuppressWarnings("hiding")
 	public PathOption(final OptionContainer optionContainer,
 			final TaskPool taskPool, final String name, final String toolTip,
 			final String guiDescription, char shortFlag, final String longFlag,
@@ -86,7 +87,7 @@ public class PathOption extends Option {
 
 	/** */
 	@Override
-	public final void display(final JPanel panel, final KeyEventHandler key) {
+	public final void display(final JPanel panel, @SuppressWarnings("hiding") final KeyEventHandler key) {
 		final JPanel mainPanel = new JPanel();
 		final JTextField textField = new JTextField();
 		final JScrollPane scrollPane = new JScrollPane(textField);

@@ -14,7 +14,7 @@ public abstract class FileEndingFilter extends stone.util.PathOptionFileFilter {
 	 * @param dots
 	 *            parts, separated by '.', necessary for {@link #ending(String)}
 	 */
-	protected FileEndingFilter(int dots) {
+	protected FileEndingFilter(@SuppressWarnings("hiding") int dots) {
 		this.dots = dots;
 	}
 
@@ -39,8 +39,8 @@ public abstract class FileEndingFilter extends stone.util.PathOptionFileFilter {
 	}
 
 	/**
-	 * @param file
-	 * @return file
+	 * @param file -
+	 * @return <i>file</i>
 	 */
 	@Override
 	public final File value(final File file) {
@@ -50,7 +50,7 @@ public abstract class FileEndingFilter extends stone.util.PathOptionFileFilter {
 	/**
 	 * Checks if the given filename shall be accepted.
 	 * 
-	 * @param name
+	 * @param name -
 	 * @return true if <i>name</i> shall be accepted.
 	 */
 	protected abstract boolean ending(final String name);

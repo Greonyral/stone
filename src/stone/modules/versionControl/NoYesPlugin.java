@@ -18,18 +18,24 @@ import stone.io.GUIPlugin;
 public class NoYesPlugin extends GUIPlugin {
 
 	private final String title;
+	/** set to value of constructor call */
 	protected final String message;
+	/** set to value of constructor call */
 	protected final GUIInterface gui;
+	/** set to value of constructor call */
 	protected final boolean progress;
 
 	/**
-	 * @param title
-	 * @param message
-	 * @param guiInterface
-	 * @param progress
+	 * @param title -
+	 * @param message -
+	 * @param guiInterface -
+	 * @param progress -
+	 * @param text displayed if {@link GUIPlugin#display(JPanel)} returns <i>false</i>
 	 */
+	@SuppressWarnings("hiding")
 	public NoYesPlugin(final String title, final String message,
-			final GUIInterface guiInterface, boolean progress) {
+			final GUIInterface guiInterface, boolean progress, final String text) {
+		super(text);
 		this.title = title;
 		this.message = message;
 		this.gui = guiInterface;

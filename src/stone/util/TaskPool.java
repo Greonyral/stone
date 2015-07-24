@@ -42,6 +42,7 @@ public class TaskPool {
 	 * Adds a new task to the pool to be executed.
 	 * 
 	 * @param task
+	 *            Task to run
 	 */
 	public final void addTask(final Runnable task) {
 		synchronized (this.taskPool) {
@@ -50,20 +51,13 @@ public class TaskPool {
 		}
 	}
 
-	@Deprecated
-	public final void addTaskForAll(final Runnable... task) {
-		for (final Runnable t : task) {
-			addTaskForAll(t);
-		}
-	}
-
-
 	/**
 	 * Adds one task to the pool to be executed. Each task will be executed by
 	 * all available WorkerThreads for the pool. The next task will be executed
 	 * after the previous task has been completed with all threads.
 	 * 
-	 * @param tasks
+	 * @param task
+	 *            Task to run
 	 */
 	public final void addTaskForAll(final Runnable task) {
 		addTaskForAll(task, 100);
@@ -74,7 +68,10 @@ public class TaskPool {
 	 * set percent of available WorkerThreads for the pool. The next task will
 	 * be executed after the previous task has been completed with all threads.
 	 * 
-	 * @param tasks
+	 * @param task
+	 *            Task to run
+	 * @param percent
+	 *            percent of threads in pool to run <i>task</i>
 	 */
 	public final void addTaskForAll(final Runnable task, int percent) {
 		final int n = NUM_CPUS * Math.max(1, Math.min(100, percent) / 100);
@@ -120,7 +117,9 @@ public class TaskPool {
 	}
 
 	/**
-	 * Forks and starts the master thread.
+	 * Forks and starts the {@link MasterThread}.
+	 * 
+	 * @return created master thread
 	 */
 	public final Runnable runMaster() {
 		this.master.setName("master");

@@ -61,7 +61,7 @@ class ValueInt extends Value<Integer> {
 	final DragObject<Container, Container, Container> object;
 	final DropTarget<Container, Container, Container> target;
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "hiding" })
 	private <A extends Container, B extends Container, C extends Container> ValueInt(
 			BruteParams<Integer> bruteParams, final ValueInt value,
 			final DragObject<A, B, C> object, final DropTarget<A, B, C> target,
@@ -77,6 +77,7 @@ class ValueInt extends Value<Integer> {
 		this.target = (DropTarget<Container, Container, Container>) target;
 	}
 
+	@SuppressWarnings("hiding")
 	/** Creates a new Value with unbounded value */
 	ValueInt(BruteParams<Integer> bruteParams, int initValue, int interval,
 			int ticks) {
@@ -90,6 +91,7 @@ class ValueInt extends Value<Integer> {
 		this.target = null;
 	}
 
+	@SuppressWarnings("hiding")
 	/** Creates a new Value with bounded value */
 	ValueInt(BruteParams<Integer> bruteParams, int initValue, int min, int max,
 			int ticks) {
@@ -119,6 +121,7 @@ class ValueInt extends Value<Integer> {
 		this.slider.addChangeListener(new SliderListener());
 	}
 
+	@SuppressWarnings("hiding")
 	@Override
 	public <A extends Container, B extends Container, C extends Container> Value<Integer> localInstance(
 			DragObject<A, B, C> object, DropTarget<A, B, C> target,

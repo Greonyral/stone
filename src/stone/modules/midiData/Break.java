@@ -2,7 +2,7 @@ package stone.modules.midiData;
 
 final class Break extends MidiEvent {
 
-	Break(int delta) {
+	Break(@SuppressWarnings("hiding") int delta) {
 		super(delta, EventType.NOP);
 	}
 

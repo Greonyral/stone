@@ -5,6 +5,7 @@ import stone.util.Path;
 
 final class LongTitleInAbc extends AbtractEoWInAbc {
 
+	@SuppressWarnings("hiding")
 	public LongTitleInAbc(final Path song, int line) {
 		super(song, line);
 	}

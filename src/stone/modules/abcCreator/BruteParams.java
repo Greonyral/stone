@@ -36,10 +36,11 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	public static final BruteParams<Integer> VOLUME = new BruteParams<>(
 			"Volume", 0, -127, 127, 16, true, true);
 
-	/** Delay with hard limites */
+	/** Delay with hard limits */
 	public static final BruteParams<Integer> DELAY = new BruteParams<>("Delay",
 			0, 0, 32, 16, false, true);
 
+	/** Fading out at end with hard limit */
 	public static final BruteParams<Integer> FADEOUT = new BruteParams<>(
 			"Fadeout", 0, 0, 512, 1, true, false);
 
@@ -60,7 +61,8 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	}
 
 	/**
-	 * @param s
+	 * Parses given sting to related object
+	 * @param s the string describing a {@link BruteParams}
 	 * @return the equivalent param
 	 */
 	public final static BruteParams<?> valueOf(final String s) {
@@ -136,7 +138,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 
 	private final DoubleMap<DragObject<?, ?, ?>, DropTarget<?, ?, ?>, Value<E>> localValueMap = new DoubleMap<>();
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "hiding" })
 	private BruteParams(final String s, double initValue, double step,
 			double ticks, boolean global, boolean local) {
 		this.s = s;
@@ -157,7 +159,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 * @param global
 	 * @param local
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "hiding" })
 	private BruteParams(final String s, int initValue, int interval, int ticks,
 			boolean global, boolean local) {
 		this.s = s;
@@ -179,7 +181,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 * @param global
 	 * @param local
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "hiding" })
 	private BruteParams(final String s, int initValue, int min, int max,
 			int ticks, boolean global, boolean local) {
 		this.s = s;
@@ -201,7 +203,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	/**
 	 * Displays <i>this</i> param using the given panel.
 	 * 
-	 * @param panel
+	 * @param panel -
 	 */
 	@Override
 	public final void display(final JPanel panel) {
@@ -257,8 +259,8 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 *            Container to display the DropTarget
 	 * @param <T>
 	 *            Container to display the DropTargetContainer
-	 * @param midiTrack
-	 * @param abcTrack
+	 * @param midiTrack -
+	 * @param abcTrack -
 	 * @return The value set for given midiTrack and abcTrack.
 	 */
 	public final <C extends Container, D extends Container, T extends Container> E getLocalValue(
@@ -270,7 +272,7 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 
 	/**
 	 * 
-	 * @param value
+	 * @param value -
 	 */
 	public final void setGlobalValue(final E value) {
 		this.globalValue.value(value);
@@ -284,9 +286,9 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 *            Container to display the DropTarget
 	 * @param <T>
 	 *            Container to display the DropTargetContainer
-	 * @param object
-	 * @param target
-	 * @param value
+	 * @param object -
+	 * @param target -
+	 * @param value -
 	 */
 	public final <C extends Container, D extends Container, T extends Container> void setLocalValue(
 			final DragObject<C, D, T> object, final DropTarget<C, D, T> target,
@@ -301,9 +303,9 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	 *            Container to display the DropTarget
 	 * @param <T>
 	 *            Container to display the DropTargetContainer
-	 * @param object
-	 * @param target
-	 * @param string
+	 * @param object -
+	 * @param target -
+	 * @param string -
 	 */
 	public final <C extends Container, D extends Container, T extends Container> void setLocalValue(
 			final DragObject<C, D, T> object, final DropTarget<C, D, T> target,
@@ -332,8 +334,8 @@ public class BruteParams<E> implements DndPluginCallerParams<E> {
 	/**
 	 * Loads a previously stored value.
 	 * 
-	 * @param value
-	 * @param io
+	 * @param value -
+	 * @param io -
 	 */
 	public final void value(final String value, final IOHandler io) {
 		if (!this.global) {

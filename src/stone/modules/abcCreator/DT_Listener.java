@@ -10,6 +10,7 @@ final class DT_Listener<C extends Container, D extends Container, T extends Cont
 
 	private final DropTarget<C, D, T> target;
 
+	@SuppressWarnings("hiding")
 	DT_Listener(final DropTarget<C, D, T> target,
 			final DragAndDropPlugin<C, D, T>.State state) {
 		super(state);

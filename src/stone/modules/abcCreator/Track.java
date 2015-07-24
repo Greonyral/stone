@@ -37,7 +37,7 @@ class Track implements Comparable<Track>, DragObject<JPanel, JPanel, JPanel> {
 	 * @param name
 	 *            as in the midi
 	 */
-	public Track(int idInBrute, int idInMidi, final String name) {
+	public Track(int idInBrute, int idInMidi, @SuppressWarnings("hiding") final String name) {
 		this.idBrute = idInBrute;
 		if (name == null) {
 			this.name = "<Track " + idInMidi + ">";

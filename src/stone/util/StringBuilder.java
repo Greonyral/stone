@@ -69,7 +69,7 @@ public class StringBuilder {
 	 * 
 	 * @param s
 	 *            String to append
-	 * @return <i>this<i>
+	 * @return <i>this</i>
 	 */
 	public final StringBuilder appendFirst(final String s) {
 		if (isEmpty()) {
@@ -101,6 +101,7 @@ public class StringBuilder {
 	 * Appends c to the end.
 	 * 
 	 * @param c
+	 *            character to append
 	 */
 	public final void appendLast(char c) {
 		if (this.tail == this.content[this.cIdx].length) {
@@ -117,6 +118,7 @@ public class StringBuilder {
 	 * Appends s to the end.
 	 * 
 	 * @param s
+	 *            string to append
 	 * @return <i>this</i>
 	 */
 	public final StringBuilder appendLast(final String s) {
@@ -147,6 +149,7 @@ public class StringBuilder {
 
 	/**
 	 * @param pos
+	 *            index in resulting string
 	 * @return the character at <i>pos</i>.
 	 */
 	public final char charAt(int pos) {
@@ -200,6 +203,7 @@ public class StringBuilder {
 	 * and append{First, Last}(s).
 	 * 
 	 * @param s
+	 *            string to set to
 	 */
 	public final void set(final String s) {
 		if ((s == null) || s.isEmpty()) {
@@ -216,10 +220,23 @@ public class StringBuilder {
 		this.tail = this.head + s.length();
 	}
 
+	/**
+	 * @param string
+	 *            pattern to compare with
+	 * @return <i>true</i> if resulting string starts with given string
+	 */
 	public final boolean startsWith(final String string) {
 		return toString().startsWith(string);
 	}
 
+	/**
+	 * @param string
+	 *            pattern to compare with
+	 * @param toffset
+	 *            offset in resulting string
+	 * @return <i>true</i> if resulting string starts at given offset with given
+	 *         string
+	 */
 	public final boolean startsWith(final String string, int toffset) {
 		return toString().startsWith(string, toffset);
 	}
@@ -229,6 +246,7 @@ public class StringBuilder {
 	 * Unspecified behavior if offset is greater than actual length.
 	 * 
 	 * @param offset
+	 *            index in resulting string
 	 */
 	public final void substring(int offset) {
 		this.head = (this.head + offset) % this.content[this.cIdx].length;
@@ -329,6 +347,8 @@ public class StringBuilder {
 				e.printStackTrace();
 			}
 			return true;
+		default:
+			break;
 		}
 		return false;
 	}
@@ -601,6 +621,8 @@ public class StringBuilder {
 		case KeyEvent.VK_DELETE:
 			remove(cursor);
 			return 0;
+		default:
+			break;
 		}
 		final char key = e.getKeyChar();
 		if (key == KeyEvent.CHAR_UNDEFINED) {

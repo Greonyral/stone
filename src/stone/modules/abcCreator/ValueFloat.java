@@ -45,6 +45,7 @@ class ValueFloat extends Value<Double> {
 	private final DragObject<Container, Container, Container> object;
 	private final DropTarget<Container, Container, Container> target;
 
+	@SuppressWarnings("hiding")
 	ValueFloat(BruteParams<Double> bruteParams, double initValue, double step,
 			double ticks) {
 		this.bruteParams = bruteParams;
@@ -110,6 +111,7 @@ class ValueFloat extends Value<Double> {
 		value(parse(string));
 	}
 
+	@SuppressWarnings("hiding")
 	@Override
 	final <A extends Container, B extends Container, C extends Container> Value<Double> localInstance(
 			final DragObject<A, B, C> object, final DropTarget<A, B, C> target,

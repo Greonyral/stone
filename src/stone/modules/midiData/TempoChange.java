@@ -3,6 +3,7 @@ package stone.modules.midiData;
 final class TempoChange extends MidiEvent {
 	final int tempo;
 
+	@SuppressWarnings("hiding")
 	TempoChange(int tempo, int delta) {
 		super(delta, EventType.TEMPO);
 		this.tempo = tempo;

@@ -5,12 +5,40 @@ target=$2
 files=$3
 files_a=($3)
 
+to_delete=()
+shift 3
+while [ $# -gt 0 ] ; do
+  targetD="$1"
+  sourceD="$2"
+  filesD=("$3")
+  shift 3
+  temp0=`mktemp`
+  temp1=`mktemp`
+  rm $temp0 $temp1
+  mkdir -p `dirname $temp0/$sourceD`
+  mkdir -p $temp1/$targetD
+  cp -r $sourceD $temp0/$sourceD
+  mv $temp0/$sourceD/* $temp1/$targetD
+  rm -rf $temp0
+  for f in ${filesD[@]} ; do
+    ds+="-C $temp1 $targetD/$f "
+  done
+  to_delete+=($temp1)
+done
+
 trap "rm -f $target; exit 127" SIGINT
 
 echo -en "$target \033[33mbusy\033[0m"
 printf "\r"
-jar $jarFlags $target ${files[@]} 2>/dev/null
+jar $jarFlags $target ${files[@]} $ds 2>/dev/null
 success=$?
+
+for f in "$to_delete" ; do
+  if [ "$f" != "" ] ; then
+    rm -r "$f"
+  fi
+done
+
 if (( $success != 0 )) ; then
 	echo -e "$target \033[31mfailed\033[0m"
 	echo "jar $jarFlags $target ${files[@]}"

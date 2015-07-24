@@ -6,9 +6,9 @@ import java.util.Iterator;
 
 /**
  * @author Nelphindal
- * @param <C>
- * @param <D>
- * @param <T>
+ * @param <C> -
+ * @param <D> -
+ * @param <T> -
  */
 public interface DragObject<C extends Container, D extends Container, T extends Container>
 		extends Iterable<DropTarget<C, D, T>> {

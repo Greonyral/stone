@@ -4,7 +4,7 @@ abstract class NameSchemeElement {
 
 	final int[] idcs;
 
-	NameSchemeElement(int[] idcs) {
+	NameSchemeElement(@SuppressWarnings("hiding") int[] idcs) {
 		this.idcs = idcs;
 	}
 

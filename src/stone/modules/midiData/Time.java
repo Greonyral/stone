@@ -4,6 +4,7 @@ final class Time extends MidiEvent {
 	final int n, d;
 	final byte c, b;
 
+	@SuppressWarnings("hiding")
 	Time(int n, int d, byte c, byte b, int delta) {
 		super(delta, EventType.TIME);
 		this.n = 0xff & n;

@@ -22,6 +22,7 @@ final class DirMouseListener implements MouseListener {
 	private final JPanel panel;
 	private final JScrollPane scroll;
 
+	@SuppressWarnings("hiding")
 	DirMouseListener(FileEditorPlugin fileEditorPlugin, String[] dirs, Path p,
 			String[] songs, JPanel panel, JScrollPane scroll) {
 		this.fileEditorPlugin = fileEditorPlugin;

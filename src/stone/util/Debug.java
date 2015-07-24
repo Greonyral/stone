@@ -1,6 +1,10 @@
 package stone.util;
 
+import java.io.File;
+import java.io.IOException;
+
 import stone.Main;
+import stone.StartupContainer;
 
 
 /**
@@ -14,6 +18,7 @@ public abstract class Debug {
 	private static final Debug instance = Flag.getInstance().isEnabled(
 			Main.DEBUG_ID) ? new Debug() {
 
+
 		@Override
 		protected final synchronized void printImpl(final String string,
 				final Object[] args) {
@@ -23,9 +28,28 @@ public abstract class Debug {
 
 	} : new Debug() {
 
+		private final File log = StartupContainer.getDatadirectory()
+				.resolve("log.txt").toFile();
+		private boolean first = true;
+
+
 		@Override
 		protected final void printImpl(final String string, final Object[] args) {
-			return;
+			if (!string.endsWith("\n")) {
+				printImpl(string + "\n", args);
+				return;
+			}
+			final String format = string.replaceAll("\r*\n", FileSystem.getLineSeparator());
+			try {	
+				final java.io.OutputStream out = new java.io.FileOutputStream(
+						log, !first);
+				first = false;
+				out.write(String.format(format, args).getBytes());
+				out.flush();
+				out.close();
+			} catch (IOException e) {
+				return;
+			}
 		}
 
 	};

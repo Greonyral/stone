@@ -5,6 +5,7 @@ import stone.util.Path;
 
 final class MissingTLineInAbc extends AbtractEoWInAbc {
 
+	@SuppressWarnings("hiding")
 	MissingTLineInAbc(final Path song, int line) {
 		super(song, line);
 	}

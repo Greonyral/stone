@@ -21,11 +21,7 @@ public class OptionSetup {
 	boolean jar;
 
 	OptionSetup() {
-		try {
-			this.io = new IOHandler("Nelphi's Tool");
-		} catch (final InterruptedException e) {
-			e.printStackTrace();
-		}
+		this.io = new IOHandler("Nelphi's Tool");
 	}
 
 	/**

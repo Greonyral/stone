@@ -8,6 +8,14 @@ import java.util.Set;
 
 import stone.util.LinkedMap;
 
+
+
+/**
+ * A representation of non static details of the program. The details are packed
+ * into the archive as config.txt and parsed on startup.
+ * @author Nelphindal
+ *
+ */
 public final class Config {
 
 	private static final String CONFIG_FILE = "config.txt";
@@ -17,6 +25,9 @@ public final class Config {
 
 	private final static Config instance = new Config();
 
+	/**
+	 * @return the instance of <i>this</i> class
+	 */
 	public static Config getInstance() {
 		return instance;
 	}
@@ -60,12 +71,31 @@ public final class Config {
 		}
 	}
 
+	/**
+	 * @param section of config file to return
+	 * @return section of config file
+	 */
 	public Set<String> getSection(final String section) {
-		return this.mapSKV.get(section).keySet();
+		final Map<String, String> map = this.mapSKV.get(section);
+		final Set<String> set;
+		if (map == null)
+			set = java.util.Collections.emptySet();
+		else
+			set = map.keySet();
+		assert set != null;
+		return set;
+		
 	}
 
+	/**
+	 * @param key identifying key of main section to return
+	 * @return corresponding value of config value
+	 */
 	public final String getValue(final String key) {
-		return this.mapKV.get(key);
+		final String value = this.mapKV.get(key);
+		if (value == null)
+			return "";
+		return value;
 	}
 
 }

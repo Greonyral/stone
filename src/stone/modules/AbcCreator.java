@@ -3,6 +3,7 @@ package stone.modules;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -16,6 +17,7 @@ import java.util.TreeSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -118,7 +120,8 @@ public class AbcCreator implements Module,
 			return "...";
 		}
 
-		synchronized final void drawState(final IOHandler io) {
+		synchronized final void drawState(
+				@SuppressWarnings("hiding") final IOHandler io) {
 			this.io = io;
 			if (this.failed) {
 				return;
@@ -139,9 +142,13 @@ public class AbcCreator implements Module,
 		}
 
 		synchronized final void progress() {
+			progress(1);
+		}
+
+		synchronized final void progress(@SuppressWarnings("hiding") int size) {
 			++this.progress;
 			if (this.io != null) {
-				this.io.updateProgress();
+				this.io.updateProgress(size);
 			}
 		}
 
@@ -149,6 +156,7 @@ public class AbcCreator implements Module,
 			this.failed = true;
 		}
 
+		@SuppressWarnings("hiding")
 		synchronized final void setSize(final Object state, int size) {
 			if (this.state == state) {
 				this.size = size;
@@ -158,7 +166,8 @@ public class AbcCreator implements Module,
 			}
 		}
 
-		synchronized final void startPhase(final Object state) {
+		synchronized final void startPhase(
+				@SuppressWarnings("hiding") final Object state) {
 			this.state = state;
 			this.progress = 0;
 			this.size = -1;
@@ -167,6 +176,7 @@ public class AbcCreator implements Module,
 			}
 		}
 
+		@SuppressWarnings("hiding")
 		synchronized final void startPhase(final Object state, int size) {
 			this.state = state;
 			this.progress = 0;
@@ -199,7 +209,7 @@ public class AbcCreator implements Module,
 
 	private static final PathOptionFileFilter INSTR_MAP_FILTER = new InstrumentMapFileFilter();
 
-	private final static int VERSION = 13;
+	private final static int VERSION = 14;
 
 	private static final FileFilter midiFilter = new MidiFileFilter();
 
@@ -329,9 +339,9 @@ public class AbcCreator implements Module,
 
 	/**
 	 * @param sc
-	 * @throws InterruptedException
+	 *            container providing runtime dependent information
 	 */
-	public AbcCreator(final StartupContainer sc) throws InterruptedException {
+	public AbcCreator(final StartupContainer sc) {
 		this.ABC_PLAYER = AbcCreator.createPathToAbcPlayer(
 				sc.getOptionContainer(), sc.getTaskPool());
 		this.INSTRUMENT_MAP = AbcCreator.createInstrMap(
@@ -346,13 +356,19 @@ public class AbcCreator implements Module,
 		this.targets = null;
 		this.parser = null;
 		this.taskPool = sc.getTaskPool();
-		this.bruteDir = Path.getTmpDirOrFile("BruTE-GUI");
+		this.bruteDir = StartupContainer.getDatadirectory().resolve("brute");
 		this.brutesMidi = this.brutesMap = this.brutesAbc = null;
 		this.initState = new InitState();
 		this.main = sc.getMain();
 	}
 
-	private AbcCreator(final AbcCreator abc, final StartupContainer sc) {
+	@Override
+	public final void dependingModules(final Set<String> set) {
+		set.add("BruTE");
+	}
+
+	private AbcCreator(@SuppressWarnings("hiding") final AbcCreator abc,
+			final StartupContainer sc) {
 		this.io = abc.io;
 		this.master = abc.master;
 		this.targets = MidiInstrument.createTargets();
@@ -381,8 +397,11 @@ public class AbcCreator implements Module,
 	 * Issues the transcription from selected midi.
 	 * 
 	 * @param name
+	 *            transriber's name
 	 * @param title
+	 *            title of tracks
 	 * @param abcTracks
+	 *            number of tracks
 	 * @return <i>true</i> on success
 	 */
 	@Override
@@ -391,7 +410,7 @@ public class AbcCreator implements Module,
 		this.io.startProgress("Creating map", abcTracks + 1);
 		final Path map = generateMap(name == null ? "<insert your name here>"
 				: name, title == null ? this.abc.getFilename() : title);
-		this.io.endProgress();
+		this.io.endProgress("");
 		if (map == null) {
 			// no abc-tracks
 			return new Object() {
@@ -406,7 +425,7 @@ public class AbcCreator implements Module,
 			copy(map, this.brutesMap);
 			this.io.startProgress("Waiting for BruTE to finish", abcTracks + 1);
 			final int remap = call("remap.exe", this.bruteDir);
-			this.io.endProgress();
+			this.io.endProgress("BruTE finished");
 			if (remap != 0) {
 				this.io.printError("Unable to execute BRuTE", false);
 				// will interrupt the process
@@ -431,7 +450,7 @@ public class AbcCreator implements Module,
 					this.io.startProgress("Starting AbcPlayer", -1);
 					call(abcPlayer, CallType.JAR, abcPlayer.getParent(),
 							this.abc.toString());
-					this.io.endProgress();
+					this.io.endProgress("AbcPlayer running");
 				}
 			} catch (final IOException | InterruptedException e) {
 				e.printStackTrace();
@@ -591,6 +610,8 @@ public class AbcCreator implements Module,
 						return;
 					}
 					break;
+				default:
+					break;
 				}
 				if (c.error()) {
 					System.out.println(". " + line);
@@ -633,7 +654,7 @@ public class AbcCreator implements Module,
 			c.setError();
 			e.printStackTrace();
 		} finally {
-			this.io.endProgress();
+			this.io.endProgress("Map loaded");
 			this.io.close(in);
 		}
 		System.out.println("... completed");
@@ -679,7 +700,7 @@ public class AbcCreator implements Module,
 			for (int i = 0; i < AbcCreator.DRUM_MAPS_COUNT; i++) {
 				this.maps.add(i);
 			}
-			this.io.endProgress();
+			this.io.endProgress("Running loop");
 			runLoop();
 		} finally {
 			for (final Process p : this.processList) {
@@ -694,7 +715,6 @@ public class AbcCreator implements Module,
 					this.master.interrupt();
 				}
 			}
-			this.bruteDir.delete();
 		}
 	}
 
@@ -864,6 +884,37 @@ public class AbcCreator implements Module,
 		return call(exe, CallType.EXE_WAIT, bruteDirectory);
 	}
 
+	private final void extract(final JarFile jarFile, final String string)
+			throws IOException {
+		this.initState.startPhase(InitState.READ_JAR);
+		final ZipEntry jarEntry = jarFile.getEntry(string);
+		this.initState.startPhase(InitState.UNPACK_JAR);
+		unpack(jarFile, jarEntry);
+		final Path jar = this.bruteDir.resolve(string);
+		extract(jar);
+	}
+
+	private final void extract(final Path zip) throws IOException {
+		final Set<ZipEntry> entries = new HashSet<>();
+		final ZipFile zipFile = new ZipFile(zip.toFile());
+		final Enumeration<? extends ZipEntry> ee = zipFile.entries();
+		while (ee.hasMoreElements()) {
+			final ZipEntry je = ee.nextElement();
+			if (!je.isDirectory()) {
+				entries.add(je);
+			}
+		}
+		this.initState.setSize(InitState.UNPACK_JAR, (int) zip.toFile()
+				.length());
+		unpack(zipFile, entries.toArray(new JarEntry[entries.size()]));
+		try {
+			zipFile.close();
+		} catch (final IOException e) {
+			e.printStackTrace();
+			initState.setFailed();
+		}
+	}
+
 	private final void extract(final URL url) {
 		final String s = url.toString();
 		if (!s.startsWith("jar:")) {
@@ -878,35 +929,6 @@ public class AbcCreator implements Module,
 			this.initState.setFailed();
 		}
 
-	}
-
-	private final void extract(final JarFile jarFile, final String string)
-			throws IOException {
-		this.initState.startPhase(InitState.READ_JAR);
-		final ZipEntry jarEntry = jarFile.getEntry(string);
-		this.initState.startPhase(InitState.UNPACK_JAR);
-		unpack(jarFile, jarEntry);
-		final Path jar = this.bruteDir.resolve(string);
-		extract(jar);
-	}
-
-	private final void extract(final Path jar) throws IOException {
-		final Set<JarEntry> entries = new HashSet<>();
-		final JarFile jarFile1 = new JarFile(jar.toFile());
-		final Enumeration<JarEntry> ee = jarFile1.entries();
-		while (ee.hasMoreElements()) {
-			final JarEntry je = ee.nextElement();
-			if (!je.isDirectory()) {
-				entries.add(je);
-			}
-		}
-		this.initState.setSize(InitState.UNPACK_JAR, entries.size());
-		unpack(jarFile1, entries.toArray(new JarEntry[entries.size()]));
-		try {
-			jarFile1.close();
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	private final Path generateMap(final Object name, final Object title) {
@@ -1028,7 +1050,7 @@ public class AbcCreator implements Module,
 							this.main.getConfigValue(Main.GLOBAL_SECTION,
 									Main.PATH_KEY, null).split("/")).toFile()
 							: this.midi.getParent().toFile(),
-					AbcCreator.midiFilter);
+					AbcCreator.midiFilter, "Parsing midi");
 			if (this.midi == null) {
 				break;
 			}
@@ -1106,7 +1128,7 @@ public class AbcCreator implements Module,
 		}
 	}
 
-	private final void unpack(final JarFile jarFile,
+	private final void unpack(final ZipFile zipFile,
 			final ZipEntry... jarEntries) {
 		for (final ZipEntry jarEntry : jarEntries) {
 			if (this.master.isInterrupted()) {
@@ -1127,17 +1149,23 @@ public class AbcCreator implements Module,
 			}
 			try {
 				out = this.io.openOut(file);
+				boolean hiddenProgress = false;
+				if (initState.io == null)
+					hiddenProgress = true;
+				else
+					out.registerProgress(initState.io);
 				try {
-					this.io.write(jarFile.getInputStream(jarEntry), out);
+					this.io.write(zipFile.getInputStream(jarEntry), out);
 				} finally {
 					this.io.close(out);
 				}
+				if (hiddenProgress)
+					initState.progress((int) file.length());
 			} catch (final IOException e) {
 				this.initState.setFailed();
 				this.bruteDir.delete();
 				return;
 			}
-			this.initState.progress();
 		}
 	}
 
@@ -1266,25 +1294,82 @@ public class AbcCreator implements Module,
 				if (!bruteArchive2.exists()) {
 					final URL bruteArchive3 = getClass().getClassLoader()
 							.getResource("BruTE.jar");
-					if (bruteArchive3 == null
+					if ((bruteArchive3 == null)
 							&& !Path.getPath(bruteArchive3).exists()) {
 						System.err.println("Unable to find Brute\n"
 								+ bruteArchive + " does not exist.");
 						return false;
-					} else
-						extract(bruteArchive3);
-				} else
+					}
+					extract(bruteArchive3);
+				} else {
 					extract(bruteArchive2);
+				}
 			} else {
 				extract(bruteArchive);
 			}
 		} else {
-			final JarFile jarFile;
-			jarFile = new JarFile(this.wdDir.toFile());
-			try {
-				extract(jarFile, "BruTE.jar");
-			} finally {
+			final Path version = bruteDir.resolve("VERSION");
+			boolean unpack = false;
+			if (!version.exists())
+				unpack = true;
+			else {
+				final InputStream inVersion = io.openIn(version.toFile());
+				final byte[] buffer = new byte[4];
+				if (inVersion.read(buffer) != 4)
+					unpack = true;
+				else {
+					final int existingVersion = ByteBuffer.wrap(buffer)
+							.getInt();
+					if (master.getModule("BruTE").getVersion() != existingVersion)
+						unpack = true;
+				}
+				io.close(inVersion);
+			}
+			if (unpack) {
+				if (!bruteDir.exists())
+					bruteDir.toFile().mkdir();
+				else
+					for (final String s : bruteDir.toFile().list())
+						bruteDir.resolve(s).delete();
+
+				initState.startPhase(InitState.READ_JAR);
+				final OutputStream outVersion = io.openOut(version.toFile());
+				final Path jar = StartupContainer.getDatadirectory().resolve(
+						"BruTE.jar");
+				final JarFile jarFile = new JarFile(jar.toFile());
+				final Enumeration<JarEntry> entries = jarFile.entries();
+				final Set<JarEntry> entriesToExtract = new HashSet<>();
+				int size = 0;
+				while (entries.hasMoreElements()) {
+					final JarEntry e = entries.nextElement();
+					if (e.getName().startsWith("brute/")) {
+						entriesToExtract.add(e);
+						size += e.getSize();
+					}
+				}
+				initState.startPhase(InitState.UNPACK_JAR, size);
+				for (final JarEntry entry : entriesToExtract) {
+					final Path target = bruteDir.resolve(entry.getName()
+							.replace("brute/", "").split("/"));
+					final OutputStream out = io.openOut(target.toFile());
+					@SuppressWarnings("hiding")
+					final IOHandler io;
+					if (initState.io != null) {
+						io = initState.io;
+					} else
+						io = null;
+					out.registerProgress(io);
+					this.io.write(jarFile.getInputStream(entry), out);
+					if (io == null)
+						initState.progress((int) entry.getSize());
+				}
 				jarFile.close();
+
+				final byte[] buffer = new byte[4];
+				ByteBuffer.wrap(buffer).putInt(
+						master.getModule("BruTE").getVersion());
+				outVersion.write(buffer);
+				io.close(outVersion);
 			}
 		}
 		return true;

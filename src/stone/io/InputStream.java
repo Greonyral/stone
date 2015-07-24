@@ -11,7 +11,7 @@ import java.util.Queue;
 
 /**
  * A class for a BufferedInputStream reading from a file
- * 
+ *
  * @author Nelphindal
  */
 public class InputStream extends AbstractInputStream {
@@ -48,12 +48,13 @@ public class InputStream extends AbstractInputStream {
 
 	/**
 	 * Generates a new InputStream reading from given file
-	 * 
+	 *
 	 * @param file
 	 *            file to read from
 	 * @param cs
 	 *            charset used for encoding
 	 */
+	@SuppressWarnings("hiding")
 	public InputStream(final File file, final Charset cs) {
 		super(new byte[16000]);
 		this.cs = cs;
@@ -71,6 +72,15 @@ public class InputStream extends AbstractInputStream {
 	}
 
 
+	@Override
+	public final void close() throws IOException {
+		super.close();
+		if (this.stream != null) {
+			this.stream.close();
+		}
+	}
+
+
 	/**
 	 * Closes this stream and deletes the associated file
 	 * 
@@ -83,7 +93,6 @@ public class InputStream extends AbstractInputStream {
 		close();
 		return this.file.delete();
 	}
-
 
 	/**
 	 * Returns relative offset from current position in <i>this</i> stream to a
@@ -165,30 +174,31 @@ public class InputStream extends AbstractInputStream {
 	}
 
 	/**
-	 * Registers an IO-Handler for managing a ProgressMonitor for
+	 * Registers an IO-Handler for managing a {@link ProgressMonitor} for
 	 * {@link #read()}
 	 * 
-	 * @param io
+	 * @param io {@link IOHandler} providing a instance of {@link ProgressMonitor} 
 	 */
-	public final void registerProgressMonitor(final IOHandler io) {
+	public final void registerProgressMonitor(@SuppressWarnings("hiding") final IOHandler io) {
 		this.io = io;
 		io.startProgress("Reading file", (int) this.file.length());
 	}
 
 	/**
-	 * Resets the stream to start
+	 * Sets <i>this</i> to reach EOF on next invocation.
 	 */
 	@Override
-	public final void reset() {
+	public final synchronized void reset() {
 		this.stream = null;
+		super.reset();
 	}
 
 	/**
 	 * Not supported
 	 * 
-	 * @param n
+	 * @param n ignored
 	 * @return nothing, throws UnsupportedOperationException
-	 * @throws UnsupportedOperationException
+	 * @throws UnsupportedOperationException whenever called
 	 */
 	@Override
 	public final long skip(long n) {

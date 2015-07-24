@@ -9,6 +9,7 @@ import java.util.Set;
 
 import stone.io.InputStream;
 import stone.io.OutputStream;
+import stone.modules.SongData;
 import stone.util.Path;
 
 class Deserializer_3 extends Deserializer {
@@ -23,7 +24,7 @@ class Deserializer_3 extends Deserializer {
 	private final InputStream in;
 	private final Path inFile;
 
-	Deserializer_3(final SongDataContainer sdc) {
+	Deserializer_3(@SuppressWarnings("hiding") final SongData sdc) {
 		super(sdc);
 		final String entry = this.idx.getFilename().replace(".idx", "")
 				.replace(".zip", "");
@@ -40,8 +41,12 @@ class Deserializer_3 extends Deserializer {
 		} else {
 			this.in = this.io.openIn(this.inFile.toFile());
 		}
-		this.out = this.io.openOut(this.tmp.toFile());
-		this.io.write(this.out, VERSION);
+		if (!this.tmp.getParent().exists()) {
+			this.out = null;
+		} else {
+			this.out = this.io.openOut(this.tmp.toFile());
+			this.io.write(this.out, VERSION);
+		}
 	}
 
 	private final void put(final ByteBuffer bb) {
@@ -78,6 +83,7 @@ class Deserializer_3 extends Deserializer {
 
 	@Override
 	protected final void crawlDone_() {
+		return;
 	}
 
 	@Override
@@ -121,6 +127,7 @@ class Deserializer_3 extends Deserializer {
 				do {
 					this.in.read(intField);
 					intBuffer.position(0);
+					@SuppressWarnings("hiding")
 					final int idx = intBuffer.getInt();
 					end = readUntilSep(nameBuffer);
 					final String desc = new String(nameBuffer.array(), 0,
@@ -138,6 +145,7 @@ class Deserializer_3 extends Deserializer {
 				for (int i = 0; i < voicesCount; i++) {
 					this.in.read(idxField);
 					idxBuffer.position(0);
+					@SuppressWarnings("hiding")
 					final int idx = idxBuffer.getShort();
 					final String desc = new String(
 							this.in.readTo(Deserializer_3.SEPERATOR_3));
@@ -146,7 +154,7 @@ class Deserializer_3 extends Deserializer {
 			}
 			final Path p = this.root.resolve(name.split("/"));
 			if (p.exists()) {
-				tree.put(new SongData(p, voices, mod));
+				tree.put(new SongDataEntry(p, voices, mod));
 			}
 		}
 		this.io.close(this.in);
@@ -157,13 +165,15 @@ class Deserializer_3 extends Deserializer {
 	protected final void finish_() {
 		this.io.close(this.out);
 		this.idx.delete();
-		this.tmp.renameTo(this.inFile);
-		this.io.compress(this.idx.toFile(), this.inFile.toFile());
-		this.tmp.delete();
+		if (this.tmp.exists()) {
+			this.tmp.renameTo(this.inFile);
+			this.io.compress(this.idx.toFile(), this.inFile.toFile());
+			this.tmp.delete();
+		}
 	}
 
 	@Override
-	protected final void generateStream(final SongData song) {
+	protected final void generateStream(final SongDataEntry song) {
 		ByteBuffer bb = ByteBuffer.allocate(512);
 
 		final Map<Integer, String> voices = song.voices();
@@ -192,6 +202,7 @@ class Deserializer_3 extends Deserializer {
 
 		final ArrayList<byte[]> voicesBytes = new ArrayList<>(voicesSize);
 		for (final Map.Entry<Integer, String> voice : voices.entrySet()) {
+			@SuppressWarnings("hiding")
 			final int idx = voice.getKey().intValue();
 			final byte[] name = voice.getValue().getBytes();
 			final ByteBuffer bbVoice;
@@ -253,5 +264,13 @@ class Deserializer_3 extends Deserializer {
 			bb.put(Deserializer_3.SEPERATOR_EXT_3);
 		}
 		put(bb);
+	}
+
+	/**
+	 * Not supported
+	 */
+	@Override
+	public Runnable getDeserialTask() {
+		return null;
 	}
 }

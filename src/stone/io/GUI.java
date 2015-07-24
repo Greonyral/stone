@@ -39,6 +39,7 @@ import stone.MasterThread;
 import stone.ModuleInfo;
 import stone.modules.Main;
 import stone.util.BooleanOption;
+import stone.util.Debug;
 import stone.util.MaskedStringOption;
 import stone.util.Option;
 import stone.util.Path;
@@ -56,7 +57,7 @@ public class GUI implements GUIInterface {
 
 		private final GUI.Button button;
 
-		public ButtonListener(final GUI.Button button) {
+		public ButtonListener(@SuppressWarnings("hiding") final GUI.Button button) {
 			this.button = button;
 		}
 
@@ -93,13 +94,11 @@ public class GUI implements GUIInterface {
 
 	}
 
-	private static final String waitText = "Please wait ...";
-
 	/**
 	 * Enables a component by calling {@link Component#setEnabled(boolean)}
 	 * 
-	 * @param c
-	 * @param b
+	 * @param c Part of GUI to enable
+	 * @param b enable
 	 */
 	public final static void setEnabled(final Component c, boolean b) {
 		if (c instanceof Container) {
@@ -127,11 +126,10 @@ public class GUI implements GUIInterface {
 	/**
 	 * Creates a GUI from a temporarily GUI
 	 * 
-	 * @param gui
-	 * @param master
-	 * @param icon
+	 * @param gui temporarily GUI
+	 * @param master {@link MasterThread} to check on interruption
 	 */
-	public GUI(final GUI gui, final MasterThread master) {
+	public GUI(final GUI gui, @SuppressWarnings("hiding") final MasterThread master) {
 		this.master = master;
 
 		this.text = new JTextArea();
@@ -156,13 +154,9 @@ public class GUI implements GUIInterface {
 
 			@Override
 			public final void windowClosing(final WindowEvent e) {
-				try {
-					synchronized (Button.class) {
-						master.interruptAndWait();
-						Button.class.notifyAll();
-					}
-				} catch (final InterruptedException e1) {
-					e1.printStackTrace();
+				synchronized (Button.class) {
+					master.interruptAndWait();
+					Button.class.notifyAll();
 				}
 
 			}
@@ -207,9 +201,8 @@ public class GUI implements GUIInterface {
 	 * 
 	 * @param name
 	 *            Title for the window
-	 * @throws InterruptedException
 	 */
-	public GUI(final String name) throws InterruptedException {
+	public GUI(final String name) {
 		this.master = null;
 		this.bar = null;
 		this.text = null;
@@ -217,7 +210,7 @@ public class GUI implements GUIInterface {
 		final java.io.InputStream in = getClass().getResourceAsStream(
 				"Icon.png");
 
-		this.wait = new JLabel(GUI.waitText);
+		this.wait = new JLabel("Starting up");
 
 		this.mainFrame = new JFrame();
 		this.mainFrame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
@@ -252,7 +245,7 @@ public class GUI implements GUIInterface {
 	 * 
 	 * @param string
 	 *            the question to show
-	 * @param progress
+	 * @param progress if during the dialog the latest set progress bar shall be displayed
 	 * @return <i>true</i> if and only if the user hit yes
 	 */
 	public final Button askNoYes(final String string, boolean progress) {
@@ -276,7 +269,7 @@ public class GUI implements GUIInterface {
 		this.mainFrame.getContentPane().removeAll();
 		this.mainFrame.add(panel);
 
-		waitForButton();
+		waitForButton(wait.getText());
 
 		return this.pressed;
 	}
@@ -290,25 +283,21 @@ public class GUI implements GUIInterface {
 			}
 			this.destroyed = true;
 		}
-		try {
-			this.master.interruptAndWait();
-		} catch (final InterruptedException e) {
-			e.printStackTrace();
-		}
+		this.master.interruptAndWait();
 		this.mainFrame.setVisible(false);
 		this.mainFrame.dispose();
 	}
 
 	/** */
 	@Override
-	public final void endProgress() {
+	public final void endProgress(@SuppressWarnings("hiding") final String text) {
 		this.bar.setVisible(false);
 		if (Thread.currentThread() == this.master) {
 			this.mainFrame.remove(this.bar);
 			this.mainFrame.remove(this.wait); // may by added to north by
 												// another Thread
 			// by calling this method
-			this.wait.setText(GUI.waitText);
+			this.wait.setText(text);
 			this.mainFrame.add(this.wait);
 			revalidate(true, false);
 		} else {
@@ -337,6 +326,8 @@ public class GUI implements GUIInterface {
 						GUI.this.pressed = Button.OK;
 						Button.class.notifyAll();
 					}
+				default:
+					break;
 				}
 			}
 
@@ -393,7 +384,7 @@ public class GUI implements GUIInterface {
 		this.mainFrame.add(mainPanel);
 		this.mainFrame.add(Button.OK.button, BorderLayout.SOUTH);
 
-		waitForButton();
+		waitForButton("Appyling settings");
 
 		for (final Option o : options) {
 			o.endDisplay();
@@ -404,9 +395,9 @@ public class GUI implements GUIInterface {
 	/**
 	 * Shows a dialog to chose an absolute path
 	 * 
-	 * @param titleMsg
-	 * @param filter
-	 * @param initialDirectory
+	 * @param titleMsg Heading line to display
+	 * @param filter Filter to use
+	 * @param initialDirectory directory to start displaying
 	 * @return the selected path or <i>null</i> if user aborted the dialog
 	 */
 	public final Path getPath(final String titleMsg, final FileFilter filter,
@@ -444,7 +435,7 @@ public class GUI implements GUIInterface {
 		this.mainFrame.add(chooser);
 		this.mainFrame.add(title, BorderLayout.NORTH);
 
-		waitForButton();
+		waitForButton(" TODO getPath()");
 
 		this.mainFrame.setAlwaysOnTop(aot);
 
@@ -501,7 +492,7 @@ public class GUI implements GUIInterface {
 		final Color oldFG = this.text.getForeground();
 		this.text.setBackground(Color.DARK_GRAY);
 		this.text.setForeground(Color.WHITE);
-		printMessageFunc(null, errorMessage, true);
+		printMessageFunc(null, errorMessage, wait.getText());
 		this.text.setBackground(oldBG);
 		this.text.setForeground(oldFG);
 	}
@@ -510,7 +501,7 @@ public class GUI implements GUIInterface {
 	@Override
 	public final void printMessage(final String title, final String message,
 			boolean toFront) {
-		printMessageFunc(title, message, toFront);
+		printMessageFunc(title, message, toFront ? wait.getText() : null);
 	}
 
 	/** */
@@ -523,13 +514,13 @@ public class GUI implements GUIInterface {
 			plugin.endDisplay();
 			this.mainFrame.getContentPane().removeAll();
 			this.mainFrame.add(this.wait);
-			this.wait.setText(waitText);
+			this.wait.setText(plugin.getText());
 			revalidate(true, false);
 			return;
 		}
 		this.mainFrame.add(this.wait, BorderLayout.NORTH);
 		this.wait.setText(plugin.getTitle());
-		waitForButton();
+		waitForButton(plugin.getText());
 	}
 
 	/** */
@@ -551,7 +542,7 @@ public class GUI implements GUIInterface {
 
 			private final String m;
 
-			private BoxListener(final String m) {
+			private BoxListener(@SuppressWarnings("hiding") final String m) {
 				this.m = m;
 			}
 
@@ -579,7 +570,7 @@ public class GUI implements GUIInterface {
 		box.setForeground(Color.RED);
 		box.addChangeListener(new BoxListener(Main.REPAIR));
 		panel.add(box);
-		waitForButton();
+		waitForButton("Loading selection");
 
 		this.text.setBackground(Color.YELLOW);
 
@@ -589,6 +580,12 @@ public class GUI implements GUIInterface {
 	/** */
 	@Override
 	public final void setProgress(int pos) {
+		if (!this.bar.isShowing()) {
+			this.mainFrame.getContentPane().removeAll();
+			this.mainFrame.add(this.wait, BorderLayout.NORTH);
+			this.mainFrame.add(this.bar);
+			revalidate(true, false);
+		}
 		this.bar.setValue(pos);
 	}
 
@@ -629,14 +626,21 @@ public class GUI implements GUIInterface {
 		this.wait.setText(action);
 	}
 
+	/**
+	 * 
+	 * @param title
+	 * @param message
+	 * @param text <i>null</i> if not to front
+	 */
 	private final void printMessageFunc(final String title,
-			final String message, boolean toFront) {
+			final String message, @SuppressWarnings("hiding") final String text) {
 		if (Thread.currentThread() == this.master) {
 			synchronized (Button.class) {
 				this.pressed = Button.ABORT;
 				Button.class.notifyAll();
 			}
 		}
+		Debug.print("#%s#\n%s", title, message);
 		this.mainFrame.getContentPane().removeAll();
 		this.text.setEditable(false);
 		this.text.setText(message);
@@ -648,7 +652,7 @@ public class GUI implements GUIInterface {
 		scrollPane.setPreferredSize(new Dimension(600, cols < 20 ? cols * 8
 				: 800));
 		this.mainFrame.add(scrollPane);
-		if (toFront) {
+		if (text != null) {
 			if (title != null) {
 				this.wait.setText(title);
 			} else {
@@ -657,7 +661,7 @@ public class GUI implements GUIInterface {
 			panel.add(this.wait, BorderLayout.NORTH);
 			panel.add(Button.OK.getButton(), BorderLayout.SOUTH);
 			this.mainFrame.pack();
-			waitForButton();
+			waitForButton(text);
 		} else {
 			this.mainFrame.pack();
 			synchronized (this) {
@@ -666,7 +670,7 @@ public class GUI implements GUIInterface {
 		}
 	}
 
-	private final void waitForButton() {
+	private final void waitForButton(@SuppressWarnings("hiding") final String text) {
 		try {
 			synchronized (Button.class) {
 				if (this.master.isInterrupted()) {
@@ -690,7 +694,7 @@ public class GUI implements GUIInterface {
 		}
 		this.mainFrame.getContentPane().removeAll();
 		this.mainFrame.add(this.wait);
-		this.wait.setText(GUI.waitText);
+		this.wait.setText(text);
 		revalidate(true, false);
 	}
 

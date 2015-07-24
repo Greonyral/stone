@@ -9,20 +9,20 @@ class DeserialTask implements Runnable {
 
 	private final AbstractInputStream stream;
 	private final DeserializeContainer sc;
-	private SongData result;
+	private SongDataEntry result;
 
 	public DeserialTask() {
 		this.stream = null;
 		this.sc = null;
 	}
 
-	public DeserialTask(final Entry<String, AbstractInputStream> stream,
+	public DeserialTask(@SuppressWarnings("hiding") final Entry<String, AbstractInputStream> stream,
 			final DeserializeContainer byteStreamIn) {
 		this.stream = stream.getValue();
 		this.sc = byteStreamIn;
 	}
 
-	public SongData getResult() {
+	public SongDataEntry getResult() {
 		return this.result;
 	}
 
@@ -40,6 +40,7 @@ class DeserialTask implements Runnable {
 
 			this.result = this.sc.parse(bytes);
 		} catch (final IOException e) {
+			// Silently disregard thrown exception
 		} finally {
 			try {
 				this.stream.close();

@@ -15,7 +15,7 @@ final class MainConfigWriter implements Runnable {
 	 */
 	private final Main main;
 
-	public MainConfigWriter(Main main) {
+	public MainConfigWriter(@SuppressWarnings("hiding") Main main) {
 		this.main = main;
 	}
 

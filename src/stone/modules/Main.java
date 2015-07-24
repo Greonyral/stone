@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import stone.StartupContainer;
 import stone.io.IOHandler;
 import stone.io.InputStream;
+import stone.util.Debug;
 import stone.util.FileSystem;
 import stone.util.Flag;
 import stone.util.Option;
@@ -27,7 +29,7 @@ public class Main implements Module {
 	private static final int MAX_LENGTH_INFO = 80;
 
 
-	private static final int VERSION = 22;
+	private static final int VERSION = 23;
 
 	/**
 	 * The name to be used for naming the config-file and the title.
@@ -70,6 +72,7 @@ public class Main implements Module {
 	 * Should be called only once. Creates an option to adjust the user's name.
 	 * 
 	 * @param oc
+	 *            -
 	 * @return the option for the name of user.
 	 */
 	public final static StringOption createNameOption(final OptionContainer oc) {
@@ -79,11 +82,31 @@ public class Main implements Module {
 				'n', "name", Main.GLOBAL_SECTION, Main.NAME_KEY);
 	}
 
+	/**
+	 * 
+	 * @param base
+	 *            -
+	 * @param filename
+	 *            -
+	 * @return concatenated path regarding a maximum length
+	 */
 	public final static String formatMaxLength(final Path base,
 			final String filename) {
 		return formatMaxLength(base, filename, "", "");
 	}
 
+	/**
+	 * 
+	 * @param base
+	 *            -
+	 * @param filename
+	 *            -
+	 * @param a
+	 *            prefix to prepend
+	 * @param b
+	 *            suffix to append
+	 * @return concatenated path regarding a maximum length
+	 */
 	public final static String formatMaxLength(final Path base,
 			final String filename, final String a, final String b) {
 		if (filename == null) {
@@ -109,7 +132,6 @@ public class Main implements Module {
 					sb.append("\n");
 					lengthSB = 0;
 				}
-				sb.append("\"");
 				++lengthSB;
 			} else {
 				sb.append(FileSystem.getFileSeparator());
@@ -123,7 +145,6 @@ public class Main implements Module {
 			lengthSB += c.length();
 		}
 		++lengthSB;
-		sb.append("\"");
 		if (!filename.isEmpty()) {
 			if ((lengthSB > 0)
 					&& ((lengthSB + filename.length()) >= Main.MAX_LENGTH_INFO)) {
@@ -144,9 +165,12 @@ public class Main implements Module {
 
 	private static int format(final StringBuilder sb, final String s,
 			int lineLength) {
+		if (s.isEmpty())
+			return 0;
+		int l = lineLength;
 		final String[] parts = s.split(" ");
 		boolean front = sb.length() != 0;
-		int l = lineLength;
+
 		for (final String part : parts) {
 			if ((l > 0) && ((l + part.length() + 1) >= Main.MAX_LENGTH_INFO)) {
 				sb.append("\n");
@@ -166,6 +190,9 @@ public class Main implements Module {
 	 * The users homeDir
 	 */
 	public final Path homeDir = FileSystem.getBase();
+	/**
+	 * Text file providing configuration data
+	 */
 	public static final Path homeSetting = StartupContainer
 			.getDatadirectory()
 			.resolve(
@@ -204,10 +231,13 @@ public class Main implements Module {
 	 * Gets a value from the config.
 	 * 
 	 * @param section
+	 *            -
 	 * @param key
+	 *            -
 	 * @param defaultValue
-	 * @return the value in the config, or defaultValue if the key in given
-	 *         section does not exist
+	 *            -
+	 * @return the value in the config, or <i>defaultValue</i> if the <i>key</i>
+	 *         in given <i>section</i> does not exist
 	 */
 	public final String getConfigValue(final String section, final String key,
 			final String defaultValue) {
@@ -278,7 +308,9 @@ public class Main implements Module {
 	 * The actual main method executing this main module.
 	 * 
 	 * @param sc
+	 *            -
 	 * @param flags
+	 *            -
 	 */
 	public final void run(final StartupContainer sc, final Flag flags) {
 		final IOHandler io;
@@ -295,7 +327,22 @@ public class Main implements Module {
 
 			@Override
 			public void run() {
-				if (Main.homeSetting.exists())
+				if (!Main.homeSetting.exists()) {
+					try {
+						Main.homeSetting.toFile().createNewFile();
+					} catch (final IOException e) {
+						Debug.print("%s\n", e.getMessage());
+					}
+					try {
+						sc.finishInit(flags); // sync barrier 1
+						sc.parseDone(); // sync barrier 2
+					} catch (final Throwable e) {
+						Main.homeSetting.delete();
+						Main.this.taskPool.getMaster().interrupt();
+						io.close();
+						throw e;
+					}
+				} else {
 					try {
 						sc.finishInit(flags); // sync barrier 1
 						final InputStream in = io.openIn(
@@ -334,16 +381,7 @@ public class Main implements Module {
 						io.close();
 						throw e;
 					}
-				else
-					try {
-						sc.finishInit(flags); // sync barrier 1
-						sc.parseDone(); // sync barrier 2
-					} catch (final Exception e) {
-						Main.homeSetting.delete();
-						Main.this.taskPool.getMaster().interrupt();
-						io.close();
-						throw e;
-					}
+				}
 			}
 
 		});
@@ -353,11 +391,15 @@ public class Main implements Module {
 	}
 
 	/**
-	 * Sets a config entry
+	 * Sets the config entry to <i>value</i> with <i>key</i> in given
+	 * <i>section</i>
 	 * 
 	 * @param section
+	 *            -
 	 * @param key
+	 *            -
 	 * @param value
+	 *            -
 	 */
 	public final void setConfigValue(final String section, final String key,
 			final String value) {
@@ -444,5 +486,12 @@ public class Main implements Module {
 		line.setLength(0);
 		return section;
 
+	}
+
+	/** no use for main module */
+	@Override
+	@Deprecated
+	public final void dependingModules(final Set<String> set) {
+		throw new UnsupportedOperationException();
 	}
 }

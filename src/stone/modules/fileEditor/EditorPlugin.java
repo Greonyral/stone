@@ -22,10 +22,13 @@ public final class EditorPlugin extends GUIPlugin {
 	private final JTextField content;
 
 	/**
-	 * @param content
-	 * @param title
+	 * @param content -
+	 * @param title -
+	 * @param text displayed if {@link #display(JPanel)} returns false
 	 */
-	public EditorPlugin(final String content, final String title) {
+	@SuppressWarnings("hiding")
+	public EditorPlugin(final String content, final String title, final String text) {
+		super(text);
 		this.content = new JTextField(content);
 		this.title = title;
 	}

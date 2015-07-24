@@ -16,7 +16,8 @@ import stone.io.IOHandler;
 import stone.io.InputStream;
 import stone.io.OutputStream;
 import stone.modules.Main;
-import stone.modules.songData.SongData;
+import stone.modules.songData.SongDataEntry;
+import stone.util.Debug;
 import stone.util.Path;
 import stone.util.Time;
 
@@ -29,6 +30,7 @@ import stone.util.Time;
 public class SongChangeData {
 
 	class AbcTempoParams {
+
 		int tempo = SongChangeData.DEFAULT_TEMPO;
 		double beats = 0;
 		double base = 0;
@@ -127,7 +129,7 @@ public class SongChangeData {
 		}
 		return indicesS;
 	}
-	
+
 	final static Set<Instrument> parse(final String string) {
 		final Set<Instrument> ret = new HashSet<>();
 		final stone.util.StringBuilder part = new stone.util.StringBuilder(
@@ -167,7 +169,7 @@ public class SongChangeData {
 			case 'b':
 			case 'c':
 			case 'd':
-				if (!tmpContainsNumber || tmpContainsLetter != 0) {
+				if (!tmpContainsNumber || (tmpContainsLetter != 0)) {
 					// default case
 					tmpContainsLetter = 0;
 					if (!tmp.isEmpty()) {
@@ -259,15 +261,15 @@ public class SongChangeData {
 	private final Main main;
 
 	/**
-	 * @param voices
-	 * @param main
+	 * @param voices -
+	 * @param main -
 	 */
-	public SongChangeData(final SongData voices, final Main main) {
+	public SongChangeData(final SongDataEntry voices, @SuppressWarnings("hiding") final Main main) {
 		this.main = main;
 		this.date = stone.util.Time.date(voices.getLastModification()).split(
 				" ");
 		this.file = voices.getPath();
-		System.out.println(this.file);
+		Debug.print("%s\n", this.file);
 		for (final Map.Entry<Integer, String> titleEntry : voices.voices()
 				.entrySet()) {
 			this.instruments
@@ -292,11 +294,13 @@ public class SongChangeData {
 									+ title.substring(i);
 							final String tempTitleAfter = extractInstrument(
 									titleEntry.getKey(), tempTitleBefore);
-							if (tempTitleAfter != tempTitleBefore)
-								if (tempTitleAfter.isEmpty())
+							if (tempTitleAfter != tempTitleBefore) {
+								if (tempTitleAfter.isEmpty()) {
 									title = tempTitle;
-								else
+								} else {
 									title = tempTitle + " " + tempTitleAfter;
+								}
+							}
 						}
 					}
 					if (title.endsWith(">")) {
@@ -306,12 +310,11 @@ public class SongChangeData {
 				this.titles.put(titleEntry.getKey(), title);
 			}
 			final Integer key = titleEntry.getKey();
-			System.out.printf("Analyzation complete: %s\n"
-					+ "title:        %s\n" + "duration:     %s\n"
-					+ "instrument:   %s\n" + "indices:      %s\n\n",
-					titleEntry.getValue(), this.titles.get(key),
-					this.duration.get(key), this.instruments.get(key),
-					this.indices.get(key));
+			Debug.print("Analyzation complete: %s\n" + "title:        %s\n"
+					+ "duration:     %s\n" + "instrument:   %s\n"
+					+ "indices:      %s\n\n", titleEntry.getValue(),
+					this.titles.get(key), this.duration.get(key),
+					this.instruments.get(key), this.indices.get(key));
 
 
 		}
@@ -343,8 +346,8 @@ public class SongChangeData {
 	/**
 	 * Applies the changes being made.
 	 * 
-	 * @param io
-	 * @param scheme
+	 * @param io -
+	 * @param scheme -
 	 */
 	public final void revalidate(final IOHandler io, final NameScheme scheme) {
 		if (!this.dirty) {
@@ -361,7 +364,7 @@ public class SongChangeData {
 	/**
 	 * Sets the title component of T: line of underlying song
 	 * 
-	 * @param string
+	 * @param string -
 	 */
 	public final void setTitle(final String string) {
 		for (final Integer i : this.indices.keySet()) {
@@ -376,8 +379,8 @@ public class SongChangeData {
 	/**
 	 * Tries to apply the global name scheme to the song
 	 * 
-	 * @param scheme
-	 * @param io
+	 * @param scheme -
+	 * @param io -
 	 */
 	public final void uniform(final IOHandler io, final NameScheme scheme) {
 		final List<Integer> idcs = new ArrayList<>(this.instruments.keySet());
@@ -456,6 +459,8 @@ public class SongChangeData {
 							}
 						}
 						tempo.base = (double) n / d;
+					default:
+						break;
 					}
 					continue;
 				}
@@ -858,14 +863,16 @@ public class SongChangeData {
 				int second = title.indexOf('-', first + 1);
 				final String titlew;
 				if (second < 0) {
-					titlew = title + "-" + date[3].substring(2);
+					titlew = title + "-" + this.date[3].substring(2);
 					second = title.length();
-				} else
+				} else {
 					titlew = title;
+				}
 				if (second > 0) {
 					int start = titlew.lastIndexOf(' ', first);
-					if (start < 0)
+					if (start < 0) {
 						start = 0;
+					}
 					final String dayString = titlew
 							.substring(first + 1, second);
 					final String yearString = titlew.substring(second + 1);
@@ -888,7 +895,7 @@ public class SongChangeData {
 							}
 						}
 					} catch (final Exception e) {
-
+						// 
 					}
 					if (valid) {
 						this.mod[2] = yearString;
@@ -959,13 +966,20 @@ public class SongChangeData {
 				this.mod[0] = month;
 				this.mod[1] = day;
 			}
-			if (this.mod[2] == null)
+			if (this.mod[2] == null) {
 				this.mod[2] = this.date[3];
-			scheme.mod(this.mod[0],this.mod[1],this.mod[2]);
+			}
+			scheme.mod(this.mod[0], this.mod[1], this.mod[2]);
 		}
 		if (scheme.needsDuration()) {
 			if (this.duration.size() > 1) {
+				final Set<String> durations = new HashSet<>(
+						this.duration.values());
 				this.duration.clear();
+				if (durations.size() == 1) {
+					this.duration.put(Integer.valueOf(0), durations.iterator()
+							.next());
+				}
 			}
 			if (this.duration.isEmpty()) {
 				scheme.duration(calculateDuration(io));
@@ -975,7 +989,12 @@ public class SongChangeData {
 		}
 		if (this.titleNew != null) {
 			scheme.title(this.titleNew);
+		} else {
+			scheme.title(this.file.getFilename().substring(0,
+					this.file.getFilename().indexOf('.')));
+			scheme.title(this.titles);
 		}
+
 		if (!writeChunks(io, headerChunk, partsToChunk, scheme)) {
 			return null;
 		}
@@ -1019,9 +1038,6 @@ public class SongChangeData {
 					}
 				} else if (line.startsWith("T:")) {
 					io.write(out, "T: ");
-					if (this.titleNew == null) {
-						scheme.title(this.titles.get(key));
-					}
 					io.writeln(out, scheme.print(key));
 					continue;
 				}

@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
+
 import stone.modules.Main;
 import stone.util.FileSystem;
 import stone.util.Path;
@@ -30,18 +31,23 @@ public class ModuleLoader extends ClassLoader {
 		final int size;
 		final ZipEntry entry;
 
-		Lookup(int size, final java.io.InputStream in, final Path path) {
+		Lookup(@SuppressWarnings("hiding") int size,
+				@SuppressWarnings("hiding") final java.io.InputStream in,
+				@SuppressWarnings("hiding") final Path path) {
 			this.in = in;
 			this.size = size;
 
 			this.path = path;
 
 			this.jarFile = null;
-			entry = null;
+			this.entry = null;
 		}
 
-		Lookup(int size, final java.io.InputStream in, final Path path,
-				final JarFile jarFile, final ZipEntry entry) {
+		Lookup(@SuppressWarnings("hiding") int size,
+				@SuppressWarnings("hiding") final java.io.InputStream in,
+				@SuppressWarnings("hiding") final Path path,
+				@SuppressWarnings("hiding") final JarFile jarFile,
+				@SuppressWarnings("hiding") final ZipEntry entry) {
 			this.in = in;
 			this.size = size;
 
@@ -52,12 +58,12 @@ public class ModuleLoader extends ClassLoader {
 		}
 	}
 
+	private static ModuleLoader instance;
+
 	static final ModuleLoader createLoader() {
 		ModuleLoader.instance = new ModuleLoader();
 		return ModuleLoader.instance;
 	}
-
-	private static ModuleLoader instance;
 
 	private final boolean jar;
 	private final Path workingDirectory;
@@ -72,8 +78,9 @@ public class ModuleLoader extends ClassLoader {
 
 	private ModuleLoader() {
 		super(null);
-		final String className =
-				this.getClass().getCanonicalName().replace('.', '/') + ".class";
+		final String className = this.getClass().getCanonicalName()
+				.replace('.', '/')
+				+ ".class";
 		final URL url = Main.class.getClassLoader().getResource(className);
 
 		if (url.getProtocol().equals("file")) {
@@ -87,71 +94,67 @@ public class ModuleLoader extends ClassLoader {
 			this.jar = false;
 			this.workingDirectory = null;
 		}
-		final String[] cp =
-				System.getProperty("java.class.path").split(
-						FileSystem.type == FileSystem.OSType.WINDOWS ? ";"
-								: ":");
+		@SuppressWarnings("hiding")
+		final String[] cp = System.getProperty("java.class.path").split(
+				FileSystem.type == FileSystem.OSType.WINDOWS ? ";" : ":");
 		this.cp = new Path[Math.max(1, cp.length)];
 		if (cp.length == 0) {
 			this.cp[0] = this.workingDirectory;
 		} else {
-			final Path path =
-					Path.getPath(System.getProperty("user.dir").split(
-							"\\" + FileSystem.getFileSeparator()));
+			final Path path = Path.getPath(System.getProperty("user.dir")
+					.split("\\" + FileSystem.getFileSeparator()));
 			for (int i = 0; i < cp.length; i++) {
-				final String[] cpPath =
-						cp[i].split("\\" + FileSystem.getFileSeparator());
+				final String[] cpPath = cp[i].split("\\"
+						+ FileSystem.getFileSeparator());
 				this.cp[i] = path.resolve(cpPath);
 			}
 		}
-		modulePath = StartupContainer.getDatadirectory();
+		this.modulePath = StartupContainer.getDatadirectory();
 	}
 
-	private final Lookup find(final String[] names, final String suffix) {
-		final String[] namesSuffix = new String[names.length];
-		String entryName = null;
+	/** */
+	@Override
+	public final URL getResource(final String s) {
+		final Lookup l = find(s.split("/"), null);
+		try {
+			if (l.jarFile != null) {
 
-		if (suffix != null) {
-			System.arraycopy(names, 0, namesSuffix, 0, names.length);
-			namesSuffix[names.length - 1] += suffix;
-		}
-		for (final String s : names) {
-			if (entryName == null)
-				entryName = s;
-			else {
-				entryName += "/";
-				entryName += s;
+				return URI.create(
+						"jar:" + l.path.toFile().toURI() + "!/"
+								+ l.entry.getName()).toURL();
+
 			}
-
+			return l.path.toFile().toURI().toURL();
+		} catch (final MalformedURLException e) {
+			e.printStackTrace();
+			return null;
 		}
-		if (suffix != null)
-			entryName += suffix;
-		if (names[0].equals("org") || names[0].equals("com") ||
-				names[0].equals("stone") && names[1].equals("modules")) {
-			if (modulePath.exists())
-				for (final String file : modulePath.toFile().list()) {
-					if (file.endsWith(".jar")) {
-						final Path moduleArchive = modulePath.resolve(file);
-						final Lookup l =
-								find(moduleArchive, entryName,
-										suffix == null ? names : namesSuffix);
-						if (l != null)
-							return l;
-					}
-				}
-		}
-		for (int i = 0; i < this.cp.length; i++) {
-			final Lookup l =
-					find(this.cp[i], entryName, suffix == null ? names
-							: namesSuffix);
-			if (l != null)
-				return l;
-		}
-		return null;
 	}
 
-	private final Lookup find(final Path path, final String entryName,
-			final String[] nameParts) {
+	/** */
+	@Override
+	public final InputStream getResourceAsStream(final String s) {
+		final Lookup l = find(s.split("/"), null);
+		return l == null ? null : l.in;
+	}
+
+	/**
+	 * @return the dir, where the class files are or the jar-archive containing
+	 *         them
+	 */
+	public final Path getWorkingDir() {
+		return this.workingDirectory;
+	}
+
+	/**
+	 * @return true if {@link #getWorkingDir()} returns the path of an
+	 *         jar-archive, false otherwise
+	 */
+	public final boolean wdIsJarArchive() {
+		return this.jar;
+	}
+
+	private final Lookup find(final Path path, final String entryName) {
 		final java.io.InputStream in;
 		final JarFile jarFile;
 		final ZipEntry entry;
@@ -193,9 +196,44 @@ public class ModuleLoader extends ClassLoader {
 				: new Lookup(size, in, path, jarFile, entry);
 	}
 
-	/**
-	 * @throws ClassNotFoundException
-	 */
+	private final Lookup find(final String[] names, final String suffix) {
+		String entryName = null;
+		for (final String s : names) {
+			if (entryName == null) {
+				entryName = s;
+			} else {
+				entryName += "/";
+				entryName += s;
+			}
+
+		}
+		if (suffix != null) {
+			entryName += suffix;
+		}
+
+		// look at cp-path(s)
+		for (int i = 0; i < this.cp.length; i++) {
+			final Lookup l = find(this.cp[i], entryName);
+			if (l != null) {
+				return l;
+			}
+		}
+
+		// look into archives
+		if (this.modulePath.exists()) {
+			for (final String file : this.modulePath.toFile().list()) {
+				if (file.endsWith(".jar")) {
+					final Path moduleArchive = this.modulePath.resolve(file);
+					final Lookup l = find(moduleArchive, entryName);
+					if (l != null) {
+						return l;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
 	@Override
 	protected Class<?> findClass(final String name)
 			throws ClassNotFoundException {
@@ -224,7 +262,8 @@ public class ModuleLoader extends ClassLoader {
 				offset += in.read(this.buffer, offset, size - offset);
 			}
 		} catch (final IOException e) {
-			e.printStackTrace();	System.out.printf("findClass(%s)\n", name);
+			e.printStackTrace();
+			System.out.printf("findClass(%s)\n", name);
 			return null;
 		}
 		try {
@@ -243,48 +282,5 @@ public class ModuleLoader extends ClassLoader {
 		this.map.put(name, c);
 		return c;
 
-	}
-
-	/** */
-	@Override
-	public final URL getResource(final String s) {
-		final Lookup l = find(s.split("/"), null);
-		try {
-			if (l.jarFile != null) {
-
-				return URI.create(
-						"jar:" + l.path.toFile().toURI() + "!/"
-								+ l.entry.getName()).toURL();
-
-			} else {
-				return l.path.toFile().toURI().toURL();
-			}
-		} catch (final MalformedURLException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	/** */
-	@Override
-	public final InputStream getResourceAsStream(final String s) {
-		final Lookup l = find(s.split("/"), null);
-		return l == null ? null : l.in;
-	}
-
-	/**
-	 * @return the dir, where the class files are or the jar-archive containing
-	 *         them
-	 */
-	public final Path getWorkingDir() {
-		return this.workingDirectory;
-	}
-
-	/**
-	 * @return true if {@link #getWorkingDir()} returns the path of an
-	 *         jar-archive, false otherwise
-	 */
-	public final boolean wdIsJarArchive() {
-		return this.jar;
 	}
 }

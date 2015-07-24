@@ -26,7 +26,7 @@ public final class StringOption extends Option {
 	/**
 	 * Creates a new StringOption and registers it at the OptionContainer
 	 * 
-	 * @param optionContainer
+	  * @param optionContainer instance of {@link OptionContainer} to use
 	 * @param name
 	 *            a unique identifier for this option to register at
 	 *            OptionContainer
@@ -52,6 +52,7 @@ public final class StringOption extends Option {
 	 *            and
 	 *            {@link stone.modules.Main#setConfigValue(String, String, String)}
 	 */
+	@SuppressWarnings("hiding")
 	public StringOption(final OptionContainer optionContainer,
 			final String name, final String toolTip,
 			final String guiDescription, char shortFlag, final String longFlag,
@@ -63,7 +64,7 @@ public final class StringOption extends Option {
 	/**
 	 * Creates a new StringOption and registers it at the OptionContainer
 	 * 
-	 * @param optionContainer
+	 * @param optionContainer instance of {@link OptionContainer} to use
 	 * @param name
 	 *            a unique identifier for this option to register at
 	 *            OptionContainer
@@ -91,6 +92,7 @@ public final class StringOption extends Option {
 	 * @param defaultValue
 	 *            the value returned if the key does not exist in given section
 	 */
+	@SuppressWarnings("hiding")
 	public StringOption(final OptionContainer optionContainer,
 			final String name, final String toolTip,
 			final String guiDescription, char shortFlag, final String longFlag,
@@ -101,7 +103,7 @@ public final class StringOption extends Option {
 
 	/** */
 	@Override
-	public final void display(final JPanel panel, final KeyEventHandler key) {
+	public final void display(final JPanel panel, @SuppressWarnings("hiding") final KeyEventHandler key) {
 		this.textField = new JTextField();
 		final JScrollPane scrollPane = new JScrollPane(this.textField);
 		final JPanel mainPanel = new JPanel();
@@ -135,9 +137,9 @@ public final class StringOption extends Option {
 							.getCaretPosition();
 				}
 				final int keyEvent = sb.handleEvent(e, this.cursor);
-				if (keyEvent != 0)
+				if (keyEvent != 0) {
 					key.handleKeyEvent(keyEvent);
-				else {
+				} else {
 					if (sb.isEmpty()) {
 						this.cursor[0] = 0;
 						StringOption.this.textField.setText(getTooltip());

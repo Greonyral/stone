@@ -48,6 +48,7 @@ public abstract class Option {
 	 * Creates a new option and registers it at the OptionContainer
 	 * 
 	 * @param optionContainer
+	 *            instance of {@link OptionContainer} to use
 	 * @param name
 	 *            a unique identifier for this option to register at
 	 *            OptionContainer
@@ -65,7 +66,9 @@ public abstract class Option {
 	 *            util.OptionContainer#addOption(String, String, char, String,
 	 *            boolean, Option)
 	 * @param argExpected
+	 *            <i>true</i> if <i>this</i> option consists of a key-value-pair
 	 */
+	@SuppressWarnings("hiding")
 	protected Option(final OptionContainer optionContainer, final String name,
 			final String toolTip, final String guiDescription, char shortFlag,
 			final String longFlag, boolean argExpected) {
@@ -77,6 +80,7 @@ public abstract class Option {
 	 * Creates a new option and registers it at the OptionContainer
 	 * 
 	 * @param optionContainer
+	 *            instance of {@link OptionContainer} to use
 	 * @param name
 	 *            a unique identifier for this option to register at
 	 *            OptionContainer
@@ -92,6 +96,7 @@ public abstract class Option {
 	 *            a unique printable string to register at flags or
 	 *            {@link stone.util.Flag#NoLongFlag} to enable this option
 	 * @param argExpected
+	 *            <i>true</i> if <i>this</i> option consists of a key-value-pair
 	 * @param section
 	 *            the section identifier for this option, to access by
 	 *            {@link stone.modules.Main#getConfigValue(String, String, String)}
@@ -108,6 +113,7 @@ public abstract class Option {
 	 *            * @see stone.util.OptionContainer#addOption(String, String,
 	 *            char, String, boolean, Option)
 	 */
+	@SuppressWarnings("hiding")
 	protected Option(final OptionContainer optionContainer, final String name,
 			final String toolTip, final String guiDescription, char shortFlag,
 			final String longFlag, boolean argExpected, final String section,
@@ -128,11 +134,12 @@ public abstract class Option {
 	/**
 	 * Uses given panel to display this option.
 	 * 
-	 * @param rootPanel
-	 * @param activeGui
+	 * @param rootPanel the panel for displaying
+	 * @param activeGui instance of @{link GUIInterface} displaying <i>rootPanel</i>
+	 * @param key {@link KeyEventHandler} to process key strokes
 	 */
 	public final void displayWithGUI(final JPanel rootPanel,
-			final stone.io.GUIInterface activeGui, final KeyEventHandler key) {
+			final stone.io.GUIInterface activeGui, @SuppressWarnings("hiding") final KeyEventHandler key) {
 		this.panel = rootPanel;
 		this.gui = activeGui;
 		display(rootPanel, key);
@@ -141,7 +148,7 @@ public abstract class Option {
 	/**
 	 * Enables or disables all components belonging to this option.
 	 * 
-	 * @param active
+	 * @param active sets <i>this</i> option active if <i>active</i> is <i>true</i>
 	 */
 	public final void enableOnGUI(boolean active) {
 		GUI.setEnabled(this.panel, active);
@@ -149,7 +156,7 @@ public abstract class Option {
 
 	/**
 	 * Releases all resources allocated by
-	 * {@link #displayWithGUI(JPanel, stone.io.GUIInterface)}
+	 * {@link #displayWithGUI(JPanel, stone.io.GUIInterface, KeyEventHandler)}
 	 */
 	public void endDisplay() {
 		this.panel = null;
@@ -225,7 +232,7 @@ public abstract class Option {
 	 * @param value
 	 *            new value
 	 */
-	public void value(final String value) {
+	public void value(@SuppressWarnings("hiding") final String value) {
 		if (this.optionContainer == null) {
 			this.value = value;
 		} else {
@@ -235,7 +242,7 @@ public abstract class Option {
 
 	abstract void display(final JPanel rootPanel, final KeyEventHandler keh);
 
-	void setByFlagValue(String value) {
+	void setByFlagValue(@SuppressWarnings("hiding") String value) {
 		this.value(value);
 	}
 }

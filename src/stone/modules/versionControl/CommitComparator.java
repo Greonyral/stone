@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.TreeSet;
 
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -32,6 +31,7 @@ public final class CommitComparator implements Comparator<RevCommit> {
 		private long localTime, remoteTime;
 		private long diff, start, time;
 
+		@SuppressWarnings("hiding")
 		CommitHistoryParser(final RevWalk walk, final IOHandler io) {
 			this.io = io;
 			this.walk = walk;
@@ -51,7 +51,7 @@ public final class CommitComparator implements Comparator<RevCommit> {
 			while (true) {
 				if (this.localTime == this.remoteTime) {
 					if (this.remote.equals(this.local)) {
-						this.io.endProgress();
+						this.io.endProgress("Serch done");
 						return this.remote;
 					}
 
@@ -84,7 +84,7 @@ public final class CommitComparator implements Comparator<RevCommit> {
 					}
 					final long timeBefore = this.remoteTime;
 					if (this.remoteList.isEmpty()) {
-						this.io.endProgress();
+						this.io.endProgress("Search done");
 						Debug.print("rewritten history\n");
 						return null;
 					}
@@ -110,11 +110,19 @@ public final class CommitComparator implements Comparator<RevCommit> {
 
 	private final static CommitComparator instance = new CommitComparator();
 
-	public final static CommitComparator init(final RevWalk walk,
-			final Git gitSession, final IOHandler io) {
-		return new CommitComparator(walk, gitSession, io);
+	/**
+	 * Creates a new comparator for commits
+	 * @param walk -
+	 * @param io -
+	 * @return the creates instance
+	 */
+	public final static CommitComparator init(final RevWalk walk, final IOHandler io) {
+		return new CommitComparator(walk, io);
 	}
 
+	/**
+	 * @return previsouly created instance
+	 */
 	public final static CommitComparator instance() {
 		return instance;
 	}
@@ -125,8 +133,7 @@ public final class CommitComparator implements Comparator<RevCommit> {
 		this.chp = null;
 	}
 
-	private CommitComparator(final RevWalk walk, final Git gitSession,
-			final IOHandler io) {
+	private CommitComparator(final RevWalk walk, final IOHandler io) {
 		this.chp = new CommitHistoryParser(walk, io);
 	}
 
@@ -143,6 +150,14 @@ public final class CommitComparator implements Comparator<RevCommit> {
 		return delta;
 	}
 
+	/**
+	 * @param commitLocal one commit
+	 * @param commitRemote another commit
+	 * @return the latest commit in both trees of given commits
+	 * @throws MissingObjectException -
+	 * @throws IncorrectObjectTypeException -
+	 * @throws IOException -
+	 */
 	public final RevCommit getParent(final RevCommit commitLocal,
 			final RevCommit commitRemote) throws MissingObjectException,
 			IncorrectObjectTypeException, IOException {

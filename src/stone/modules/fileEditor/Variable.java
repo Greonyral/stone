@@ -1,10 +1,16 @@
 package stone.modules.fileEditor;
 
+import java.lang.ref.WeakReference;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+
 class Variable extends NameSchemeElement {
 
 	class VariableDep extends NameSchemeElement {
 
-		VariableDep(int[] idcs) {
+		VariableDep(@SuppressWarnings("hiding") int[] idcs) {
 			super(idcs);
 		}
 
@@ -32,11 +38,27 @@ class Variable extends NameSchemeElement {
 
 	final String s;
 
+	private final static Set<WeakReference<Variable>> instances = new HashSet<>();
+
+	static void clearAll() {
+		synchronized (instances) {
+			for (final WeakReference<Variable> wRef : instances) {
+				final Variable v = wRef.get();
+				if (v != null) {
+					v.clear();
+				}
+			}
+		}
+	}
+
 	private String value;
 
-	Variable(final String s) {
+	Variable(@SuppressWarnings("hiding") final String s) {
 		super(null);
 		this.s = s;
+		synchronized (instances) {
+			instances.add(new WeakReference<>(this));
+		}
 	}
 
 	@Override
@@ -57,7 +79,19 @@ class Variable extends NameSchemeElement {
 		return this.s;
 	}
 
-	final void clear() {
+	@Override
+	protected final void finalize() {
+		synchronized (instances) {
+			for (final WeakReference<Variable> wRef : instances) {
+				if ((wRef != null) && (wRef.get() == this)) {
+					instances.remove(wRef);
+					return;
+				}
+			}
+		}
+	}
+
+	void clear() {
 		this.value = null;
 	}
 
@@ -65,12 +99,21 @@ class Variable extends NameSchemeElement {
 		return new VariableDep(indices);
 	}
 
+	String getValue() {
+		return this.value;
+	}
+
 	@Override
 	final void print(final StringBuilder sb) {
 		sb.append(this.value);
 	}
 
-	void value(final String value) {
+	@SuppressWarnings("static-method")
+	void value(@SuppressWarnings("unused") final Map<Integer, String> map) {
+		return;
+	}
+
+	void value(@SuppressWarnings("hiding") final String value) {
 		this.value = value;
 	}
 }

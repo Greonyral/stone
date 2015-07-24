@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import stone.util.Debug;
 import stone.util.Time;
 
 
@@ -15,8 +16,10 @@ import stone.util.Time;
 public class NameScheme {
 
 	class Constant extends NameSchemeElement {
+
 		private final String s;
 
+		@SuppressWarnings("hiding")
 		Constant(final String s, int[] idcs) {
 			super(idcs);
 			this.s = s;
@@ -57,7 +60,8 @@ public class NameScheme {
 		}
 	}
 
-	final Map<Integer, Set<Instrument>> map = new HashMap<>();
+	private final Map<Integer, Set<Instrument>> map = new HashMap<>();
+
 	private final Variable DURATION = new Variable("DURATION"),
 			PART_NUM = new Variable("PART_NUM") {
 
@@ -68,8 +72,42 @@ public class NameScheme {
 
 			};
 
-	private final Variable TOTAL_NUM = new Variable("TOTAL_NUM"),
-			TITLE = new Variable("TITLE");
+	private final Variable TOTAL_NUM = new Variable("TOTAL_NUM") {
+
+		@Override
+		void clear() {
+			value("0");
+		}
+	};
+
+	private final Variable TITLE = new Variable("TITLE") {
+
+		@SuppressWarnings("hiding")
+		private final Map<Integer, String> map = new HashMap<>();
+
+		@Override
+		final void clear() {
+			super.clear();
+			this.map.clear();
+		}
+
+		@Override
+		final void print(final StringBuilder sb, int track) {
+			final String title = this.map.get(track);
+			if (title != null) {
+				sb.append(title);
+				return;
+			}
+			super.print(sb, track);
+			return;
+		}
+
+		@Override
+		void value(@SuppressWarnings("hiding") final Map<Integer, String> map) {
+			this.map.putAll(map);
+		}
+	};
+
 
 	@Deprecated
 	private final Variable MOD_DATE = new Variable("MOD_DATE");
@@ -80,19 +118,20 @@ public class NameScheme {
 		@Override
 		void value(final String m) {
 			final char c = m.charAt(0);
-			if (c >= '0' && c <= '9') {
+			if ((c >= '0') && (c <= '9')) {
 				final int index = Integer.parseInt(m);
-				value(Time.getShortMonthNames()[index]);
+				value(Time.getShortMonthNames()[index - 1]);
 				return;
 			}
 			super.value(m);
 		}
 	};
 	private final Variable MOD_MONTH_STRING = new Variable("MONTH_STRING") {
+
 		@Override
 		void value(final String m) {
 			final char c = m.charAt(0);
-			if (c >= '0' && c <= '9') {
+			if ((c >= '0') && (c <= '9')) {
 				value(Time.getMonthName(m));
 				return;
 			}
@@ -156,8 +195,8 @@ public class NameScheme {
 	final Map<Integer, String> indices = new HashMap<>();
 
 	/**
-	 * @param string
-	 * @throws InvalidNameSchemeException
+	 * @param string -
+	 * @throws InvalidNameSchemeException if parsing <i>string</i> raises an error
 	 */
 	public NameScheme(final String string) throws InvalidNameSchemeException {
 		int pos = 0;
@@ -189,7 +228,7 @@ public class NameScheme {
 					final String variableTmp = string.substring(pos, ++end);
 					final Variable vTmp = this.variables.get(variableTmp);
 					if (vTmp != null) {
-						char next = string.charAt(end);
+						final char next = string.charAt(end);
 						switch (next) {
 						case '/':
 						case ' ':
@@ -219,6 +258,8 @@ public class NameScheme {
 					this.elements.add(v);
 				}
 				continue;
+			default:
+				break;
 			}
 			final int[] ends = new int[] { string.indexOf('%', pos),
 					string.indexOf('$', pos), string.indexOf('}', pos) };
@@ -238,6 +279,23 @@ public class NameScheme {
 			this.elements.add(new Constant(constant, idcs));
 		}
 	}
+
+	/**
+	 * Sets titles for each track
+	 * @param titles -
+	 */
+	public void title(final Map<Integer, String> titles) {
+		this.TITLE.value(titles);
+	}
+
+	/**
+	 * Checks if uniform title is set
+	 * @return <i>true</i> if uniform title is set
+	 */
+	public boolean titleIsEmpty() {
+		return this.TITLE.getValue() == null;
+	}
+
 
 	/**
 	 * @return the title matching the name-scheme. Non existing parts will be
@@ -268,7 +326,6 @@ public class NameScheme {
 		map_.put("%INSTRUMENT", this.INSTRUMENT_CAPS);
 		return map_;
 	}
-
 
 	final void duration(final String duration) {
 		this.DURATION.value(duration);
@@ -305,7 +362,11 @@ public class NameScheme {
 	}
 
 	final boolean needsMod() {
-		return this.elements.contains(this.MOD_DATE);
+		return this.elements.contains(this.MOD_DATE)
+				|| this.elements.contains(this.MOD_DAY)
+				|| this.elements.contains(this.MOD_MONTH)
+				|| this.elements.contains(this.MOD_MONTH_STRING)
+				|| this.elements.contains(this.MOD_YEAR);
 	}
 
 	final void partNum(final Map<Integer, String> newIndices) {
@@ -327,15 +388,13 @@ public class NameScheme {
 		for (final NameSchemeElement e : this.elements) {
 			e.print(sb, track);
 		}
+		Debug.print("%s\n", sb.toString());
 		return sb.toString();
 	}
 
 	final void reset() {
-		this.DURATION.clear();
-		this.TITLE.clear();
-		this.MOD_DATE.clear();
-		this.TOTAL_NUM.value("0");
-		this.PART_NUM.clear();
+		Variable.clearAll();
+
 		this.map.clear();
 		this.countMap.clear();
 		this.indices.clear();

@@ -48,12 +48,13 @@ public final class AbcMapPlugin extends
 	private Color emptyC;
 
 	/**
-	 * @param abcCreator
-	 * @param taskPool
-	 * @param parser
-	 * @param targets
-	 * @param io
+	 * @param abcCreator -
+	 * @param taskPool -
+	 * @param parser -
+	 * @param targets -
+	 * @param io -
 	 */
+	@SuppressWarnings("hiding")
 	public AbcMapPlugin(final AbcCreator abcCreator, final TaskPool taskPool,
 			final MidiParser parser,
 			final List<DropTargetContainer<JPanel, JPanel, JPanel>> targets,
@@ -64,8 +65,8 @@ public final class AbcMapPlugin extends
 	/**
 	 * Links object with target
 	 * 
-	 * @param object
-	 * @param target
+	 * @param object -
+	 * @param target -
 	 */
 	public final void link(DragObject<JPanel, JPanel, JPanel> object,
 			DropTarget<JPanel, JPanel, JPanel> target) {
@@ -94,7 +95,7 @@ public final class AbcMapPlugin extends
 	/**
 	 * Prints an error on the GUI.
 	 * 
-	 * @param string
+	 * @param string -
 	 */
 	public final void printError(final String string) {
 		this.state.label.setText(string);
@@ -135,8 +136,8 @@ public final class AbcMapPlugin extends
 	/**
 	 * Unlinks object with target
 	 * 
-	 * @param object
-	 * @param target
+	 * @param object -
+	 * @param target -
 	 * @return <i>true</i> if the target is now empty
 	 */
 	public final boolean unlink(DragObject<?, ?, ?> object,

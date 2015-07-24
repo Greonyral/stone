@@ -1,7 +1,5 @@
 package stone;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -23,21 +21,11 @@ public class Main {
 	public static final String DEBUG_ID = "debug";
 
 	/**
-	 * @param args
-	 * @throws IllegalAccessException
-	 * @throws IllegalArgumentException
-	 * @throws InvocationTargetException
-	 * @throws NoSuchMethodException
-	 * @throws SecurityException
-	 * @throws InstantiationException
-	 * @throws ClassNotFoundException
-	 * @throws IOException
+	 * @param args parameters for the program to be parsed
+	 * @throws ReflectiveOperationException if any operation based on reflection fails
 	 */
 	public final static void main(final String[] args)
-			throws IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException,
-			SecurityException, InstantiationException, ClassNotFoundException,
-			IOException {
+			throws ReflectiveOperationException {
 		final ModuleLoader loader = ModuleLoader.createLoader();
 		final Class<?> scClass = loader.loadClass("stone.StartupContainer");
 		final Class<?> mainClass = loader.loadClass("stone.modules.Main");
