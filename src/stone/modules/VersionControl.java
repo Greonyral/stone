@@ -520,6 +520,7 @@ public final class VersionControl implements Module {
 	 */
 	private final void checkForLocalChanges(final Git gitSession)
 			throws IOException, GitAPIException, InterruptedException {
+		io.startProgress("Checking repo for changes", -1);
 		final Status status = gitSession.status().call();
 		stone.util.Debug.print("modified: %s\n" + "untracked: %s\n"
 				+ "missing: %s\n" + "added: %s\n" + "changed: %s\n"
@@ -530,6 +531,7 @@ public final class VersionControl implements Module {
 		final DirCache cache =  gitSession.getRepository().readDirCache();
 		final StagePlugin stage = new StagePlugin(status, cache,
 				this.COMMIT.getValue(), this.master);
+		io.endProgress("Opening stage GUI");
 		this.io.handleGUIPlugin(stage);
 		if (stage.doCommit(gitSession, this)) {
 			final RevCommit commitRet = commit(gitSession);
@@ -556,12 +558,13 @@ public final class VersionControl implements Module {
 				Main.formatMaxLength(this.repoRoot, null, "The directory ",
 						" does not exist or is no git-repository.\n")
 						+ "It can take a while to create it. Continue?",
-				this.io.getGUI(), false, "Checking out");
+				this.io.getGUI(), false, "");
 		this.io.handleGUIPlugin(plugin);
 		this.start = System.currentTimeMillis();
 		if (!plugin.get()) {
 			return;
 		}
+		io.startProgress("Initializing repo", -1);
 		this.repoRoot.getParent().toFile().mkdirs();
 		try {
 			Git.init().setDirectory(this.repoRoot.toFile()).call();

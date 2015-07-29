@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import stone.Config;
 import stone.MasterThread;
 import stone.StartupContainer;
 import stone.io.ExceptionHandle;
@@ -27,7 +28,7 @@ public final class SongbookUpdater implements Module {
 	private final static int VERSION = 8;
 
 	private final IOHandler io;
-	
+
 	private final Main main;
 
 	private final MasterThread master;
@@ -36,6 +37,7 @@ public final class SongbookUpdater implements Module {
 	/** %HOME%\The Lord of The Rings Online */
 	private final Path pluginDataPath;
 	private final Path songbookPlugindataPath;
+
 	/**
 	 * Constructor for building versionInfo
 	 */
@@ -45,13 +47,14 @@ public final class SongbookUpdater implements Module {
 		this.main = null;
 		this.songbookPlugindataPath = null;
 		this.pluginDataPath = null;
-		
+
 	}
 
 	/**
 	 * Constructor as needed by being a Module
 	 * 
-	 * @param sc -
+	 * @param sc
+	 *            -
 	 */
 	public SongbookUpdater(final StartupContainer sc) {
 		this.io = sc.getIO();
@@ -118,10 +121,10 @@ public final class SongbookUpdater implements Module {
 		if (this.master.isInterrupted()) {
 			return;
 		}
-		master.getModule("SongData").run();
+		master.getModule("SongData").run(); // search songs and create entries
 		updateSongbookData();
 	}
-	
+
 	private void updateSongbookData() {
 		if (this.master.isInterrupted()) {
 			return;
@@ -131,8 +134,9 @@ public final class SongbookUpdater implements Module {
 		 */
 		final long start = System.currentTimeMillis();
 		final Set<String> profiles = new HashSet<>();
-		final stone.modules.SongData data = (stone.modules.SongData) master.getModule("SongData");
-		
+		final stone.modules.SongData data = (stone.modules.SongData) master
+				.getModule("SongData");
+
 		if (!this.pluginDataPath.exists()) {
 			if (!this.pluginDataPath.toFile().mkdir()) {
 				this.io.printMessage(null,
@@ -227,10 +231,22 @@ public final class SongbookUpdater implements Module {
 		final long end = System.currentTimeMillis();
 		Debug.print("needed %s for updating songbook with %d song(s)",
 				stone.util.Time.delta(end - start), data.size());
-		this.io.printMessage(null,
-				"Update of your songbook is complete.\nAvailable songs: "
-						+ data.size(), true);
-		
+		if (Config.getInstance().getValue("mainClass").equals("Main_susa")) {
+			this.io.printMessage(null,
+					"Update of your songbook is complete.\nAvailable songs: "
+							+ data.size(), false);
+			synchronized(master) {
+				try {
+					master.wait(java.util.concurrent.TimeUnit.MINUTES.toMillis(5));
+				} catch (final InterruptedException e) {
+					// no relevance
+				}
+			}
+		} else {
+			this.io.printMessage(null,
+					"Update of your songbook is complete.\nAvailable songs: "
+							+ data.size(), true);
+		}
 	}
 
 	@Override

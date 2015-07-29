@@ -102,9 +102,9 @@ public class Main implements Module {
 	 * @param filename
 	 *            -
 	 * @param a
-	 *            prefix to prepend
+	 *           leading pattern to append 
 	 * @param b
-	 *            suffix to append
+	 *            trailing pattern to append
 	 * @return concatenated path regarding a maximum length
 	 */
 	public final static String formatMaxLength(final Path base,

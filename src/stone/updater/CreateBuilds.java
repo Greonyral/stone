@@ -87,13 +87,19 @@ public class CreateBuilds {
 		}
 		final InputStream in = new FileInputStream(info.resolve("Main")
 				.toFile());
-		final OutputStream out = new FileOutputStream(info.resolve("Main_band")
+		final OutputStream out0 = new FileOutputStream(info.resolve("Main_band")
+				.toFile());
+		final OutputStream out1 = new FileOutputStream(info.resolve("Main_susa")
 				.toFile());
 		for (int i = 0; i < 4; i++) {
-			out.write(in.read());
+			int inByte = in.read();
+			out0.write(inByte);
+			out1.write(inByte);
 		}
-		out.flush();
-		out.close();
+		out0.flush();
+		out0.close();
+		out1.flush();
+		out1.close();
 		in.close();
 	}
 }

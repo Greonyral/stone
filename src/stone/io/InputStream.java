@@ -1,5 +1,6 @@
 package stone.io;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class InputStream extends AbstractInputStream {
 
 
 	private final ArrayDeque<Integer> marked = new ArrayDeque<>();
-	private FileInputStream stream;
+	private java.io.InputStream stream;
 	private final Charset cs;
 	private final File file;
 
@@ -250,7 +251,7 @@ public class InputStream extends AbstractInputStream {
 				this._length = 0;
 				return;
 			}
-			this.stream = new FileInputStream(this.file);
+			this.stream = new BufferedInputStream(new FileInputStream(this.file));
 			fillBuff();
 			// remove byte order mark
 			if (this.cs.toString().equals("UTF-16")) {

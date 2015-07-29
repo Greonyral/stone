@@ -566,7 +566,12 @@ public class MasterThread extends Thread {
 		}
 		this.sc.getOptionContainer().setValuesByParsedFlags();
 		final List<String> modules;
-		modules = this.io.selectModules(this.possibleModules);
+		if (this.possibleModules.size() <= 1) {
+			modules = new ArrayList<>(3);
+			modules.addAll(this.possibleModules);
+		} else {
+			modules = this.io.selectModules(this.possibleModules);
+		}
 		Debug.print("Selected modules %s", modules.toString());
 		final Set<String> dl = new HashSet<>();
 
@@ -585,7 +590,8 @@ public class MasterThread extends Thread {
 			} else
 				module = modul0;
 			try {
-				for (final Method method : module.getClass().getDeclaredMethods()) {
+				for (final Method method : module.getClass()
+						.getDeclaredMethods()) {
 					// old modules does not implement
 					// dependingModules(Set<String>)
 					if (method.getName().equals("dependingModules")
@@ -595,7 +601,8 @@ public class MasterThread extends Thread {
 						break;
 					}
 				}
-			} catch (final SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			} catch (final SecurityException | IllegalAccessException
+					| IllegalArgumentException | InvocationTargetException e) {
 				continue;
 			}
 		}

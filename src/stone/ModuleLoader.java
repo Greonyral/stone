@@ -1,5 +1,6 @@
 package stone;
 
+import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -172,7 +173,7 @@ public class ModuleLoader extends ClassLoader {
 					return null;
 				}
 				size = (int) entry.getSize();
-				in = jarFile.getInputStream(entry);
+				in = new BufferedInputStream(jarFile.getInputStream(entry));
 			} catch (final Exception e) {
 				e.printStackTrace();
 				return null;

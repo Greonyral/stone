@@ -64,7 +64,7 @@ VC_SRC= \
 VC_CLASSES=$(patsubst src/%, $(BIN_DIR)/%, $(patsubst %.java,%.class,$(VC_SRC)))
 VC_CLASSES_BASE=$(patsubst $(BIN_DIR)/%.class,%,$(VC_CLASSES))
 
-all: classes wipeJars hiddenVC normal moduleInfo sign_jars
+all: classes wipeJars hiddenVC normal songbook_standalone moduleInfo sign_jars
 
 clean:
 	rm -rf $(BIN_DIR)
@@ -111,6 +111,15 @@ modules/Main.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	@./build_jar cfe $@ "stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class)\
         -C $(BIN_DIR) stone/io/Icon.png config.txt"
 
+modules/Main_susa.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
+	$(JAVAC) src/stone/MasterThread.java
+	@echo "url https://github.com/Greonyral/stone/raw/master/" > config.txt
+	@echo "mainClass Main_susa" >> config.txt
+	@echo "modules" >> config.txt
+	@echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
+	@./build_jar cfe $@ "stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class)\
+        -C $(BIN_DIR) stone/io/Icon.png config.txt"
+
 modules/Main_band.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	$(JAVAC) src/stone/MasterThread.java
 	@echo "url https://github.com/Greonyral/stone/raw/master/" > config.txt
@@ -141,6 +150,9 @@ hiddenVC: modules/Main.jar modules/AbcCreator.jar modules/SongbookUpdater.jar mo
 
 normal: modules/Main_band.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/VersionControl.jar modules/FileEditor.jar modules/SongData.jar modules/BruTE.jar
 	cp $< SToNe.jar
+
+songbook_standalone: modules/Main_susa.jar modules/SongbookUpdater.jar
+	cp $< SongbookUpdater.jar
 
 moduleInfo: $(BIN_DIR)/stone/updater/CreateBuilds.class
 	mkdir -p moduleInfo
