@@ -57,7 +57,8 @@ public class GUI implements GUIInterface {
 
 		private final GUI.Button button;
 
-		public ButtonListener(@SuppressWarnings("hiding") final GUI.Button button) {
+		public ButtonListener(
+				@SuppressWarnings("hiding") final GUI.Button button) {
 			this.button = button;
 		}
 
@@ -97,8 +98,10 @@ public class GUI implements GUIInterface {
 	/**
 	 * Enables a component by calling {@link Component#setEnabled(boolean)}
 	 * 
-	 * @param c Part of GUI to enable
-	 * @param b enable
+	 * @param c
+	 *            Part of GUI to enable
+	 * @param b
+	 *            enable
 	 */
 	public final static void setEnabled(final Component c, boolean b) {
 		if (c instanceof Container) {
@@ -126,10 +129,13 @@ public class GUI implements GUIInterface {
 	/**
 	 * Creates a GUI from a temporarily GUI
 	 * 
-	 * @param gui temporarily GUI
-	 * @param master {@link MasterThread} to check on interruption
+	 * @param gui
+	 *            temporarily GUI
+	 * @param master
+	 *            {@link MasterThread} to check on interruption
 	 */
-	public GUI(final GUI gui, @SuppressWarnings("hiding") final MasterThread master) {
+	public GUI(final GUI gui,
+			@SuppressWarnings("hiding") final MasterThread master) {
 		this.master = master;
 
 		this.text = new JTextArea();
@@ -245,7 +251,9 @@ public class GUI implements GUIInterface {
 	 * 
 	 * @param string
 	 *            the question to show
-	 * @param progress if during the dialog the latest set progress bar shall be displayed
+	 * @param progress
+	 *            if during the dialog the latest set progress bar shall be
+	 *            displayed
 	 * @return <i>true</i> if and only if the user hit yes
 	 */
 	public final Button askNoYes(final String string, boolean progress) {
@@ -395,9 +403,12 @@ public class GUI implements GUIInterface {
 	/**
 	 * Shows a dialog to chose an absolute path
 	 * 
-	 * @param titleMsg Heading line to display
-	 * @param filter Filter to use
-	 * @param initialDirectory directory to start displaying
+	 * @param titleMsg
+	 *            Heading line to display
+	 * @param filter
+	 *            Filter to use
+	 * @param initialDirectory
+	 *            directory to start displaying
 	 * @return the selected path or <i>null</i> if user aborted the dialog
 	 */
 	public final Path getPath(final String titleMsg, final FileFilter filter,
@@ -630,7 +641,8 @@ public class GUI implements GUIInterface {
 	 * 
 	 * @param title
 	 * @param message
-	 * @param text <i>null</i> if not to front
+	 * @param text
+	 *            <i>null</i> if not to front
 	 */
 	private final void printMessageFunc(final String title,
 			final String message, @SuppressWarnings("hiding") final String text) {
@@ -644,13 +656,12 @@ public class GUI implements GUIInterface {
 		this.mainFrame.getContentPane().removeAll();
 		this.text.setEditable(false);
 		this.text.setText(message);
-		final int cols = this.text.getColumns() + 1;
+
 		final JPanel panel = new JPanel();
 		final JScrollPane scrollPane = new JScrollPane(panel);
 		panel.setLayout(new BorderLayout());
 		panel.add(this.text);
-		scrollPane.setPreferredSize(new Dimension(600, cols < 20 ? cols * 8
-				: 800));
+
 		this.mainFrame.add(scrollPane);
 		if (text != null) {
 			if (title != null) {
@@ -659,8 +670,15 @@ public class GUI implements GUIInterface {
 				this.wait.setText("");
 			}
 			panel.add(this.wait, BorderLayout.NORTH);
-			panel.add(Button.OK.getButton(), BorderLayout.SOUTH);
+			mainFrame.add(Button.OK.getButton(), BorderLayout.SOUTH);
 			this.mainFrame.pack();
+			final int height = scrollPane.getHeight();
+			if (height > 800) {
+				final Dimension d = scrollPane.getSize();
+				d.height = 800 - Button.OK.getButton().getHeight();
+				scrollPane.setPreferredSize(d);
+				this.mainFrame.pack();
+			}
 			waitForButton(text);
 		} else {
 			this.mainFrame.pack();
@@ -670,7 +688,8 @@ public class GUI implements GUIInterface {
 		}
 	}
 
-	private final void waitForButton(@SuppressWarnings("hiding") final String text) {
+	private final void waitForButton(
+			@SuppressWarnings("hiding") final String text) {
 		try {
 			synchronized (Button.class) {
 				if (this.master.isInterrupted()) {

@@ -61,7 +61,14 @@ public class Flag {
 	 * @return last argument of {@link #parse(String[])}
 	 */
 	public final String[] getArgs() {
-		return this.args;
+		if (args == null) {
+			return new String[] {"-\b", getValue(stone.Main.UPDATE_ID) };
+		}
+		final String[] args = new String[this.args.length + 2];
+		System.arraycopy(this.args, 0, args, 0, this.args.length);
+		args[this.args.length] = "-\b";
+		args[this.args.length + 1] = getValue(stone.Main.UPDATE_ID);
+		return args;
 	}
 
 	/**

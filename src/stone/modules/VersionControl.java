@@ -75,7 +75,7 @@ import stone.util.StringOption;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 12;
+	private final static int VERSION = 13;
 
 	private final static String SECTION = Main.VC_SECTION;
 
@@ -445,7 +445,9 @@ public final class VersionControl implements Module {
 			} else {
 				Git git = null;
 				try {
+					io.startProgress("Opening git repo " + this.repoRoot.getFilename(), -1);
 					git = Git.open(this.repoRoot.toFile());
+					io.endProgress("Checking git config");
 				} catch (final Exception e) {
 					if (!this.RESET.getValue()) {
 						this.io.printError("failed to open the repository",
@@ -483,6 +485,11 @@ public final class VersionControl implements Module {
 									false);
 							return;
 						}
+					}
+				} else if (this.EMAIL.value() == null) {
+					this.EMAIL.value("user@localhost");
+					if (!USE_SSH.getValue()) {
+						USERNAME.value("user");
 					}
 				}
 				final StoredConfig config = gitSession_band.getRepository()

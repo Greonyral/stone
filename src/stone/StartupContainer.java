@@ -75,6 +75,8 @@ public class StartupContainer {
 
 
 	private int wait = 2;
+
+	
 	private static final ClassLoader loader = StartupContainer.class
 			.getClassLoader();
 
@@ -261,4 +263,6 @@ public class StartupContainer {
 		}
 		return params;
 	}
+
+	
 }

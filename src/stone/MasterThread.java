@@ -125,6 +125,8 @@ public class MasterThread extends Thread {
 
 	private Path wd;
 
+	private ParseError parseError;
+
 	/**
 	 * @param os
 	 *            {@link StartupContainer} to use
@@ -204,7 +206,7 @@ public class MasterThread extends Thread {
 	/** */
 	@Override
 	public synchronized void interrupt() {
-		this.event = Event.INT;
+		this.state.handleEvent(Event.INT);
 		notifyAll();
 	}
 
@@ -258,7 +260,13 @@ public class MasterThread extends Thread {
 		}
 		this.io.endProgress("Waiting for initialization");
 		this.sc.waitForInit();
-
+		synchronized (this) {
+			if (parseError != null) {
+				((stone.modules.Main) mainModule.instance).flushConfig();
+				io.printError(parseError.toString(), false);
+				die(null);
+			}
+		}
 		if (this.sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
 				Main.PATH_KEY, null) == null) {
 			final Path fsBase = FileSystem.getBase();
@@ -276,7 +284,6 @@ public class MasterThread extends Thread {
 			this.sc.getMain().setConfigValue(Main.GLOBAL_SECTION,
 					Main.PATH_KEY,
 					base.resolve("The Lord of the Rings Online").toString());
-
 		}
 		try {
 			final StringOption NAME_OPTION = Main.createNameOption(this.sc
@@ -357,6 +364,10 @@ public class MasterThread extends Thread {
 				io.endProgress("No Updates");
 				return;
 			}
+			final String active = moduleSelection.toString()
+					.substring(1, moduleSelection.toString().length() - 1)
+					.replaceAll(", ", ",");
+			sc.flags.parse(new String[] { "\b", active });
 			io.endProgress("Downloads complete");
 			die(repack());
 		} catch (final Exception e) {
@@ -444,7 +455,6 @@ public class MasterThread extends Thread {
 				path.renameTo(this.wd);
 			}
 			deleteTmp();
-
 			final Thread newMaster = new Thread() {
 
 				@Override
@@ -569,6 +579,12 @@ public class MasterThread extends Thread {
 		if (this.possibleModules.size() <= 1) {
 			modules = new ArrayList<>(3);
 			modules.addAll(this.possibleModules);
+		} else if (this.sc.flags.isEnabled(stone.Main.UPDATE_ID)) {
+			final String moduleS = this.sc.flags.getValue(stone.Main.UPDATE_ID);
+			modules = new ArrayList<>();
+			for (final String m : moduleS.split(",")) {
+				modules.add(m);
+			}
 		} else {
 			modules = this.io.selectModules(this.possibleModules);
 		}
@@ -736,5 +752,20 @@ public class MasterThread extends Thread {
 			e.printStackTrace();
 			this.io.handleException(ExceptionHandle.TERMINATE, e);
 		}
+	}
+
+	/**
+	 * notifies running instance that parsing
+	 * {@link stone.modules.Main#homeSetting} failed
+	 * 
+	 * @param parseError
+	 *            error message
+	 */
+	public void setParseError(
+			@SuppressWarnings("hiding") final ParseError parseError) {
+		synchronized (this) {
+			this.parseError = parseError;
+		}
+
 	}
 }

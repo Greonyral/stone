@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import stone.ParseError;
 import stone.StartupContainer;
 import stone.io.IOHandler;
 import stone.io.InputStream;
@@ -29,7 +30,7 @@ public class Main implements Module {
 	private static final int MAX_LENGTH_INFO = 80;
 
 
-	private static final int VERSION = 23;
+	private static final int VERSION = 24;
 
 	/**
 	 * The name to be used for naming the config-file and the title.
@@ -102,7 +103,7 @@ public class Main implements Module {
 	 * @param filename
 	 *            -
 	 * @param a
-	 *           leading pattern to append 
+	 *            leading pattern to append
 	 * @param b
 	 *            trailing pattern to append
 	 * @return concatenated path regarding a maximum length
@@ -204,6 +205,7 @@ public class Main implements Module {
 	final Map<String, Map<String, String>> configOld = new HashMap<>();
 
 	final Map<String, Map<String, String>> configNew = new HashMap<>();
+
 
 	/**
 	 * Creates a new instance providing the parsed entries of the config
@@ -343,12 +345,14 @@ public class Main implements Module {
 						throw e;
 					}
 				} else {
+					String section = null;
+					int lineN = 0;
+					String lineS = null, lineSection = null;
 					try {
 						sc.finishInit(flags); // sync barrier 1
 						final InputStream in = io.openIn(
 								Main.homeSetting.toFile(), FileSystem.UTF8);
 						final StringBuilder sb = new StringBuilder();
-						String section = null;
 						try {
 							while (true) {
 								final int read = in.read();
@@ -360,7 +364,10 @@ public class Main implements Module {
 								if ((c == '\r') || (c == '\t')) {
 									sb.append(' ');
 								} else if (c == '\n') {
+									lineS = sb.toString();
+									lineSection = section;
 									section = parseConfig(sb, section);
+									++lineN;
 								} else {
 									sb.append(c);
 								}
@@ -370,16 +377,21 @@ public class Main implements Module {
 						}
 						io.close(in);
 						if (sb.length() != 0) {
-							System.out.println("error parsing config");
-							sc.getMaster().interrupt();
-						} else {
-							sc.parseDone(); // sync barrier 2
+							lineS = sb.toString();
+							lineSection = section;
+							section = parseConfig(sb, section);
+							++lineN;
 						}
 					} catch (final Exception e) {
 						Main.homeSetting.delete();
-						Main.this.taskPool.getMaster().interrupt();
-						io.close();
-						throw e;
+						try {
+							Main.homeSetting.toFile().createNewFile();
+						} catch (final IOException e1) {
+							e1.printStackTrace();
+						}
+						parseError(lineN, lineS, lineSection);
+					} finally {
+						sc.parseDone(); // sync barrier 2
 					}
 				}
 			}
@@ -388,6 +400,10 @@ public class Main implements Module {
 
 		Thread.currentThread().setName("Worker-0");
 		workerRun.run();
+	}
+
+	void parseError(int lineN, final String lineS, final String lineSection) {
+			taskPool.getMaster().setParseError(new ParseError(lineN, lineS, lineSection));
 	}
 
 	/**

@@ -19,6 +19,10 @@ public class Main {
 	 * debug
 	 */
 	public static final String DEBUG_ID = "debug";
+	/**
+	 * 
+	 */
+	public static final String UPDATE_ID = "update";
 
 	/**
 	 * @param args parameters for the program to be parsed
@@ -42,7 +46,8 @@ public class Main {
 				'h', "help", false);
 		registerOption.invoke(flags, Main.DEBUG_ID,
 				"Enables more output for debugging", 'd', "debug", false);
-
+		registerOption.invoke(flags, Main.UPDATE_ID,
+				"Flag indicating launch of updated program", '\b', null, true);
 		// pass args to the flags
 		flagClass.getMethod("parse", String[].class).invoke(flags,
 				(Object) args);

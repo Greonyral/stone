@@ -66,7 +66,7 @@ final class MainConfigWriter implements Runnable {
 		// write some short info at the start
 		sb.append("# config file for SToNe by Nelphindal");
 		sb.append(FileSystem.getLineSeparator());
-		sb.append("# Lines leading with # will be inonred");
+		sb.append("# Lines leading with # will be ignored");
 		sb.append(FileSystem.getLineSeparator());
 		sb.append("# Use at own risk according to the documentation in the manual");
 		sb.append(FileSystem.getLineSeparator());
