@@ -75,7 +75,7 @@ import stone.util.StringOption;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 13;
+	private final static int VERSION = 14;
 
 	private final static String SECTION = Main.VC_SECTION;
 

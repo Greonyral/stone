@@ -64,6 +64,7 @@ public class Flag {
 		if (args == null) {
 			return new String[] {"-\b", getValue(stone.Main.UPDATE_ID) };
 		}
+		@SuppressWarnings("hiding")
 		final String[] args = new String[this.args.length + 2];
 		System.arraycopy(this.args, 0, args, 0, this.args.length);
 		args[this.args.length] = "-\b";

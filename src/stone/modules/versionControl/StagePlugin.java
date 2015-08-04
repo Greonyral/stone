@@ -263,95 +263,111 @@ public class StagePlugin extends GUIPlugin {
 			if (s == null) {
 				return;
 			}
-			final String[] files = s.split("[M+-] ");
-			for (int i = 1; i < files.length; i++) {
-				final String file0, file1, file2;
-				{
-					String t = files[i].trim();
-					if (t.startsWith("E ")) {
-						t = t.substring(2);
-					}
-					file0 = t;
-				}
-				file1 = "E " + file0;
-				{
-					String t = file1;
-					if (t.endsWith(".enc.abc")) {
-						t = t.substring(0, t.length() - 8);
-						t = t + ".abc";
-					} else if (t.endsWith(".abc")) {
-						t = t.substring(0, t.length() - 4);
-						t = t + ".enc.abc";
-					}
-
-					file2 = t;
-				}
-				ChangedFile f = StagePlugin.this.stagedFiles.remove(file0);
-				if (f != null) {
-					if (f.changeTypeC == 'C') {
-						f = null;
-					} else if (f.encrypt == this.encrypt) {
-						// already at desired state
-						StagePlugin.this.stagedFiles.put(file0, f);
-						continue;
-					}
-				}
-				if (f == null) {
-					f = StagePlugin.this.stagedFiles.remove(file1);
-					if ((f != null) && (f.encrypt == this.encrypt)) {
-						StagePlugin.this.stagedFiles.put(file1, f);
-					}
-				}
-				if (f == null) {
-					f = StagePlugin.this.stagedFiles.remove(file2);
-					if ((f != null) && (f.encrypt == this.encrypt)) {
-						StagePlugin.this.stagedFiles.put(file2, f);
-						continue;
-					}
-				}
-				if (f == null) {
-					throw new NullPointerException();
-				}
-				f.enableEncryption(this.encrypt);
-				if (this.encrypt && f.encrypt) {
-					if (StagePlugin.this.stagedFiles.containsKey(file2)) {
-						if (StagePlugin.this.stagedFiles.get(file2).changeTypeC == 'C') {
-							StagePlugin.this.stagedFiles.put(file0, f);
-						} else {
-							StagePlugin.this.stagedFiles.put(file2, f);
-						}
-					} else {
-						StagePlugin.this.stagedFiles.put(file2, f);
-						if (file2.endsWith(".enc.abc")) {
-							// assume implict encrypted files should not be
-							// deleted
-							StagePlugin.this.stagedFiles.put(file0,
-									new ChangedFile('C', file0));
-							StagePlugin.this.missing.add(file0);
-						}
-					}
-				} else if (!this.encrypt && !f.encrypt) {
-					if (StagePlugin.this.stagedFiles.containsKey(file0)) {
-						if (StagePlugin.this.stagedFiles.get(file0).changeTypeC == 'C') {
-							StagePlugin.this.stagedFiles.put(file0, f);
-						} else {
-							StagePlugin.this.stagedFiles.put(file2, f);
-						}
-					} else {
-						StagePlugin.this.stagedFiles.put(file0, f);
-					}
-				} else {
-					if (StagePlugin.this.stagedFiles.containsKey(file0)) {
-						StagePlugin.this.stagedFiles.put(file2, f);
-					} else {
-						StagePlugin.this.stagedFiles.put(file0, f);
-					}
-				}
-			}
+			setEncrypt(s, encrypt);
 			StagePlugin.this.left.setSelectionStart(0);
 			StagePlugin.this.left.setSelectionEnd(0);
 			updateLeftAndRight();
 		}
+	}
+
+	private String[] setEncrypt(final String s, boolean encrypt) {
+		final String[] files = s.split("[M+-]C? ");
+		for (int i = 1; i < files.length; i++) {
+			final String file0, file1, file2;
+			{
+				String t = files[i].trim();
+				if (t.startsWith("E ")) {
+					t = t.substring(2);
+				}
+				file0 = t;
+			}
+			file1 = "E " + file0;
+			{
+				String t = file1;
+				if (t.endsWith(".enc.abc")) {
+					t = t.substring(0, t.length() - 8);
+					t = t + ".abc";
+				} else if (t.endsWith(".abc")) {
+					t = t.substring(0, t.length() - 4);
+					t = t + ".enc.abc";
+				}
+
+				file2 = t;
+			}
+			ChangedFile f = StagePlugin.this.stagedFiles.remove(file0);
+			if (f != null) {
+				if (f.changeTypeC == 'C') {
+					f = null;
+				} else if (f.encrypt == encrypt) {
+					// already at desired state
+					files[i] = file0;
+					StagePlugin.this.stagedFiles.put(file0, f);
+					continue;
+				}
+			}
+			if (f == null) {
+				f = StagePlugin.this.stagedFiles.remove(file1);
+				if ((f != null) && (f.encrypt == encrypt)) {
+					files[i] = file1;
+					StagePlugin.this.stagedFiles.put(file1, f);
+				}
+			}
+			if (f == null) {
+				f = StagePlugin.this.stagedFiles.remove(file2);
+				if ((f != null) && (f.encrypt == encrypt)) {
+					files[i] = file2;
+					StagePlugin.this.stagedFiles.put(file2, f);
+					continue;
+				}
+			}
+			if (f == null) {
+				throw new NullPointerException();
+			}
+			f.enableEncryption(encrypt);
+			if (encrypt && f.encrypt) {
+				if (StagePlugin.this.stagedFiles.containsKey(file2)) {
+					if (StagePlugin.this.stagedFiles.get(file2).changeTypeC == 'C') {
+						files[i] = file0;
+						StagePlugin.this.stagedFiles.put(file0, f);
+					} else {
+						files[i] = file2;
+						StagePlugin.this.stagedFiles.put(file2, f);
+					}
+				} else {
+					files[i] = file2;
+					StagePlugin.this.stagedFiles.put(file2, f);
+					if (file2.endsWith(".enc.abc")) {
+						// assume implict encrypted files should not be
+						// deleted
+						StagePlugin.this.stagedFiles.put(file0,
+								new ChangedFile('C', file0));
+						StagePlugin.this.missing.add(file0);
+					}
+				}
+			} else if (!encrypt && !f.encrypt) {
+				if (StagePlugin.this.stagedFiles.containsKey(file0)) {
+					if (StagePlugin.this.stagedFiles.get(file0).changeTypeC == 'C') {
+						files[i] = file0;
+						StagePlugin.this.stagedFiles.put(file0, f);
+					} else {
+						files[i] = file2;
+						StagePlugin.this.stagedFiles.put(file2, f);
+					}
+				} else {
+					files[i] = file0;
+					StagePlugin.this.stagedFiles.put(file0, f);
+				}
+			} else {
+				if (StagePlugin.this.stagedFiles.containsKey(file0)) {
+					files[i] = file2;
+					StagePlugin.this.stagedFiles.put(file2, f);
+				} else {
+					files[i] = file0;
+					StagePlugin.this.stagedFiles.put(file0, f);
+				}
+			}
+		}
+		return files;
 	}
 
 	class StageActionRemoveListener implements MouseListener {
@@ -383,15 +399,23 @@ public class StagePlugin extends GUIPlugin {
 			if (s == null) {
 				return;
 			}
-			final String[] files = s.split("[M+-] ");
+			final String[] files = setEncrypt(s, false);
+			final Set<String> done = new HashSet<>();
 			for (int i = 1; i < files.length; i++) {
-				// TODO
+				final String file = files[i];
+				if (done.add(file)) {
+					final ChangedFile f = StagePlugin.this.stagedFiles
+							.remove(file);
+					if (f == null) {
+						throw new NullPointerException();
+					}
+					StagePlugin.this.unstagedFiles.put(file, f);
+				}
 			}
 			StagePlugin.this.right.setSelectionStart(0);
 			StagePlugin.this.right.setSelectionEnd(0);
 			updateLeftAndRight();
 		}
-
 	}
 
 	class StageMouseListener implements MouseListener {
@@ -693,7 +717,7 @@ public class StagePlugin extends GUIPlugin {
 		if (this.commit) {
 			Font font = buttonEncrypt.getFont();
 			font = font.deriveFont((float) (font.getSize() * 0.8));
-			// panel.add(buttonRemove); // TODO not implemented
+			panel.add(buttonRemove);
 			panel.add(buttonAdd);
 			panel.add(buttonEncrypt);
 			panel.add(buttonPlain);
