@@ -16,7 +16,8 @@ public class Crawler implements Runnable {
 	private final Deserializer sdd;
 
 	private final boolean terminated = false;
-
+	private final int offset;
+	
 	private final java.util.concurrent.atomic.AtomicInteger threads = new java.util.concurrent.atomic.AtomicInteger();
 
 	/**
@@ -24,6 +25,7 @@ public class Crawler implements Runnable {
 	 * @param sdd instance of {@link Deserializer} to use 
 	 */
 	public Crawler(@SuppressWarnings("hiding") final Deserializer sdd) {
+		offset = sdd.getRoot().toString().length() + 1;
 		this.wl.add(sdd.getRoot());
 		this.sdd = sdd;
 	}
@@ -90,7 +92,7 @@ public class Crawler implements Runnable {
 			}
 		} else if (path.toFile().isFile()
 				&& path.getFilename().endsWith(".abc")) {
-			Debug.print("found %s\n", path);
+			Debug.print("found %s\n", path.toString().substring(offset));
 			synchronized (this.sdd) {
 				this.sdd.addToQueue(new ModEntry(path));
 				this.sdd.notifyAll();

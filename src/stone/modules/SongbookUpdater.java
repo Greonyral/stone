@@ -25,7 +25,7 @@ import stone.util.Path;
  */
 public final class SongbookUpdater implements Module {
 
-	private final static int VERSION = 8;
+	private final static int VERSION = 9;
 
 	private final IOHandler io;
 
@@ -121,11 +121,13 @@ public final class SongbookUpdater implements Module {
 		if (this.master.isInterrupted()) {
 			return;
 		}
+		final long start = System.currentTimeMillis();
 		master.getModule("SongData").run(); // search songs and create entries
-		updateSongbookData();
+		final long end = System.currentTimeMillis();
+		updateSongbookData(end - start);
 	}
 
-	private void updateSongbookData() {
+	private void updateSongbookData(long durationSearch) {
 		if (this.master.isInterrupted()) {
 			return;
 		}
@@ -202,21 +204,24 @@ public final class SongbookUpdater implements Module {
 		for (final String profile : profiles) {
 			Debug.print("- %s\n", profile);
 		}
+		Debug.print("\n");
 
 		// copy from master plugindata to each profile
 		final Iterator<String> profilesIter = profiles.iterator();
 		while (profilesIter.hasNext()) {
 			final String profile = profilesIter.next();
-			this.io.setProgressTitle("Writing Songbook.plugindata " + profile);
-			final File target = this.pluginDataPath.resolve(profile)
-					.resolve("AllServers").resolve("SongbookData.plugindata")
-					.toFile();
+			this.io.setProgressTitle("Copying Songbook.plugindata to " + profile);
+			final stone.util.Path targetP = this.pluginDataPath.resolve(profile)
+					.resolve("AllServers").resolve("SongbookData.plugindata");
+			final File target = targetP.toFile();
+			Debug.print("Copying songbook.plugindata to %s\n", target.toString());
 			if (!target.exists()) {
 				try {
 					target.getParentFile().mkdirs();
 					target.createNewFile();
 				} catch (final IOException e) {
-					this.io.handleException(ExceptionHandle.SUPPRESS, e);
+					Debug.print("Failed to create %s\n%s", target.getAbsolutePath(), e.getLocalizedMessage());
+					this.io.printMessage("Update for " + profile + " failed", Main.formatMaxLength(targetP.getParent(), targetP.getFilename(), "Failed to create", "\nSee the log for more details"), true);
 					this.io.updateProgress();
 					continue;
 				}
@@ -229,8 +234,8 @@ public final class SongbookUpdater implements Module {
 		masterPluginData.delete();
 		this.io.endProgress("");
 		final long end = System.currentTimeMillis();
-		Debug.print("needed %s for updating songbook with %d song(s)",
-				stone.util.Time.delta(end - start), data.size());
+		Debug.print("\nneeded %s for searching for songs and updating songbook for %d profiles with %d %s",
+				stone.util.Time.delta(durationSearch + end - start), profiles.size(), data.size(), data.size() == 1 ? "song" : "songs");
 		if (Config.getInstance().getValue("mainClass").equals("Main_susa")) {
 			this.io.printMessage(null,
 					"Update of your songbook is complete.\nAvailable songs: "
@@ -246,6 +251,7 @@ public final class SongbookUpdater implements Module {
 			this.io.printMessage(null,
 					"Update of your songbook is complete.\nAvailable songs: "
 							+ data.size(), true);
+			Debug.print("\n");
 		}
 	}
 

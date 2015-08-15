@@ -8,7 +8,6 @@ import stone.MasterThread;
 import stone.io.ExceptionHandle;
 import stone.io.IOHandler;
 import stone.io.InputStream;
-import stone.util.Debug;
 import stone.util.FileSystem;
 import stone.util.Path;
 
@@ -56,9 +55,12 @@ public final class Scanner implements Runnable {
 	private final Deserializer sdd;
 
 	/**
-	 * @param master -
-	 * @param sdd -
-	 * @param tree -
+	 * @param master
+	 *            -
+	 * @param sdd
+	 *            -
+	 * @param tree
+	 *            -
 	 */
 	@SuppressWarnings("hiding")
 	public Scanner(MasterThread master, final Deserializer sdd,
@@ -113,9 +115,7 @@ public final class Scanner implements Runnable {
 									e);
 						}
 						if ((line == null) || !line.startsWith("T:")) {
-							Debug.print("%s\n",
-									new MissingTLineInAbc(song.getKey(),
-											lineNumber));
+							new MissingTLineInAbc(song.getKey(), lineNumber);
 							error = true;
 							if (line == null) {
 								break;
@@ -137,22 +137,19 @@ public final class Scanner implements Runnable {
 							}
 							if (line.startsWith("T:")) {
 								desc.append(" ");
-								Debug.print("%s\n", new MultipleTLinesInAbc(
-										lineNumber, song.getKey()));
+								new MultipleTLinesInAbc(lineNumber,
+										song.getKey());
 							} else {
 								break;
 							}
 						} while (true);
 						if (desc.length() >= 65) {
-							Debug.print("%s\n",
-									new LongTitleInAbc(song.getKey(),
-											lineNumberOfX));
+							new LongTitleInAbc(song.getKey(), lineNumberOfX);
 						}
 						voices.put(voiceId, Scanner.clean(desc.toString()));
 						continue;
 					} else if (line.startsWith("T:")) {
-						Debug.print("%s\n", new NoXLineInAbc(song.getKey(),
-								lineNumber));
+						new NoXLineInAbc(song.getKey(), lineNumber);
 						error = true;
 					}
 					try {
@@ -167,7 +164,7 @@ public final class Scanner implements Runnable {
 				}
 				if (voices.isEmpty()) {
 					this.io.printError(String.format("Warning: %-50s %s", song
-							.getKey().toString(), "has no voices"), true);
+							.getKey().toString(), "has no voices\n"), true);
 				}
 				final SongDataEntry sd = SongDataEntry.create(song, voices);
 				synchronized (song) {

@@ -652,7 +652,10 @@ public class GUI implements GUIInterface {
 				Button.class.notifyAll();
 			}
 		}
-		Debug.print("#%s#\n%s", title, message);
+		if (title == null)
+			Debug.print("\n%s", message);
+		else
+			Debug.print("#%s#\n%s", title, message);
 		this.mainFrame.getContentPane().removeAll();
 		this.text.setEditable(false);
 		this.text.setText(message);

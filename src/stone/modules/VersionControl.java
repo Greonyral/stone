@@ -75,7 +75,7 @@ import stone.util.StringOption;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 14;
+	private final static int VERSION = 15;
 
 	private final static String SECTION = Main.VC_SECTION;
 
@@ -173,8 +173,10 @@ public final class VersionControl implements Module {
 	/**
 	 * Creates a new instance
 	 * 
-	 * @param sc -
-	 * @throws InterruptedException -
+	 * @param sc
+	 *            -
+	 * @throws InterruptedException
+	 *             -
 	 */
 	public VersionControl(final StartupContainer sc)
 			throws InterruptedException {
@@ -274,9 +276,12 @@ public final class VersionControl implements Module {
 
 	/**
 	 * 
-	 * @param source input
-	 * @param target output
-	 * @param encrypt encrypt else decrypt
+	 * @param source
+	 *            input
+	 * @param target
+	 *            output
+	 * @param encrypt
+	 *            encrypt else decrypt
 	 * @return <i>target</i>
 	 */
 	public final String encrypt(final String source, final String target,
@@ -445,7 +450,9 @@ public final class VersionControl implements Module {
 			} else {
 				Git git = null;
 				try {
-					io.startProgress("Opening git repo " + this.repoRoot.getFilename(), -1);
+					io.startProgress(
+							"Opening git repo " + this.repoRoot.getFilename(),
+							-1);
 					git = Git.open(this.repoRoot.toFile());
 					io.endProgress("Checking git config");
 				} catch (final Exception e) {
@@ -528,14 +535,16 @@ public final class VersionControl implements Module {
 	private final void checkForLocalChanges(final Git gitSession)
 			throws IOException, GitAPIException, InterruptedException {
 		io.startProgress("Checking repo for changes", -1);
+		boolean commit = false;
 		final Status status = gitSession.status().call();
-		stone.util.Debug.print("modified: %s\n" + "untracked: %s\n"
-				+ "missing: %s\n" + "added: %s\n" + "changed: %s\n"
-				+ "removed %s\n", status.getModified().toString(), status
-				.getUntracked().toString(), status.getMissing().toString(),
-				status.getAdded().toString(), status.getChanged().toString(),
-				status.getRemoved().toString());
-		final DirCache cache =  gitSession.getRepository().readDirCache();
+		stone.util.Debug.print("-----------\n" + "staged changes\n"
+				+ "modified : %s\n" + "untracked: %s\n" + "missing  : %s\n"
+				+ "===========\n" + "unstaged changes\n" + "added    : %s\n"
+				+ "changed  : %s\n" + "removed  : %s\n" + "-----------\n", status
+				.getModified().toString(), status.getUntracked().toString(),
+				status.getMissing().toString(), status.getAdded().toString(),
+				status.getChanged().toString(), status.getRemoved().toString());
+		final DirCache cache = gitSession.getRepository().readDirCache();
 		final StagePlugin stage = new StagePlugin(status, cache,
 				this.COMMIT.getValue(), this.master);
 		io.endProgress("Opening stage GUI");
@@ -549,12 +558,13 @@ public final class VersionControl implements Module {
 							+ commitRet.getFullMessage()
 							+ "\nStarting to upload changes after checking remote repository for changes",
 					false);
+			commit = true;
 		}
 		if (this.master.isInterrupted()) {
 			return;
 		}
 		update(gitSession);
-		if (stage.doCommit(gitSession, this)) {
+		if (commit) {
 			push(gitSession);
 		}
 	}
@@ -1193,16 +1203,16 @@ public final class VersionControl implements Module {
 					.setString("remote", "origin", "url",
 							this.GIT_URL_HTTPS.value());
 			gitSession.getRepository().getConfig().save();
-			final Set<String> refs = gitSession.getRepository()
-					.getAllRefs().keySet();
+			final Set<String> refs = gitSession.getRepository().getAllRefs()
+					.keySet();
 			if (!refs.contains("refs/heads/" + this.BRANCH.value())) {
 				this.io.printMessage("Specified branch missing in config",
 						"Branch \"" + this.BRANCH.value()
 								+ "\" does not exist.\n"
 								+ "Resetting to default \"master\".", true);
 				this.BRANCH.value("master");
-				final InputStream in = this.io.openIn(this.repoRoot
-						.resolve(".git", "HEAD").toFile());
+				final InputStream in = this.io.openIn(this.repoRoot.resolve(
+						".git", "HEAD").toFile());
 				final String localHead;
 				if (in == null) {
 					localHead = "refs/heads/master";
@@ -1283,7 +1293,8 @@ public final class VersionControl implements Module {
 
 		boolean success = true;
 
-		final RevCommit commitRoot = CommitComparator.init(walk, this.io).getParent(commitLocal, commitRemote);
+		final RevCommit commitRoot = CommitComparator.init(walk, this.io)
+				.getParent(commitLocal, commitRemote);
 		if (commitRoot == null) {
 			historyRewritten(gitSession, commitLocal, commitRemote, walk);
 			diffString = null;

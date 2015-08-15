@@ -281,8 +281,9 @@ public class IOHandler {
 				if (!s.hasNext()) {
 					break;
 				}
-				sb.append("\r\n");
+				sb.append("\n");
 			}
+			Debug.print("%s\n", sb.toString());
 			System.err.println(sb.toString());
 			System.err.println("closing down");
 		}

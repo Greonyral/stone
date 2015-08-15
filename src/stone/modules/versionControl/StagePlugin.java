@@ -28,6 +28,7 @@ import stone.MasterThread;
 import stone.io.GUI;
 import stone.io.GUIPlugin;
 import stone.modules.VersionControl;
+import stone.util.Debug;
 import stone.util.LinkedMap;
 
 /**
@@ -596,11 +597,11 @@ public class StagePlugin extends GUIPlugin {
 			}
 			if (this.commit) {
 				for (final ChangedFile f : this.unstagedFiles.values()) {
-					if (this.untracked.remove(f.s) || this.missing.remove(f.s)
-							|| this.modified.remove(f.s)) {
-						continue;
-					} else {
-						// TODO unstage
+					if (!(this.untracked.remove(f.s)
+							|| this.missing.remove(f.s) || this.modified
+								.remove(f.s))) {;
+						Debug.print("Rolling back %s\n", f.s);
+						gitSession.reset().setRef("HEAD").addPath(f.s).call();
 					}
 				}
 				for (final ChangedFile f : this.stagedFiles.values()) {
@@ -628,6 +629,8 @@ public class StagePlugin extends GUIPlugin {
 					}
 				}
 			}
+			if (this.commit && this.stagedFiles.isEmpty())
+				Debug.print("\nStage clean.\nNo files to commit\n\n");
 			return this.commit && !this.stagedFiles.isEmpty();
 		} catch (final Exception e) {
 			return false;
@@ -867,8 +870,7 @@ public class StagePlugin extends GUIPlugin {
 					this.stagedFiles.put("E " + s, c);
 
 				} else {
-					this.stagedFiles.put("E " + s.substring(0, s.length() - 8)
-							+ ".abc", c);
+					this.stagedFiles.put(s, c);
 				}
 				testConflict(c);
 			} else {

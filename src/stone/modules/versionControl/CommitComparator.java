@@ -51,7 +51,7 @@ public final class CommitComparator implements Comparator<RevCommit> {
 			while (true) {
 				if (this.localTime == this.remoteTime) {
 					if (this.remote.equals(this.local)) {
-						this.io.endProgress("Serch done");
+						this.io.endProgress("Search done");
 						return this.remote;
 					}
 

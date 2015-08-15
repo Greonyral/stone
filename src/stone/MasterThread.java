@@ -444,17 +444,13 @@ public class MasterThread extends Thread {
 
 			final boolean isFile = this.wd.toFile().isFile();
 			final Thread old = this;
-
-			this.io.printMessage(
-					"Update complete",
-					"The update completed successfully.\nThe program will restart now.",
-					true);
 			interrupt(); // force shutdown
 			this.io.close();
 			if (isFile) {
 				path.renameTo(this.wd);
 			}
 			deleteTmp();
+			
 			final Thread newMaster = new Thread() {
 
 				@Override
@@ -474,7 +470,7 @@ public class MasterThread extends Thread {
 					}
 				}
 			};
-			newMaster.setName(getName());
+			newMaster.setName("Worker-0");
 			newMaster.start();
 		} else {
 			this.taskPool.close();

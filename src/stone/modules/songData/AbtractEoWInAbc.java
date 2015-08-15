@@ -48,4 +48,9 @@ public abstract class AbtractEoWInAbc {
 	public static Collection<AbtractEoWInAbc> getMessages() {
 		return messages.values();
 	}
+	
+	@Override
+	public String toString() {
+		return printMessage();
+	}
 }

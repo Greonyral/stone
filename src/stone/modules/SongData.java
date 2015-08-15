@@ -188,7 +188,7 @@ public class SongData implements Module {
 			this.io.printError(e.printMessage(), true);
 		}
 
-		Debug.print("%4d songs found -", sdd.songsFound());
+		Debug.print("\n----------\n%4d songs found", sdd.songsFound());
 	}
 
 	/**
@@ -354,6 +354,7 @@ public class SongData implements Module {
 	 */
 	@Override
 	public void run() {
+		Debug.print("\n");
 		io.startProgress("Searching for songs", -1);
 		fill();
 		io.endProgress(tree.getFilesCount() + " songs found");
