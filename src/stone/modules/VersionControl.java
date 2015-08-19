@@ -75,7 +75,7 @@ import stone.util.StringOption;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 15;
+	private final static int VERSION = 16;
 
 	private final static String SECTION = Main.VC_SECTION;
 
@@ -563,8 +563,7 @@ public final class VersionControl implements Module {
 		if (this.master.isInterrupted()) {
 			return;
 		}
-		update(gitSession);
-		if (commit) {
+		if (update(gitSession) || commit) {
 			push(gitSession);
 		}
 	}
@@ -1258,32 +1257,32 @@ public final class VersionControl implements Module {
 	/*
 	 * download new songs
 	 */
-	private final void update(final Git gitSession) throws GitAPIException,
+	private final boolean update(final Git gitSession) throws GitAPIException,
 			IOException {
 		final ObjectId remoteHead;
 		try {
 			remoteHead = getRemoteHead(gitSession);
 			if (remoteHead == null) {
 				this.io.printError("The remote branch does not exist", false);
-				return;
+				return false;
 			}
 			Debug.print("Remote head: %s\n", remoteHead.getName());
 		} catch (final TransportException | InterruptedException e) {
 			this.io.printError(
 					"Failed to contact github.com.\nCheck if you have internet access and try again.",
 					false);
-			return;
+			return false;
 		}
 		final ObjectId localHead = gitSession.getRepository().getRef("HEAD")
 				.getObjectId();
 		if (localHead == null) {
 			this.io.printError("Unable to determine current head", false);
-			return;
+			return false;
 		}
 		Debug.print("Local  head: %s\n", localHead.getName());
 		if (remoteHead.equals(localHead)) {
 			this.io.printMessage(null, "Your repository is up-to-date", true);
-			return;
+			return false;
 		}
 		final RevWalk walk = new RevWalk(gitSession.getRepository());
 		final RevCommit commitRemote = walk.parseCommit(remoteHead);
@@ -1320,6 +1319,7 @@ public final class VersionControl implements Module {
 		} else {
 			this.io.printMessage(null, "Update completed succesully", true);
 		}
+		return COMMIT.getValue();
 	}
 
 	@Override
