@@ -53,19 +53,9 @@ class ParamMap {
 		}
 		final Track t = ParamMap.instrument.get(instrument, paramSet);
 		if (t == null) {
-			final Track orig = (Track) ParamMap.trackMap.get(id);
+			final Track orig = (Track) ParamMap.trackMap.get(id + 1);
 			if (orig == null) {
-				throw new Exception() {
-					/**
-					 * 
-					 */
-					private static final long serialVersionUID = 1L;
-
-					@Override
-					public final String toString() {
-						return "No track for id " + id;
-					}
-				};
+				return null;
 			}
 			if (ParamMap.unassignedTracks.remove(orig)) {
 				ParamMap.instrument.put(instrument, paramSet, orig);

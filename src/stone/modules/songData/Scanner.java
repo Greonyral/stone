@@ -8,6 +8,7 @@ import stone.MasterThread;
 import stone.io.ExceptionHandle;
 import stone.io.IOHandler;
 import stone.io.InputStream;
+import stone.util.Debug;
 import stone.util.FileSystem;
 import stone.util.Path;
 
@@ -83,6 +84,10 @@ public final class Scanner implements Runnable {
 		final SongDataEntry songdata = this.tree.get(song.getKey());
 		if ((songdata == null)
 				|| (songdata.getLastModification() != song.getValue())) {
+			if (songdata == null)
+				Debug.print(song.getKey() + " not found\n");
+			else
+				Debug.print(song.getKey() + " out dated\n");
 			final Path songFile = song.getKey();
 
 			final Map<String, String> voices = new HashMap<>();

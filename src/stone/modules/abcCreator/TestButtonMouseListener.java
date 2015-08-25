@@ -46,13 +46,10 @@ final class TestButtonMouseListener extends ReleaseListener {
 								.setText("Creating abc failed");
 					} else {
 						assert result != null;
+						String critical = result.toString();
 						TestButtonMouseListener.this.abcMapPlugin.state.label
 								.setText("The abc is up-to-date - "
-										+ result.toString()
-												.substring(
-														0,
-														result.toString()
-																.indexOf("%") + 1));
+										+ critical);
 					}
 				}
 			}

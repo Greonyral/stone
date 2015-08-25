@@ -9,6 +9,7 @@ import stone.MasterThread;
 import stone.io.AbstractInputStream;
 import stone.io.IOHandler;
 import stone.modules.SongData;
+import stone.util.Debug;
 import stone.util.Path;
 
 /**
@@ -35,7 +36,6 @@ abstract public class Deserializer {
 			final MasterThread master) {
 		final Path idx = getIdx(sdc.getRoot());
 		final IOHandler io = sdc.getIOHandler();
-		// TODO dont open all streams
 		final Map<String, AbstractInputStream> zipEntriesMap = io
 				.openInZip(idx);
 		final AbstractInputStream in;
@@ -51,29 +51,33 @@ abstract public class Deserializer {
 			final int version = in == null ? -1 : in.read();
 			switch (version) {
 			case 3:
-				instance = new Deserializer_3(sdc);
-				/*
-				 * // TODO replace as soon decoder 0 is done { private final
-				 * java.util.concurrent.atomic.AtomicInteger id = new
-				 * java.util.concurrent.atomic.AtomicInteger( -1);
-				 * 
-				 * @Override protected final void deserialize_() throws
-				 * IOException { final int id = this.id.incrementAndGet(); if
-				 * (id == 0) { final Deserializer sdd = new Deserializer_3(sdc);
-				 * sdd.deserialize(); sdd.abort_(); } }
-				 * 
-				 * @Override public final Runnable getDeserialTask() { return
-				 * null;
-				 * 
-				 * } };
-				 */
+				instance = new Deserializer_3(sdc) {
+					private final java.util.concurrent.atomic.AtomicInteger id = new java.util.concurrent.atomic.AtomicInteger(
+							-1);
+
+					@Override
+					protected final void deserialize_() throws IOException {
+						final int id = this.id.incrementAndGet();
+						if (id == 0) {
+							final Deserializer sdd = new Deserializer_3(sdc);
+							sdd.deserialize();
+							sdd.abort_();
+						}
+					}
+
+					@Override
+					public final Runnable getDeserialTask() {
+						return null;
+
+					}
+				};
 				break;
 			case 0:
 				instance = new Deserializer_0(sdc, master);
 				break;
 			case -1: // first run
 			default:
-				instance = new Deserializer_3(sdc);
+				instance = new Deserializer_0(sdc, master);
 			}
 			return instance;
 		} catch (final IOException e) {
@@ -174,9 +178,9 @@ abstract public class Deserializer {
 			this.deserialDone = true;
 			notifyAll();
 		}
-		// System.err
-		// .printf("\n\n==========\nDeserial completed %f parsed\n\n==========\n\n",
-		// songsParsed / 1196.0);
+		Debug.print(
+				"==========\nDeserial completed %d parsed\n\n==========\n\n",
+				songsParsed.get());
 		if (this.crawlDone) {
 			this.io.startProgress("Parsing songs", this.songsFound.get());
 			this.io.updateProgress(this.songsParsed.get());
@@ -272,11 +276,9 @@ abstract public class Deserializer {
 
 			}
 		}
-		// if (crawlDone && songsParsed.get() == songsFound.get()) {
-		// Deserial can be aborted - Parse completed
-		// in test at ~ 7% of deserial with method 3
-		// TODO
-		// }
+		if (crawlDone && songsParsed.get() == songsFound.get()) {
+			return;
+		}
 		if (update) {
 			this.io.updateProgress();
 		}

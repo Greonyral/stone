@@ -43,7 +43,7 @@ public class ZipCompression {
 			for (final File file : files) {
 				final String relName = zipPath.relativize(file.toPath())
 						.toString();
-				System.out.println(relName);
+//				System.out.println(relName);
 				final ZipEntry entry = new ZipEntry(relName);
 				final InputStream in = ioHandler.openIn(file);
 				final byte[] buff = new byte[16000];

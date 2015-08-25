@@ -35,7 +35,7 @@ import stone.util.TaskPool;
  */
 public class SongData implements Module {
 
-	private static final int VERSION = 1;
+	private static final int VERSION = 2;
 
 	/**
 	 * @param sc
@@ -173,8 +173,8 @@ public class SongData implements Module {
 			this.taskPool.addTaskForAll(taskDeserial, 75);
 			this.taskPool.addTaskForAll(crawler, 25);
 			this.taskPool.addTaskForAll(scanner);
+			taskDeserial.run();
 		}
-
 		crawler.run();
 		scanner.run();
 		this.taskPool.waitForTasks();
@@ -182,8 +182,9 @@ public class SongData implements Module {
 			sdd.abort();
 			return;
 		}
+		io.startProgress("Creating store for next run", -1);
 		sdd.finish();
-
+		io.endProgress(sdd.songsFound() + " songs found");
 		for (final AbtractEoWInAbc e : AbtractEoWInAbc.getMessages()) {
 			this.io.printError(e.printMessage(), true);
 		}
@@ -194,7 +195,8 @@ public class SongData implements Module {
 	/**
 	 * Returns all directories at given directory
 	 * 
-	 * @param directory -
+	 * @param directory
+	 *            -
 	 * @return directories at given directory
 	 */
 	public final String[] getDirs(final Path directory) {
@@ -227,7 +229,8 @@ public class SongData implements Module {
 	/**
 	 * Returns all songs at given directory
 	 * 
-	 * @param directory -
+	 * @param directory
+	 *            -
 	 * @return songs at given directory
 	 */
 	public final String[] getSongs(final Path directory) {
@@ -236,7 +239,8 @@ public class SongData implements Module {
 	}
 
 	/**
-	 * @param song -
+	 * @param song
+	 *            -
 	 * @return the data of given song
 	 */
 	public final SongDataEntry getVoices(final Path song) {

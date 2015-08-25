@@ -267,7 +267,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 					final Integer id = readInt(in, available);
 					final String name = readName(in, available);
 					final Path p;
-					if (idPrev < 0) {
+					if (idPrev == 0) {
 						p = getPath(name);
 					} else {
 						p = map.get(idPrev).resolve(name);
@@ -345,19 +345,19 @@ public final class Path implements Comparable<Path>, Externalizable {
 
 	private final static Integer readInt(final InputStream in,
 			final IntegerPointer iPtr) throws IOException {
-		int ret = 0;
+		int value = 0;
 		while (true) {
 			final int byteRead = in.read();
 			iPtr.decrement();
 			if (byteRead < 0) {
 				throw new IOException("Unexpected end of file");
 			}
-			ret = (ret << 7) | (byteRead & 0x7f);
-			if (byteRead < 0x80) {
+			value <<= 7;
+			value += 0x7f & byteRead;
+			if ((byteRead & 0x80) == 0)
 				break;
-			}
 		}
-		return Integer.valueOf(ret);
+		return Integer.valueOf(value);
 	}
 
 	private final static String readName(final InputStream in,
@@ -625,7 +625,7 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @return the number of components of <i>this</i> path
 	 */
 	public final int getNameCount() {
-		return this.filename == null ? 0 : this.dirs.length + 1;
+		return this.filename == null ? 0 : this.dirs == null ? 1 : this.dirs.length + 1;
 	}
 
 	/**
@@ -834,7 +834,8 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * {@link #readExternals(InputStream)}.
 	 * 
 	 * @param out
-	 *            instance of {@link PathAwareObjectOutput} taking care of creating the output
+	 *            instance of {@link PathAwareObjectOutput} taking care of
+	 *            creating the output
 	 */
 	public final void writeExternals(final PathAwareObjectOutput out) {
 		if (this.parent != null) {

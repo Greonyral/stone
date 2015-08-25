@@ -28,22 +28,51 @@ public abstract class Debug {
 
 	} : new Debug() {
 
-		private final File log = StartupContainer.getDatadirectory()
-				.resolve("log.txt").toFile();
+		private final File log = StartupContainer
+				.getDatadirectory()
+				.resolve(
+						FileSystem.type == FileSystem.OSType.WINDOWS ? "log.txt"
+								: "log").toFile();
+
 		private boolean first = true;
 
 
 		@Override
 		protected final void printImpl(final String string, final Object[] args) {
+			if (first) {
+				first = false;
+				if (log.exists()) {
+					final String s0 = log.toString();
+					final String s1 = s0.replace("log", "log.0");
+					final String s2 = s0.replace("log", "log.1");
+					final String s3 = s0.replace("log", "log.2");
+					final File f0 = new File(s0);
+					final File f1 = new File(s1);
+					final File f2 = new File(s2);
+					final File f3 = new File(s3);
+					if (f2.exists())
+						if (f3.exists())
+							f3.delete();
+					f2.renameTo(f3);
+					if (f1.exists())
+						f1.renameTo(f2);
+					if (f0.exists())
+						f0.renameTo(f1);
+				}
+				printImpl("Started %s\n",
+						new Object[] { stone.util.Time.date(System
+								.currentTimeMillis()) });
+			}
 			if (!string.endsWith("\n")) {
 				printImpl(string + "\n", args);
 				return;
 			}
-			final String format = string.replaceAll("\r*\n", FileSystem.getLineSeparator());
-			try {	
+			final String format = string.replaceAll("\r*\n",
+					FileSystem.getLineSeparator());
+			try {
 				final java.io.OutputStream out = new java.io.FileOutputStream(
-						log, !first);
-				first = false;
+						log, true);
+
 				out.write(String.format(format, args).getBytes());
 				out.flush();
 				out.close();

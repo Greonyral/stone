@@ -149,8 +149,8 @@ public class TaskPool {
 	 * waiting.
 	 */
 	public final void waitForTasks() {
-		while ((this.runningTasks > 0) || !this.taskPool.isEmpty()) {
-			synchronized (this.taskPool) {
+		synchronized (this.taskPool) {
+			while ((this.runningTasks > 0) || !this.taskPool.isEmpty()) {
 				try {
 					this.taskPool.wait();
 				} catch (final InterruptedException e) {

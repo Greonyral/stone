@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import stone.MasterThread;
 import stone.io.AbstractInputStream;
+import stone.io.ExceptionHandle;
 import stone.io.IOHandler;
 import stone.io.OutputStream;
 import stone.modules.SongData;
@@ -43,18 +45,16 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 
 		@Override
 		public final SongDataEntry parse(final byte[] bytes) throws IOException {
+			// TODO read as written to restore data
 			final InputStream is = new ByteArrayInputStream(bytes);
-			final long mod;
-			final Path path;
-			final int pathId;
 			final Map<Integer, String> voices;
+			final int idDir = is.read();
+			final String name = read(is);
 
-			mod = readMod(is);
-			pathId = is.read();
-			path = Deserializer_0.this.idMapIn.get(pathId);
-			if (path == null) {
+			Path dir = Deserializer_0.this.idMapIn.get(idDir);
+			if (dir == null) {
 				synchronized (Deserializer_0.this.idMapIn) {
-					while (Deserializer_0.this.idMapIn.isEmpty()) {
+					while ((dir = Deserializer_0.this.idMapIn.get(idDir)) == null) {
 						try {
 							Deserializer_0.this.idMapIn.wait();
 						} catch (final InterruptedException e) {
@@ -63,10 +63,19 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 					}
 
 				}
-				if (Deserializer_0.this.idMapIn.get(pathId) == null) {
-					return null;
-				}
-				return parse(bytes);
+			}
+			final Path path = dir.resolve(name);
+			if (!path.exists()) // file deleted -> info not needed
+			{
+				Debug.print(path + " not existing");
+				return null;
+			}
+			final long mod = readMod(is);
+			if (path.toFile().lastModified() != mod) // file edited -> info not
+														// needed
+			{
+				Debug.print(path + " changed");
+				return null;
 			}
 			voices = SongData.readExternal(is, this);
 			return new SongDataEntry(path, voices, mod);
@@ -78,7 +87,7 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 			final byte[] bytes;
 			while (true) {
 				final int read = is.read();
-				if (read == 0) {
+				if (read <= 0) {
 					break;
 				}
 				bb.put((byte) (0xff & read));
@@ -181,8 +190,9 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 			Deserializer_0.this.io.setProgressSize(this.serialSongs);
 			for (final Map.Entry<String, AbstractInputStream> stream : streams
 					.entrySet()) {
-				Deserializer_0.this.streams.add(new DeserialTask(stream, this));
-				Deserializer_0.this.io.updateProgress();
+				if (!stream.getKey().equals(pathIdMap.getFilename()))
+					Deserializer_0.this.streams.add(new DeserialTask(stream,
+							this));
 			}
 			Deserializer_0.this.streams.add(this.end);
 		}
@@ -191,7 +201,7 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 			final Map<String, AbstractInputStream> inMap = Deserializer_0.this.io
 					.openInZip(this.idx);
 			final InputStream in = inMap == null ? null : inMap
-					.get(Deserializer_0.this.pathIdMapIn.getFilename());
+					.get(Deserializer_0.this.pathIdMap.getFilename());
 			@SuppressWarnings("hiding")
 			final Map<Integer, Path> idMapIn;
 			try {
@@ -210,8 +220,6 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 	class ByteStreamOut implements SerializeConainer, ObjectOutput,
 			stone.util.Path.PathAwareObjectOutput {
 
-		@SuppressWarnings("hiding")
-		private final int id = Deserializer_0.this.id.incrementAndGet();
 		@SuppressWarnings("hiding")
 		private final IOHandler io = Deserializer_0.this.io;
 		private OutputStream out;
@@ -256,8 +264,8 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 					.resolve(filename);
 
 			final int pathId = Deserializer_0.this.pathIdNextOut
-					.getAndIncrement();
-			final byte[] idBytesPrev = writeIntRE(parent == null ? -1
+					.incrementAndGet();
+			final byte[] idBytesPrev = writeIntRE(parent == null ? 0
 					: Deserializer_0.this.idMapOut.get(parent));
 			final byte[] idBytes = writeIntRE(pathId);
 			final byte[] bytesName = filename.getBytes(FileSystem.UTF8);
@@ -304,23 +312,58 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 		@Override
 		public final void write(final Path song, long mod,
 				final Map<Integer, String> voices) throws IOException {
-			final Path outFile = Deserializer_0.this.idx.getParent().resolve(
-					String.format(format, this.id));
-			this.out = this.io.openOut(outFile.toFile());
-			boolean success = false;
+			final Path directory = song.getParent();
+			final String name = song.getFilename();
+			int idDir;
 			try {
-				writeMod(mod);
-				song.writeExternals(this);
-				writeIntRE(Deserializer_0.this.idMapOut.get(song));
-				SongData.writeExternal(voices, this);
-				success = true;
-			} finally {
-				this.io.close(this.out);
-				this.out = null;
-				if (!success) {
-					outFile.delete();
+				idDir = getId(directory);
+
+				if (idDir == -1) {
+					directory.writeExternals(this);
+					idDir = getId(directory);
 				}
+				int idSong = Deserializer_0.this.id.incrementAndGet();
+				final Path outFile = idx.getParent().resolve(
+						String.format(format, idSong));
+				out = io.openOut(outFile.toFile());
+				write(writeIntRE(idDir));
+				write(name);
+				writeMod(mod);
+				SongData.writeExternal(voices, this);
+				out.flush();
+				synchronized (files) {
+					files.add(outFile.toFile());
+				}
+				io.close(out);
+			} catch (final InterruptedException e) {
+				io.handleException(ExceptionHandle.SUPPRESS, e);
 			}
+
+			// Path outFile;
+			// song.writeExternals(this);
+			// final int id;
+			// try {
+			// id = getId(song);
+			// } catch (final InterruptedException e) {
+			// return;
+			// }
+			//
+			// outFile = Deserializer_0.this.idx.getParent().resolve(
+			// String.format(format, id));
+			// this.out = this.io.openOut(outFile.toFile());
+			// boolean success = false;
+			// try {
+			// writeMod(mod);
+			// writeIntRE(Deserializer_0.this.idMapOut.get(song));
+			// SongData.writeExternal(voices, this);
+			// success = true;
+			// } finally {
+			// this.io.close(this.out);
+			// this.out = null;
+			// if (!success) {
+			// outFile.delete();
+			// }
+			// }
 		}
 
 		@Override
@@ -406,22 +449,21 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 		}
 
 		private byte[] writeIntRE(int i) {
-			int bytesLength = 1;
-			int mask = 0x7f;
-			byte[] bytes;
-			while ((i & ~mask) != 0) {
-				++bytesLength;
-				mask = (mask << 7) | 0xff;
-			}
-			bytes = new byte[bytesLength];
-			for (int o = 0; true;) {
-				final int shift = (bytes.length - o - 1) * 7;
-				bytes[o] = (byte) ((i >> shift) & mask);
-				if (++o == bytes.length) {
+			final int mask = 0x7f;
+			int hByte = 0;
+			int bytesEncoded = 1;
+			int j = i >> 7;
+			while (j != 0) {
+				if (++bytesEncoded == 4)
 					break;
-				}
-				bytes[o - 1] |= 0x80;
-				mask >>= 7;
+				j >>= 7;
+			}
+			j = i;
+			final byte[] bytes = new byte[bytesEncoded];
+			while (--bytesEncoded >= 0) {
+				bytes[bytesEncoded] = (byte) (hByte | mask & j);
+				j >>= 7;
+				hByte = 0x80;
 			}
 			return bytes;
 		}
@@ -445,10 +487,10 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 	private final Map<Path, Integer> idMapOut = new HashMap<>();
 	private final Map<Integer, Path> idMapIn = new HashMap<>();
 
-	private final Path pathIdMapIn;
-	private final Path pathIdMapOut;
+	private final Path pathIdMap;
 	private final AtomicInteger pathIdNextOut = new AtomicInteger();
 	private final OutputStream pathIdOut;
+	private final ArrayDeque<File> files = new ArrayDeque<>();
 
 	private final static int MOD_LEN = 6;
 
@@ -456,10 +498,8 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 			@SuppressWarnings("hiding") final MasterThread master) {
 		super(sdc);
 		this.master = master;
-		this.pathIdMapIn = this.idx.getParent().resolve("path.map");
-		this.pathIdMapOut = this.pathIdMapIn.getParent().resolve(
-				this.pathIdMapIn.getFilename() + ".tmp");
-		this.pathIdOut = this.io.openOut(this.pathIdMapOut.toFile());
+		this.pathIdMap = this.idx.getParent().resolve("path.map");
+		this.pathIdOut = this.io.openOut(this.pathIdMap.toFile());
 	}
 
 	@Override
@@ -475,35 +515,26 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 
 	}
 
-	private final void clear() {
+	private final void clear(File[] files) {
 		final Path idxDir = this.idx.getParent();
-		for (int i = 1; i <= this.id.get(); i++) {
-			idxDir.resolve(String.format(format, i)).delete();
+		for (File file : files) {
+			file.delete();
 		}
-		this.pathIdMapIn.delete();
+		this.pathIdMap.delete();
 		idxDir.resolve(VERSION_ID_FILE).delete();
-	}
-
-	private final File[] getFiles() {
-		final Path idxDir = this.idx.getParent();
-		final Set<File> files = new HashSet<>();
-		for (int i = 0; i <= this.id.get(); i++) {
-			files.add(idxDir.resolve(String.format(format, i)).toFile());
-		}
-		files.add(idxDir.resolve(VERSION_ID_FILE).toFile());
-		this.pathIdMapOut.renameTo(this.pathIdMapIn);
-		files.add(this.pathIdMapIn.toFile());
-		return files.toArray(new File[files.size()]);
 	}
 
 	@Override
 	protected final void abort_() {
-		final OutputStream out = this.io.openOut(this.idx.getParent()
-				.resolve(VERSION_ID_FILE).toFile());
+		final File versionFile = this.idx.getParent().resolve(VERSION_ID_FILE)
+				.toFile();
+		final OutputStream out = this.io.openOut(versionFile);
 		this.io.write(out, (byte) 0);
 		this.io.close(out);
-		this.io.compress(this.idx.toFile(), getFiles());
-		clear();
+		files.add(versionFile);
+		files.add(idx.toFile());
+		final File[] files = this.files.toArray(new File[this.files.size()]);
+		clear(files);
 	}
 
 	@Override
@@ -519,16 +550,21 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 
 	@Override
 	protected final void finish_() {
-		final OutputStream out = this.io.openOut(this.idx.getParent()
-				.resolve("sdd").toFile());
+		final File versionFile = this.idx.getParent().resolve(VERSION_ID_FILE)
+				.toFile();
+		final OutputStream out = this.io.openOut(versionFile);
 		this.io.write(out, (byte) 0);
 		this.io.close(out);
-		this.io.compress(this.idx.toFile(), getFiles());
-		clear();
+		files.add(versionFile);
+		files.add(pathIdMap.toFile());
+		final File[] files = this.files.toArray(new File[this.files.size()]);
+		this.io.compress(this.idx.toFile(), files);
+		clear(files);
 	}
 
 	@Override
-	protected final void generateStream(final SongDataEntry data) throws IOException {
+	protected final void generateStream(final SongDataEntry data)
+			throws IOException {
 		data.serialize(this);
 	}
 }

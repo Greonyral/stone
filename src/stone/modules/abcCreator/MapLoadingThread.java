@@ -49,6 +49,7 @@ final class MapLoadingThread implements Runnable {
 					this.error = true;
 					return;
 				}
+				if (t != null)
 				MapLoadingThread.this.abcMapPlugin.link(t,
 						this.activeInstrument);
 			}

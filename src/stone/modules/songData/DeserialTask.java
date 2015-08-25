@@ -10,16 +10,19 @@ class DeserialTask implements Runnable {
 	private final AbstractInputStream stream;
 	private final DeserializeContainer sc;
 	private SongDataEntry result;
-
+	private final String entry;
+	
 	public DeserialTask() {
 		this.stream = null;
 		this.sc = null;
+		this.entry = null;
 	}
 
 	public DeserialTask(@SuppressWarnings("hiding") final Entry<String, AbstractInputStream> stream,
 			final DeserializeContainer byteStreamIn) {
 		this.stream = stream.getValue();
 		this.sc = byteStreamIn;
+		this.entry = stream.getKey();
 	}
 
 	public SongDataEntry getResult() {
