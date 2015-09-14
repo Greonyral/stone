@@ -39,7 +39,8 @@ public abstract class FileEndingFilter extends stone.util.PathOptionFileFilter {
 	}
 
 	/**
-	 * @param file -
+	 * @param file
+	 *            -
 	 * @return <i>file</i>
 	 */
 	@Override
@@ -50,7 +51,8 @@ public abstract class FileEndingFilter extends stone.util.PathOptionFileFilter {
 	/**
 	 * Checks if the given filename shall be accepted.
 	 * 
-	 * @param name -
+	 * @param name
+	 *            -
 	 * @return true if <i>name</i> shall be accepted.
 	 */
 	protected abstract boolean ending(final String name);

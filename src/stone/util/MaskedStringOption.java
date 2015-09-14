@@ -32,7 +32,8 @@ public final class MaskedStringOption extends Option {
 	/**
 	 * Creates a new MaskedStringOption.
 	 * 
-	 * @param optionContainer instance of {@link OptionContainer} to use
+	 * @param optionContainer
+	 *            instance of {@link OptionContainer} to use
 	 * @param name
 	 *            a unique identifier for this option to register at
 	 *            OptionContainer
@@ -71,7 +72,8 @@ public final class MaskedStringOption extends Option {
 
 	/** */
 	@Override
-	public final void display(final JPanel panel, @SuppressWarnings("hiding") final KeyEventHandler key) {
+	public final void display(final JPanel panel,
+			@SuppressWarnings("hiding") final KeyEventHandler key) {
 		final JPanel mainPanel = new JPanel();
 		final JPanel buttonPanel = new JPanel();
 		final JTextField textField = new JTextField();

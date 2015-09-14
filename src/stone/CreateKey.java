@@ -13,7 +13,9 @@ public class CreateKey {
 
 	/**
 	 * Creates a new 256 AES key
-	 * @param args -
+	 * 
+	 * @param args
+	 *            -
 	 */
 	public static void main(final String[] args) {
 		try {

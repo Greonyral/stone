@@ -8,20 +8,21 @@ import stone.util.Option;
 
 /**
  * Dummy module for BruTE
+ * 
  * @author Nelphindal
- *
+ * 
  */
 public final class BruTE implements Module {
 
 	private static final int VERSION = 1;
-	
+
 	/**
 	 * Constructor for building versionInfo
 	 */
 	public BruTE() {
-		
+
 	}
-	
+
 
 	/**
 	 * Creates a new instance and uses previously registered options
@@ -32,6 +33,11 @@ public final class BruTE implements Module {
 	 */
 	public BruTE(final StartupContainer sc) {
 		// dummy
+	}
+
+	@Override
+	public void dependingModules(final Set<String> set) {
+		// dummy nothing to do
 	}
 
 	@Override
@@ -56,11 +62,6 @@ public final class BruTE implements Module {
 
 	@Override
 	public void run() {
-		// dummy nothing to do
-	}
-
-	@Override
-	public void dependingModules(final Set<String> set) {
 		// dummy nothing to do
 	}
 

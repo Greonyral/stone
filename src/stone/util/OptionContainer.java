@@ -24,7 +24,7 @@ public class OptionContainer {
 	 * flags.
 	 * 
 	 * @param flags
-	 *           instance of @{link Flag} to synchronize to
+	 *            instance of @{link Flag} to synchronize to
 	 * @param main
 	 *            instance of @{link Main} to synchronize to
 	 */

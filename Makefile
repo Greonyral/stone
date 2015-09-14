@@ -6,7 +6,7 @@ BIN_DIR=classes
 BRUTE_VERSION=21b
 BRUTE_FILES=drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe
 
-MAIN_SRC_FILES=Container Event Main MasterThread ModuleLoader \
+MAIN_SRC_FILES=Event Main MasterThread ModuleLoader \
  Config OptionSetup StartupContainer Task ThreadState ModuleInfo \
  modules/Main modules/MainConfigWriter modules/Module
 MAIN_SRC_DIR=util io
@@ -70,7 +70,7 @@ clean:
 	rm -rf $(BIN_DIR)
 
 purge:
-	rm -rf $(BIN_DIR) SToNe*../build_jar modules moduleInfo brute/BruTE../build_jar brute/???
+	rm -rf $(BIN_DIR) *.jar modules moduleInfo brute/BruTE  brute/???
 
 wipeJars:
 	rm -rf *.jar modules/* moduleInfo/*

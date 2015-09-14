@@ -19,7 +19,8 @@ public final class BooleanOption extends Option {
 	private BooleanChangeListener listener;
 
 	/**
-	 * @param optionContainer instance of {@link OptionContainer} to use
+	 * @param optionContainer
+	 *            instance of {@link OptionContainer} to use
 	 * @param name
 	 *            a unique identifier for this option to register at
 	 *            OptionContainer
@@ -101,16 +102,20 @@ public final class BooleanOption extends Option {
 	/**
 	 * Sets a listener to notify when value of this option changes.
 	 * 
-	 * @param listener {@link BooleanChangeListener} to notify whenever the state changes
+	 * @param listener
+	 *            {@link BooleanChangeListener} to notify whenever the state
+	 *            changes
 	 */
-	public final void setListener(@SuppressWarnings("hiding") final BooleanChangeListener listener) {
+	public final void setListener(
+			@SuppressWarnings("hiding") final BooleanChangeListener listener) {
 		this.listener = listener;
 	}
 
 	/**
 	 * sets the value represented by <i>this</i> to b
 	 * 
-	 * @param b new state of <i>this</i>
+	 * @param b
+	 *            new state of <i>this</i>
 	 */
 	public final void setValue(boolean b) {
 		value(Boolean.valueOf(b).toString());
@@ -139,7 +144,8 @@ public final class BooleanOption extends Option {
 	}
 
 	@Override
-	protected final void setByFlagValue(@SuppressWarnings("hiding") final String value) {
+	protected final void setByFlagValue(
+			@SuppressWarnings("hiding") final String value) {
 		setValue(true);
 	}
 

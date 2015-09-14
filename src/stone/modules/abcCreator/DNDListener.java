@@ -20,7 +20,8 @@ abstract class DNDListener<C extends Container, D extends Container, T extends C
 
 	protected final DragAndDropPlugin<C, D, T>.State state;
 
-	protected DNDListener(@SuppressWarnings("hiding") final DragAndDropPlugin<C, D, T>.State state) {
+	protected DNDListener(
+			@SuppressWarnings("hiding") final DragAndDropPlugin<C, D, T>.State state) {
 		this.state = state;
 	}
 

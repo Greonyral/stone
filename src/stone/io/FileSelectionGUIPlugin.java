@@ -24,10 +24,14 @@ public class FileSelectionGUIPlugin extends GUIPlugin {
 	private File selected;
 
 	/**
-	 * @param title Title to display
-	 * @param startDir root
-	 * @param filter Filter to use for displaying
-	 * @param text displayed if {@link #display(JPanel)} returns false
+	 * @param title
+	 *            Title to display
+	 * @param startDir
+	 *            root
+	 * @param filter
+	 *            Filter to use for displaying
+	 * @param text
+	 *            displayed if {@link #display(JPanel)} returns false
 	 */
 	@SuppressWarnings("hiding")
 	public FileSelectionGUIPlugin(final String title, final File startDir,

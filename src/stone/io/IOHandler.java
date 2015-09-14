@@ -99,7 +99,8 @@ public class IOHandler {
 			}
 
 		}
-		this.guiReal = new GUI((GUI) sc.getIO().gui, this.master);
+		final GUI gui = (GUI) sc.getIO().gui;
+		this.guiReal = gui == null ? null : new GUI(gui, this.master);
 		class GUIInvocationHandler implements InvocationHandler {
 
 			private final Method interruptMethod = getDestroyMethod();
@@ -113,6 +114,9 @@ public class IOHandler {
 					if (Thread.currentThread() != IOHandler.this.master) {
 						throw new InterruptedException();
 					}
+					return null;
+				}
+				if (IOHandler.this.guiReal == null) {
 					return null;
 				}
 				return method.invoke(IOHandler.this.guiReal, args);
@@ -135,7 +139,11 @@ public class IOHandler {
 	 *            title to be shown with the GUI
 	 */
 	public IOHandler(final String name) {
-		this.gui = new GUI(name);
+		if (name == null) {
+			this.gui = null;
+		} else {
+			this.gui = new GUI(name);
+		}
 		this.guiReal = null;
 		this.progressMonitor = null;
 		this.openStreams = null;
@@ -339,7 +347,10 @@ public class IOHandler {
 
 	/**
 	 * Terminates currently displayed progress
-	 * @param text displayed if {@link GUIPlugin#display(JPanel)} returns <i>false</i>
+	 * 
+	 * @param text
+	 *            displayed if {@link GUIPlugin#display(JPanel)} returns
+	 *            <i>false</i>
 	 */
 	public final void endProgress(final String text) {
 		if (this.progressMonitor != null) {
@@ -371,6 +382,10 @@ public class IOHandler {
 	 *            to be displayed otpions
 	 */
 	public final void getOptions(final Collection<Option> options) {
+		if (guiReal == null) {
+			// options have to set on invocation or config file
+			return;
+		}
 		this.gui.getOptions(options);
 	}
 
@@ -413,6 +428,7 @@ public class IOHandler {
 	 *            plugin to perform on the GUI
 	 */
 	public final void handleGUIPlugin(final GUIPlugin plugin) {
+		// TODO support non gui mode
 		this.gui.runPlugin(plugin);
 	}
 
@@ -629,7 +645,9 @@ public class IOHandler {
 	 * @param filter
 	 *            filter to use
 	 * @return the selected file or <i>null</i> if canceled or interrupted
-	 * @param text displayed if {@link GUIPlugin#display(JPanel)} returns <i>false</i>
+	 * @param text
+	 *            displayed if {@link GUIPlugin#display(JPanel)} returns
+	 *            <i>false</i>
 	 */
 	public final Path selectFile(final String title, final File startDir,
 			final FileFilter filter, final String text) {
@@ -646,6 +664,86 @@ public class IOHandler {
 	 *         if interrupted
 	 */
 	public final List<String> selectModules(final List<String> modules) {
+		if (this.guiReal == null) {
+			final BufferedReader reader = new BufferedReader(
+					new InputStreamReader(System.in));
+			final boolean[] active = new boolean[modules.size()];
+			boolean needsConfirmation = true;
+			final List<String> ret = new java.util.ArrayList<>();
+			while (needsConfirmation) {
+				System.out.println("\nSelect modules");
+				String paddingLeft = "";
+				String paddingRight = "";
+				int size = (modules.size()) / 10;
+				while (size > 1) {
+					paddingLeft += " ";
+					paddingRight += " ";
+					size /= 100;
+				}
+				if (size == 1) {
+					paddingLeft += " ";
+				}
+				int nextDecreaseLeft = 9;
+				int nextDecreaseRight = 99;
+				for (int i = 0; i < modules.size(); ++i) {
+					System.out.printf("[ %s%d%s ] %s\n", paddingLeft, i + 1,
+							paddingRight, modules.get(i));
+					if (i == nextDecreaseLeft) {
+						nextDecreaseLeft *= 100;
+						nextDecreaseLeft += 99;
+						paddingLeft = paddingLeft.length() == 0 ? ""
+								: paddingLeft.substring(1);
+					} else if (i == nextDecreaseRight) {
+						nextDecreaseRight *= 100;
+						nextDecreaseRight += 99;
+						paddingRight = paddingRight.length() == 0 ? ""
+								: paddingRight.substring(1);
+					}
+				}
+
+				try {
+					final String line = reader.readLine();
+					if (line == null)
+						return null;
+					final String[] parts = line.split("[\\t\\- ,]");
+					needsConfirmation = false;
+					for (final String part : parts) {
+						if (part.isEmpty())
+							continue;
+						boolean valid = true;
+						final char[] chars = part.toCharArray();
+						for (final char c : chars) {
+							if (c < '0' || c > '9') {
+								System.err.printf("Invalid number %s\n", part);
+								valid = false;
+								break;
+							}
+						}
+						if (!valid) {
+							needsConfirmation = true;
+							break;
+						}
+						final int id = Integer.parseInt(part);
+						if (id < 0 || id > modules.size()) {
+							valid = false;
+							System.err.printf("Invalid number %s\n", part);
+							needsConfirmation = true;
+							break;
+						}
+						active[id - 1] = true;
+					}
+				} catch (final IOException e) {
+					handleException(ExceptionHandle.SUPPRESS, e);
+					return null;
+				}
+			}
+			for (int i = 0; i < modules.size(); ++i) {
+				if (active[i]) {
+					ret.add(modules.get(i));
+				}
+			}
+			return ret;
+		}
 		return this.gui.selectModules(modules);
 	}
 
@@ -701,7 +799,8 @@ public class IOHandler {
 	}
 
 	/**
-	 * writes all content from in to out, and closes the {@link java.io.InputStream} <i>in</i> afterwards
+	 * writes all content from in to out, and closes the
+	 * {@link java.io.InputStream} <i>in</i> afterwards
 	 * 
 	 * @param in
 	 *            stream to read from
@@ -712,13 +811,16 @@ public class IOHandler {
 			final java.io.OutputStream out) {
 		final int bufSize = 8192;
 		final byte[] buffer = new byte[bufSize];
-		final BufferedInputStream reader = new BufferedInputStream(in, buffer.length);
-		final BufferedOutputStream writer = new BufferedOutputStream(out, buffer.length);
+		final BufferedInputStream reader = new BufferedInputStream(in,
+				buffer.length);
+		final BufferedOutputStream writer = new BufferedOutputStream(out,
+				buffer.length);
 		try {
 			while (true) {
-				int read = reader.read(buffer, 0, bufSize);
-				if (read < 0)
+				final int read = reader.read(buffer, 0, bufSize);
+				if (read < 0) {
 					break;
+				}
 				writer.write(buffer, 0, read);
 			}
 			writer.flush();

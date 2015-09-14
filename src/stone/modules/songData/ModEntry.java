@@ -17,7 +17,8 @@ public class ModEntry implements Entry<Path, Long> {
 	private final long mod;
 
 	/**
-	 * @param path -
+	 * @param path
+	 *            -
 	 */
 	public ModEntry(@SuppressWarnings("hiding") final Path path) {
 		this.path = path;
@@ -49,7 +50,8 @@ public class ModEntry implements Entry<Path, Long> {
 	 * Not supported.
 	 * 
 	 * @return -
-	 * @throws UnsupportedOperationException whenever called
+	 * @throws UnsupportedOperationException
+	 *             whenever called
 	 */
 	@Override
 	public final Long setValue(final Long arg0) {

@@ -261,10 +261,13 @@ public class SongChangeData {
 	private final Main main;
 
 	/**
-	 * @param voices -
-	 * @param main -
+	 * @param voices
+	 *            -
+	 * @param main
+	 *            -
 	 */
-	public SongChangeData(final SongDataEntry voices, @SuppressWarnings("hiding") final Main main) {
+	public SongChangeData(final SongDataEntry voices,
+			@SuppressWarnings("hiding") final Main main) {
 		this.main = main;
 		this.date = stone.util.Time.date(voices.getLastModification()).split(
 				" ");
@@ -346,8 +349,10 @@ public class SongChangeData {
 	/**
 	 * Applies the changes being made.
 	 * 
-	 * @param io -
-	 * @param scheme -
+	 * @param io
+	 *            -
+	 * @param scheme
+	 *            -
 	 */
 	public final void revalidate(final IOHandler io, final NameScheme scheme) {
 		if (!this.dirty) {
@@ -364,7 +369,8 @@ public class SongChangeData {
 	/**
 	 * Sets the title component of T: line of underlying song
 	 * 
-	 * @param string -
+	 * @param string
+	 *            -
 	 */
 	public final void setTitle(final String string) {
 		for (final Integer i : this.indices.keySet()) {
@@ -379,8 +385,10 @@ public class SongChangeData {
 	/**
 	 * Tries to apply the global name scheme to the song
 	 * 
-	 * @param scheme -
-	 * @param io -
+	 * @param scheme
+	 *            -
+	 * @param io
+	 *            -
 	 */
 	public final void uniform(final IOHandler io, final NameScheme scheme) {
 		final List<Integer> idcs = new ArrayList<>(this.instruments.keySet());
@@ -895,7 +903,7 @@ public class SongChangeData {
 							}
 						}
 					} catch (final Exception e) {
-						// 
+						//
 					}
 					if (valid) {
 						this.mod[2] = yearString;

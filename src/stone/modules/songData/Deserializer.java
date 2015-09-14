@@ -56,19 +56,20 @@ abstract public class Deserializer {
 							-1);
 
 					@Override
-					protected final void deserialize_() throws IOException {
-						final int id = this.id.incrementAndGet();
-						if (id == 0) {
-							final Deserializer sdd = new Deserializer_3(sdc);
-							sdd.deserialize();
-							sdd.abort_();
-						}
-					}
-
-					@Override
 					public final Runnable getDeserialTask() {
 						return null;
 
+					}
+
+					@Override
+					protected final void deserialize_() throws IOException {
+						final int id = this.id.incrementAndGet();
+						if (id == 0) {
+							final Deserializer sdd = new Deserializer_3(
+									this.sdc);
+							sdd.deserialize();
+							sdd.abort_();
+						}
 					}
 				};
 				break;
@@ -180,7 +181,7 @@ abstract public class Deserializer {
 		}
 		Debug.print(
 				"==========\nDeserial completed %d parsed\n\n==========\n\n",
-				songsParsed.get());
+				this.songsParsed.get());
 		if (this.crawlDone) {
 			this.io.startProgress("Parsing songs", this.songsFound.get());
 			this.io.updateProgress(this.songsParsed.get());
@@ -276,7 +277,7 @@ abstract public class Deserializer {
 
 			}
 		}
-		if (crawlDone && songsParsed.get() == songsFound.get()) {
+		if (this.crawlDone && (this.songsParsed.get() == this.songsFound.get())) {
 			return;
 		}
 		if (update) {

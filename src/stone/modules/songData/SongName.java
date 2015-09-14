@@ -111,8 +111,10 @@ public class SongName implements Map<Integer, String> {
 	 * 
 	 * @param idx
 	 *            the partNumbers, idx[0] is considered as total parts
-	 * @param instrument -
-	 * @param xIdx -
+	 * @param instrument
+	 *            -
+	 * @param xIdx
+	 *            -
 	 */
 	public final void addPart(final Integer[] idx, final String instrument,
 			int xIdx) {
@@ -252,11 +254,14 @@ public class SongName implements Map<Integer, String> {
 	/**
 	 * Sets the title
 	 * 
-	 * @param name -
-	 * @param duration -
+	 * @param name
+	 *            -
+	 * @param duration
+	 *            -
 	 * @param n
 	 *            total number of parts
-	 * @param path -
+	 * @param path
+	 *            -
 	 */
 	@SuppressWarnings("hiding")
 	public final void setTitle(final String name, final String duration,

@@ -9,8 +9,9 @@ final class TempoChangeState {
 	private final int ticks;
 	final double minutes;
 
-	TempoChangeState(@SuppressWarnings("hiding") final MidiParserImpl midiParser, final TempoChange tc,
-			final TempoChangeState last) {
+	TempoChangeState(
+			@SuppressWarnings("hiding") final MidiParserImpl midiParser,
+			final TempoChange tc, final TempoChangeState last) {
 		this.midiParser = midiParser;
 		this.microsPerQuarter = tc.tempo;
 		this.ticks = this.midiParser.d.tmp += tc.delta;

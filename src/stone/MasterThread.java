@@ -177,15 +177,6 @@ public class MasterThread extends Thread {
 	/**
 	 * @param m
 	 *            name of {@link Module}
-	 * @return {@link ModuleInfo} of given {@link Module}
-	 */
-	public stone.ModuleInfo getModuleInfo(final String m) {
-		return this.modulesLocal.get(m);
-	}
-
-	/**
-	 * @param m
-	 *            name of {@link Module}
 	 * @return {@link Module} of given name
 	 */
 	public Module getModule(final String m) {
@@ -196,11 +187,21 @@ public class MasterThread extends Thread {
 				downloadModule(m);
 				final Class<Module> clazz0 = StartupContainer.loadModule(m);
 				this.modulesLocal.put(m, new ModuleInfo(clazz0, m));
-			} else
+			} else {
 				this.modulesLocal.put(m, new ModuleInfo(clazz, m));
+			}
 		}
 		final ModuleInfo mi1 = this.modulesLocal.get(m);
 		return mi1.instance;
+	}
+
+	/**
+	 * @param m
+	 *            name of {@link Module}
+	 * @return {@link ModuleInfo} of given {@link Module}
+	 */
+	public stone.ModuleInfo getModuleInfo(final String m) {
+		return this.modulesLocal.get(m);
 	}
 
 	/** */
@@ -240,7 +241,7 @@ public class MasterThread extends Thread {
 	public void run() {
 		this.io = this.sc.getIO();
 		this.wd = this.sc.workingDirectory;
-		ModuleInfo.init(c, sc);
+		ModuleInfo.init(c, this.sc);
 		final ModuleInfo mainModule = new ModuleInfo();
 
 		this.io.startProgress("Checking core for updates", -1);
@@ -261,9 +262,9 @@ public class MasterThread extends Thread {
 		this.io.endProgress("Waiting for initialization");
 		this.sc.waitForInit();
 		synchronized (this) {
-			if (parseError != null) {
+			if (this.parseError != null) {
 				((stone.modules.Main) mainModule.instance).flushConfig();
-				io.printError(parseError.toString(), false);
+				this.io.printError(this.parseError.toString(), false);
 				die(null);
 			}
 		}
@@ -337,6 +338,21 @@ public class MasterThread extends Thread {
 	}
 
 	/**
+	 * notifies running instance that parsing
+	 * {@link stone.modules.Main#homeSetting} failed
+	 * 
+	 * @param parseError
+	 *            error message
+	 */
+	public void setParseError(
+			@SuppressWarnings("hiding") final ParseError parseError) {
+		synchronized (this) {
+			this.parseError = parseError;
+		}
+
+	}
+
+	/**
 	 * checks if all selected modules are available
 	 * 
 	 * @param moduleSelection
@@ -347,7 +363,8 @@ public class MasterThread extends Thread {
 			if (isInterrupted()) {
 				return;
 			}
-			io.startProgress("Checking for updates", moduleSelection.size());
+			this.io.startProgress("Checking for updates",
+					moduleSelection.size());
 			final Set<String> changedModules = new HashSet<>();
 			for (final String m : moduleSelection) {
 				final ModuleInfo info = this.modulesLocal.get(m);
@@ -358,17 +375,17 @@ public class MasterThread extends Thread {
 				if (isInterrupted()) {
 					return;
 				}
-				io.updateProgress();
+				this.io.updateProgress();
 			}
 			if (changedModules.isEmpty()) {
-				io.endProgress("No Updates");
+				this.io.endProgress("No Updates");
 				return;
 			}
 			final String active = moduleSelection.toString()
 					.substring(1, moduleSelection.toString().length() - 1)
 					.replaceAll(", ", ",");
-			sc.flags.parse(new String[] { "\b", active });
-			io.endProgress("Downloads complete");
+			this.sc.flags.parse(new String[] { "\b", active });
+			this.io.endProgress("Downloads complete");
 			die(repack());
 		} catch (final Exception e) {
 			this.io.handleException(ExceptionHandle.TERMINATE, e);
@@ -450,7 +467,7 @@ public class MasterThread extends Thread {
 				path.renameTo(this.wd);
 			}
 			deleteTmp();
-			
+
 			final Thread newMaster = new Thread() {
 
 				@Override
@@ -509,7 +526,7 @@ public class MasterThread extends Thread {
 			final InputStream in = new BufferedInputStream(
 					connection.getInputStream());
 			final OutputStream out = this.io.openOut(target.toFile());
-			out.registerProgress(io);
+			out.registerProgress(this.io);
 			this.io.setProgressSize(connection.getContentLength());
 			final BufferedOutputStream writer = new BufferedOutputStream(out);
 			final byte[] buffer = new byte[0x200];
@@ -577,9 +594,13 @@ public class MasterThread extends Thread {
 			modules.addAll(this.possibleModules);
 		} else if (this.sc.flags.isEnabled(stone.Main.UPDATE_ID)) {
 			final String moduleS = this.sc.flags.getValue(stone.Main.UPDATE_ID);
-			modules = new ArrayList<>();
-			for (final String m : moduleS.split(",")) {
-				modules.add(m);
+			if (moduleS == null) {
+				modules = this.io.selectModules(this.possibleModules);
+			} else {
+				modules = new ArrayList<>();
+				for (final String m : moduleS.split(",")) {
+					modules.add(m);
+				}
 			}
 		} else {
 			modules = this.io.selectModules(this.possibleModules);
@@ -591,7 +612,7 @@ public class MasterThread extends Thread {
 			final Module module;
 			final Module modul0 = getModule(m);
 			if (modul0 == null) {
-				this.downloadModule(m);
+				downloadModule(m);
 				final Class<Module> clazz = StartupContainer.loadModule(m);
 				if (clazz == null) {
 					continue;
@@ -599,16 +620,17 @@ public class MasterThread extends Thread {
 				final ModuleInfo mi = new ModuleInfo(clazz, m);
 				this.modulesLocal.put(m, mi);
 				module = mi.instance;
-			} else
+			} else {
 				module = modul0;
+			}
 			try {
 				for (final Method method : module.getClass()
 						.getDeclaredMethods()) {
 					// old modules does not implement
 					// dependingModules(Set<String>)
 					if (method.getName().equals("dependingModules")
-							&& method.getParameterCount() == 1
-							&& method.getParameterTypes()[0] == Set.class) {
+							&& (method.getParameterCount() == 1)
+							&& (method.getParameterTypes()[0] == Set.class)) {
 						method.invoke(module, dl);
 						break;
 					}
@@ -618,8 +640,9 @@ public class MasterThread extends Thread {
 				continue;
 			}
 		}
-		for (final String m : dl)
+		for (final String m : dl) {
 			getModule(m);
+		}
 		dl.addAll(modules);
 		checkAvailibility(dl);
 		return modules;
@@ -748,20 +771,5 @@ public class MasterThread extends Thread {
 			e.printStackTrace();
 			this.io.handleException(ExceptionHandle.TERMINATE, e);
 		}
-	}
-
-	/**
-	 * notifies running instance that parsing
-	 * {@link stone.modules.Main#homeSetting} failed
-	 * 
-	 * @param parseError
-	 *            error message
-	 */
-	public void setParseError(
-			@SuppressWarnings("hiding") final ParseError parseError) {
-		synchronized (this) {
-			this.parseError = parseError;
-		}
-
 	}
 }

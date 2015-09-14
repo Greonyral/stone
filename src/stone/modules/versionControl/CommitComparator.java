@@ -112,11 +112,15 @@ public final class CommitComparator implements Comparator<RevCommit> {
 
 	/**
 	 * Creates a new comparator for commits
-	 * @param walk -
-	 * @param io -
+	 * 
+	 * @param walk
+	 *            -
+	 * @param io
+	 *            -
 	 * @return the creates instance
 	 */
-	public final static CommitComparator init(final RevWalk walk, final IOHandler io) {
+	public final static CommitComparator init(final RevWalk walk,
+			final IOHandler io) {
 		return new CommitComparator(walk, io);
 	}
 
@@ -151,12 +155,17 @@ public final class CommitComparator implements Comparator<RevCommit> {
 	}
 
 	/**
-	 * @param commitLocal one commit
-	 * @param commitRemote another commit
+	 * @param commitLocal
+	 *            one commit
+	 * @param commitRemote
+	 *            another commit
 	 * @return the latest commit in both trees of given commits
-	 * @throws MissingObjectException -
-	 * @throws IncorrectObjectTypeException -
-	 * @throws IOException -
+	 * @throws MissingObjectException
+	 *             -
+	 * @throws IncorrectObjectTypeException
+	 *             -
+	 * @throws IOException
+	 *             -
 	 */
 	public final RevCommit getParent(final RevCommit commitLocal,
 			final RevCommit commitRemote) throws MissingObjectException,

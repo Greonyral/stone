@@ -274,6 +274,11 @@ public final class VersionControl implements Module {
 				Main.VC_SECTION, Main.REPO_KEY, "band").split("/"));
 	}
 
+	@Override
+	public void dependingModules(final Set<String> set) {
+		return;
+	}
+
 	/**
 	 * 
 	 * @param source
@@ -450,11 +455,11 @@ public final class VersionControl implements Module {
 			} else {
 				Git git = null;
 				try {
-					io.startProgress(
+					this.io.startProgress(
 							"Opening git repo " + this.repoRoot.getFilename(),
 							-1);
 					git = Git.open(this.repoRoot.toFile());
-					io.endProgress("Checking git config");
+					this.io.endProgress("Checking git config");
 				} catch (final Exception e) {
 					if (!this.RESET.getValue()) {
 						this.io.printError("failed to open the repository",
@@ -495,8 +500,8 @@ public final class VersionControl implements Module {
 					}
 				} else if (this.EMAIL.value() == null) {
 					this.EMAIL.value("user@localhost");
-					if (!USE_SSH.getValue()) {
-						USERNAME.value("user");
+					if (!this.USE_SSH.getValue()) {
+						this.USERNAME.value("user");
 					}
 				}
 				final StoredConfig config = gitSession_band.getRepository()
@@ -534,20 +539,21 @@ public final class VersionControl implements Module {
 	 */
 	private final void checkForLocalChanges(final Git gitSession)
 			throws IOException, GitAPIException, InterruptedException {
-		io.startProgress("Checking repo for changes", -1);
+		this.io.startProgress("Checking repo for changes", -1);
 		boolean commit = false;
 		final Status status = gitSession.status().call();
 		stone.util.Debug.print("-----------\n" + "staged changes\n"
 				+ "modified : %s\n" + "untracked: %s\n" + "missing  : %s\n"
 				+ "===========\n" + "unstaged changes\n" + "added    : %s\n"
-				+ "changed  : %s\n" + "removed  : %s\n" + "-----------\n", status
-				.getModified().toString(), status.getUntracked().toString(),
-				status.getMissing().toString(), status.getAdded().toString(),
-				status.getChanged().toString(), status.getRemoved().toString());
+				+ "changed  : %s\n" + "removed  : %s\n" + "-----------\n",
+				status.getModified().toString(), status.getUntracked()
+						.toString(), status.getMissing().toString(), status
+						.getAdded().toString(), status.getChanged().toString(),
+				status.getRemoved().toString());
 		final DirCache cache = gitSession.getRepository().readDirCache();
 		final StagePlugin stage = new StagePlugin(status, cache,
 				this.COMMIT.getValue(), this.master);
-		io.endProgress("Opening stage GUI");
+		this.io.endProgress("Opening stage GUI");
 		this.io.handleGUIPlugin(stage);
 		if (stage.doCommit(gitSession, this)) {
 			final RevCommit commitRet = commit(gitSession);
@@ -580,7 +586,7 @@ public final class VersionControl implements Module {
 		if (!plugin.get()) {
 			return;
 		}
-		io.startProgress("Initializing repo", -1);
+		this.io.startProgress("Initializing repo", -1);
 		this.repoRoot.getParent().toFile().mkdirs();
 		try {
 			Git.init().setDirectory(this.repoRoot.toFile()).call();
@@ -1319,11 +1325,6 @@ public final class VersionControl implements Module {
 		} else {
 			this.io.printMessage(null, "Update completed succesully", true);
 		}
-		return COMMIT.getValue();
-	}
-
-	@Override
-	public void dependingModules(final Set<String> set) {
-		return;
+		return this.COMMIT.getValue();
 	}
 }

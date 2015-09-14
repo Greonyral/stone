@@ -18,8 +18,16 @@ import java.io.IOException;
 public class StringBuilder {
 
 	private final static int PATTERN_SIZE = 16;
-	private final static Clipboard clip = Toolkit.getDefaultToolkit()
-			.getSystemClipboard();
+	private final static Clipboard clip = getClipboard();
+
+
+	private final static Clipboard getClipboard() {
+		try {
+			return Toolkit.getDefaultToolkit().getSystemClipboard();
+		} catch (final Exception e) {
+			return null;
+		}
+	}
 
 	private final char[][] content = new char[2][4 * StringBuilder.PATTERN_SIZE];
 	private int head = StringBuilder.PATTERN_SIZE,
@@ -28,8 +36,8 @@ public class StringBuilder {
 	private int cIdxNext = 1;
 
 	/**
-	 * 
-	 */
+     *
+     */
 	public StringBuilder() {
 	}
 

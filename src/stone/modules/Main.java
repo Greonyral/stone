@@ -30,7 +30,7 @@ public class Main implements Module {
 	private static final int MAX_LENGTH_INFO = 80;
 
 
-	private static final int VERSION = 26;
+	private static final int VERSION = 27;
 
 	/**
 	 * The name to be used for naming the config-file and the title.
@@ -166,8 +166,9 @@ public class Main implements Module {
 
 	private static int format(final StringBuilder sb, final String s,
 			int lineLength) {
-		if (s.isEmpty())
+		if (s.isEmpty()) {
 			return 0;
+		}
 		int l = lineLength;
 		final String[] parts = s.split(" ");
 		boolean front = sb.length() != 0;
@@ -211,6 +212,13 @@ public class Main implements Module {
 	 * Creates a new instance providing the parsed entries of the config
 	 */
 	public Main() {
+	}
+
+	/** no use for main module */
+	@Override
+	@Deprecated
+	public final void dependingModules(final Set<String> set) {
+		throw new UnsupportedOperationException();
 	}
 
 	/**
@@ -400,10 +408,6 @@ public class Main implements Module {
 		workerRun.run();
 	}
 
-	void parseError(int lineN, final String lineS, final String lineSection) {
-			taskPool.getMaster().setParseError(new ParseError(lineN, lineS, lineSection));
-	}
-
 	/**
 	 * Sets the config entry to <i>value</i> with <i>key</i> in given
 	 * <i>section</i>
@@ -502,10 +506,8 @@ public class Main implements Module {
 
 	}
 
-	/** no use for main module */
-	@Override
-	@Deprecated
-	public final void dependingModules(final Set<String> set) {
-		throw new UnsupportedOperationException();
+	void parseError(int lineN, final String lineS, final String lineSection) {
+		this.taskPool.getMaster().setParseError(
+				new ParseError(lineN, lineS, lineSection));
 	}
 }

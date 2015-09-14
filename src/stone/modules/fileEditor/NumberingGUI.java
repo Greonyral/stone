@@ -38,11 +38,16 @@ public class NumberingGUI extends GUIPlugin {
 	private final IOHandler io;
 
 	/**
-	 * @param data -
-	 * @param io -
-	 * @param text displayed if {@link GUIPlugin#display(JPanel)} returns <i>false</i>
+	 * @param data
+	 *            -
+	 * @param io
+	 *            -
+	 * @param text
+	 *            displayed if {@link GUIPlugin#display(JPanel)} returns
+	 *            <i>false</i>
 	 */
-	public NumberingGUI(final SongChangeData data, @SuppressWarnings("hiding") final IOHandler io, final String text) {
+	public NumberingGUI(final SongChangeData data,
+			@SuppressWarnings("hiding") final IOHandler io, final String text) {
 		super(text);
 		this.indices = data.getIndices();
 		this.titles = data.getTitles();

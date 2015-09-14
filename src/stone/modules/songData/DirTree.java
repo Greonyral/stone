@@ -44,58 +44,9 @@ public final class DirTree {
 	}
 
 	/**
-	 * @param path
-	 *            directory
-	 * @return a set of directory located directly within <i>path</i>
-	 */
-	public final Set<String> getDirs(final Path path) {
-		return walkTo(path).directories.keySet();
-	}
-
-	/**
-	 * @param path
-	 *            directory
-	 * @return a set of regular files located directly within <i>path</i>
-	 */
-	public final Set<String> getFiles(final Path path) {
-		return walkTo(path).files.keySet();
-	}
-
-	private final void add(final SongDataEntry songdata) {
-		final Path path = songdata.getPath();
-		final DirTree t = walkTo(path.getParent());
-		if (t == null) {
-			return;
-		}
-		synchronized (t) {
-			final SongDataEntry sd = t.files.get(path.getFilename());
-			if (sd == null) {
-				t.files.put(path.getFilename(), songdata);
-			} else if (sd.getLastModification() < songdata
-					.getLastModification()) {
-				t.files.put(path.getFilename(), songdata);
-			} else {
-				synchronized (AbtractEoWInAbc.messages) {
-					AbtractEoWInAbc.messages.remove(path);
-				}
-				return;
-			}
-		}
-		for (DirTree tree = t; tree != null; tree = tree.parent) {
-			tree.size.incrementAndGet();
-		}
-	}
-
-	final Path buildPath() {
-		if (this.parent == null) {
-			return this.base;
-		}
-		return this.parent.buildPath().resolve(this.name);
-	}
-
-	/**
 	 * 
-	 * @return {@link Iterator} iterating over all directories containing at least one stored regular file
+	 * @return {@link Iterator} iterating over all directories containing at
+	 *         least one stored regular file
 	 */
 	public final Iterator<Path> dirsIterator() {
 		return new Iterator<Path>() {
@@ -212,9 +163,22 @@ public final class DirTree {
 		}
 	}
 
-	final int[] getCountIn(final Path path) {
-		final DirTree target = walkTo(path);
-		return new int[] { target.directories.size(), target.files.size() };
+	/**
+	 * @param path
+	 *            directory
+	 * @return a set of directory located directly within <i>path</i>
+	 */
+	public final Set<String> getDirs(final Path path) {
+		return walkTo(path).directories.keySet();
+	}
+
+	/**
+	 * @param path
+	 *            directory
+	 * @return a set of regular files located directly within <i>path</i>
+	 */
+	public final Set<String> getFiles(final Path path) {
+		return walkTo(path).files.keySet();
 	}
 
 	/**
@@ -234,6 +198,43 @@ public final class DirTree {
 			return this.parent.getRoot();
 		}
 		return this.base;
+	}
+
+	private final void add(final SongDataEntry songdata) {
+		final Path path = songdata.getPath();
+		final DirTree t = walkTo(path.getParent());
+		if (t == null) {
+			return;
+		}
+		synchronized (t) {
+			final SongDataEntry sd = t.files.get(path.getFilename());
+			if (sd == null) {
+				t.files.put(path.getFilename(), songdata);
+			} else if (sd.getLastModification() < songdata
+					.getLastModification()) {
+				t.files.put(path.getFilename(), songdata);
+			} else {
+				synchronized (AbtractEoWInAbc.messages) {
+					AbtractEoWInAbc.messages.remove(path);
+				}
+				return;
+			}
+		}
+		for (DirTree tree = t; tree != null; tree = tree.parent) {
+			tree.size.incrementAndGet();
+		}
+	}
+
+	final Path buildPath() {
+		if (this.parent == null) {
+			return this.base;
+		}
+		return this.parent.buildPath().resolve(this.name);
+	}
+
+	final int[] getCountIn(final Path path) {
+		final DirTree target = walkTo(path);
+		return new int[] { target.directories.size(), target.files.size() };
 	}
 
 	final void put(final SongDataEntry songData) {

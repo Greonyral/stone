@@ -34,7 +34,8 @@ public class SongDataEntry {
 	}
 
 	@SuppressWarnings("hiding")
-	SongDataEntry(final Path song, final TreeMap<Integer, String> voices, long mod) {
+	SongDataEntry(final Path song, final TreeMap<Integer, String> voices,
+			long mod) {
 		this.song = song;
 		this.sortedVoices = voices;
 		this.mod = mod;
@@ -57,8 +58,10 @@ public class SongDataEntry {
 
 	/**
 	 * 
-	 * @param sdd the encoder to use
-	 * @throws IOException if an I/O-Error occurs
+	 * @param sdd
+	 *            the encoder to use
+	 * @throws IOException
+	 *             if an I/O-Error occurs
 	 */
 	public void serialize(final MTDeserializer sdd) throws IOException {
 		final SerializeConainer sc = sdd.createSerializeConainer();
@@ -66,19 +69,10 @@ public class SongDataEntry {
 	}
 
 	/**
-	 * @return the voices of this song
-	 */
-	public final Map<Integer, String> voices() {
-		return this.sortedVoices;
-	}
-
-	final void setLastModification(final Path file) {
-		this.mod = file.toFile().lastModified();
-	}
-
-	/**
 	 * Encodes this entry to a format use for the Songbook plugin by Chiran
-	 * @return string usable in SongbookData.plugindata for the Songbook plugin by Chiran
+	 * 
+	 * @return string usable in SongbookData.plugindata for the Songbook plugin
+	 *         by Chiran
 	 */
 	public final String toPluginData() {
 		int voiceIdx = 0;
@@ -112,5 +106,16 @@ public class SongDataEntry {
 		sb.append("\t\t\t\t}\r\n");
 		sb.append("\t\t\t}\r\n");
 		return sb.toString();
+	}
+
+	/**
+	 * @return the voices of this song
+	 */
+	public final Map<Integer, String> voices() {
+		return this.sortedVoices;
+	}
+
+	final void setLastModification(final Path file) {
+		this.mod = file.toFile().lastModified();
 	}
 }

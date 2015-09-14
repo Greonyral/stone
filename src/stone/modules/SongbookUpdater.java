@@ -68,6 +68,11 @@ public final class SongbookUpdater implements Module {
 		this.master = sc.getMaster();
 	}
 
+	@Override
+	public final void dependingModules(final Set<String> set) {
+		set.add("SongData");
+	}
+
 	/** */
 	@Override
 	public final List<Option> getOptions() {
@@ -122,7 +127,8 @@ public final class SongbookUpdater implements Module {
 			return;
 		}
 		final long start = System.currentTimeMillis();
-		master.getModule("SongData").run(); // search songs and create entries
+		this.master.getModule("SongData").run(); // search songs and create
+													// entries
 		final long end = System.currentTimeMillis();
 		updateSongbookData(end - start);
 	}
@@ -136,7 +142,7 @@ public final class SongbookUpdater implements Module {
 		 */
 		final long start = System.currentTimeMillis();
 		final Set<String> profiles = new HashSet<>();
-		final stone.modules.SongData data = (stone.modules.SongData) master
+		final stone.modules.SongData data = (stone.modules.SongData) this.master
 				.getModule("SongData");
 
 		if (!this.pluginDataPath.exists()) {
@@ -210,18 +216,25 @@ public final class SongbookUpdater implements Module {
 		final Iterator<String> profilesIter = profiles.iterator();
 		while (profilesIter.hasNext()) {
 			final String profile = profilesIter.next();
-			this.io.setProgressTitle("Copying Songbook.plugindata to " + profile);
-			final stone.util.Path targetP = this.pluginDataPath.resolve(profile)
-					.resolve("AllServers").resolve("SongbookData.plugindata");
+			this.io.setProgressTitle("Copying Songbook.plugindata to "
+					+ profile);
+			final stone.util.Path targetP = this.pluginDataPath
+					.resolve(profile).resolve("AllServers")
+					.resolve("SongbookData.plugindata");
 			final File target = targetP.toFile();
-			Debug.print("Copying songbook.plugindata to %s\n", target.toString());
+			Debug.print("Copying songbook.plugindata to %s\n",
+					target.toString());
 			if (!target.exists()) {
 				try {
 					target.getParentFile().mkdirs();
 					target.createNewFile();
 				} catch (final IOException e) {
-					Debug.print("Failed to create %s\n%s", target.getAbsolutePath(), e.getLocalizedMessage());
-					this.io.printMessage("Update for " + profile + " failed", Main.formatMaxLength(targetP.getParent(), targetP.getFilename(), "Failed to create", "\nSee the log for more details"), true);
+					Debug.print("Failed to create %s\n%s",
+							target.getAbsolutePath(), e.getLocalizedMessage());
+					this.io.printMessage("Update for " + profile + " failed",
+							Main.formatMaxLength(targetP.getParent(),
+									targetP.getFilename(), "Failed to create",
+									"\nSee the log for more details"), true);
 					this.io.updateProgress();
 					continue;
 				}
@@ -234,15 +247,19 @@ public final class SongbookUpdater implements Module {
 		masterPluginData.delete();
 		this.io.endProgress("");
 		final long end = System.currentTimeMillis();
-		Debug.print("\nneeded %s for searching for songs and updating songbook for %d profiles with %d %s",
-				stone.util.Time.delta(durationSearch + end - start), profiles.size(), data.size(), data.size() == 1 ? "song" : "songs");
+		Debug.print(
+				"\nneeded %s for searching for songs and updating songbook for %d profiles with %d %s",
+				stone.util.Time.delta((durationSearch + end) - start), profiles
+						.size(), data.size(), data.size() == 1 ? "song"
+						: "songs");
 		if (Config.getInstance().getValue("mainClass").equals("Main_susa")) {
 			this.io.printMessage(null,
 					"Update of your songbook is complete.\nAvailable songs: "
 							+ data.size(), false);
-			synchronized(master) {
+			synchronized (this.master) {
 				try {
-					master.wait(java.util.concurrent.TimeUnit.MINUTES.toMillis(5));
+					this.master.wait(java.util.concurrent.TimeUnit.MINUTES
+							.toMillis(5));
 				} catch (final InterruptedException e) {
 					// no relevance
 				}
@@ -253,10 +270,5 @@ public final class SongbookUpdater implements Module {
 							+ data.size(), true);
 			Debug.print("\n");
 		}
-	}
-
-	@Override
-	public final void dependingModules(final Set<String> set) {
-		set.add("SongData");
 	}
 }

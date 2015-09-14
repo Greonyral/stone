@@ -364,11 +364,6 @@ public class AbcCreator implements Module,
 		this.main = sc.getMain();
 	}
 
-	@Override
-	public final void dependingModules(final Set<String> set) {
-		set.add("BruTE");
-	}
-
 	private AbcCreator(@SuppressWarnings("hiding") final AbcCreator abc,
 			final StartupContainer sc) {
 		this.io = abc.io;
@@ -460,6 +455,11 @@ public class AbcCreator implements Module,
 			}
 		}
 		return this.callResultOut;
+	}
+
+	@Override
+	public final void dependingModules(final Set<String> set) {
+		set.add("BruTE");
 	}
 
 	@Override
@@ -789,7 +789,8 @@ public class AbcCreator implements Module,
 			if (FileSystem.type == FileSystem.OSType.UNIX) {
 				if (!Path.getPath("~", ".wine").exists()) {
 					System.err.println("unable to run \""
-							+ location.getFilename() + "\"\n~/.wine does not exist");
+							+ location.getFilename()
+							+ "\"\n~/.wine does not exist");
 					return -8;
 				}
 			}
@@ -839,9 +840,10 @@ public class AbcCreator implements Module,
 			@Override
 			public final String toString() {
 				for (int i = 0; i < 64; ++i) {
-					if (lines[i].contains("Problematic time slots")) {
-						Debug.print("%s\n%s\n", lines[i-1], lines[i]);
-						String line = lines[i];
+					if (this.lines[i].contains("Problematic time slots")) {
+						Debug.print("%s\n%s\n", this.lines[i - 1],
+								this.lines[i]);
+						final String line = this.lines[i];
 						final int start = line.indexOf(':') + 1;
 						final int end = line.indexOf('%') + 1;
 						return line.substring(start, end).trim() + " critical";
@@ -919,7 +921,7 @@ public class AbcCreator implements Module,
 			zipFile.close();
 		} catch (final IOException e) {
 			e.printStackTrace();
-			initState.setFailed();
+			this.initState.setFailed();
 		}
 	}
 
@@ -1003,21 +1005,22 @@ public class AbcCreator implements Module,
 		this.io.close(out);
 		final InputStream in = this.io.openIn(map.toFile());
 		final BufferedReader r = new BufferedReader(new InputStreamReader(in));
-		Debug.print("==== MAP BEGIN ====\n", midi.toString());
+		Debug.print("==== MAP BEGIN ====\n", this.midi.toString());
 		while (true) {
 			String line;
 			try {
 				line = r.readLine();
 			} catch (final IOException e) {
-				io.handleException(ExceptionHandle.SUPPRESS, e);
+				this.io.handleException(ExceptionHandle.SUPPRESS, e);
 				break;
 			}
-			if (line == null)
+			if (line == null) {
 				break;
+			}
 			Debug.print("%s\n", line);
 		}
-		io.close(in);
-		Debug.print("\n==== MAP  END ====\n\n", midi.toString());
+		this.io.close(in);
+		Debug.print("\n==== MAP  END ====\n\n", this.midi.toString());
 		return empty ? null : map;
 	}
 
@@ -1175,17 +1178,19 @@ public class AbcCreator implements Module,
 			try {
 				out = this.io.openOut(file);
 				boolean hiddenProgress = false;
-				if (initState.io == null)
+				if (this.initState.io == null) {
 					hiddenProgress = true;
-				else
-					out.registerProgress(initState.io);
+				} else {
+					out.registerProgress(this.initState.io);
+				}
 				try {
 					this.io.write(zipFile.getInputStream(jarEntry), out);
 				} finally {
 					this.io.close(out);
 				}
-				if (hiddenProgress)
-					initState.progress((int) file.length());
+				if (hiddenProgress) {
+					this.initState.progress((int) file.length());
+				}
 			} catch (final IOException e) {
 				this.initState.setFailed();
 				this.bruteDir.delete();
@@ -1310,31 +1315,34 @@ public class AbcCreator implements Module,
 	 * Copies all BruTE into current directory
 	 */
 	final boolean init() throws IOException {
-		final Path version = bruteDir.resolve("VERSION");
+		final Path version = this.bruteDir.resolve("VERSION");
 		boolean unpack = false;
-		if (!version.exists())
+		if (!version.exists()) {
 			unpack = true;
-		else {
-			final InputStream inVersion = io.openIn(version.toFile());
+		} else {
+			final InputStream inVersion = this.io.openIn(version.toFile());
 			final byte[] buffer = new byte[4];
-			if (inVersion.read(buffer) != 4)
+			if (inVersion.read(buffer) != 4) {
 				unpack = true;
-			else {
+			} else {
 				final int existingVersion = ByteBuffer.wrap(buffer).getInt();
-				if (master.getModule("BruTE").getVersion() != existingVersion)
+				if (this.master.getModule("BruTE").getVersion() != existingVersion) {
 					unpack = true;
+				}
 			}
-			io.close(inVersion);
+			this.io.close(inVersion);
 		}
 		if (unpack) {
-			if (!bruteDir.exists())
-				bruteDir.toFile().mkdir();
-			else
-				for (final String s : bruteDir.toFile().list())
-					bruteDir.resolve(s).delete();
+			if (!this.bruteDir.exists()) {
+				this.bruteDir.toFile().mkdir();
+			} else {
+				for (final String s : this.bruteDir.toFile().list()) {
+					this.bruteDir.resolve(s).delete();
+				}
+			}
 
-			initState.startPhase(InitState.READ_JAR);
-			final OutputStream outVersion = io.openOut(version.toFile());
+			this.initState.startPhase(InitState.READ_JAR);
+			final OutputStream outVersion = this.io.openOut(version.toFile());
 			final Path jar = StartupContainer.getDatadirectory().resolve(
 					"BruTE.jar");
 			final JarFile jarFile = new JarFile(jar.toFile());
@@ -1348,29 +1356,31 @@ public class AbcCreator implements Module,
 					size += e.getSize();
 				}
 			}
-			initState.startPhase(InitState.UNPACK_JAR, size);
+			this.initState.startPhase(InitState.UNPACK_JAR, size);
 			for (final JarEntry entry : entriesToExtract) {
-				final Path target = bruteDir.resolve(entry.getName()
+				final Path target = this.bruteDir.resolve(entry.getName()
 						.replace("brute/", "").split("/"));
-				final OutputStream out = io.openOut(target.toFile());
+				final OutputStream out = this.io.openOut(target.toFile());
 				@SuppressWarnings("hiding")
 				final IOHandler io;
-				if (initState.io != null) {
-					io = initState.io;
-				} else
+				if (this.initState.io != null) {
+					io = this.initState.io;
+				} else {
 					io = null;
+				}
 				out.registerProgress(io);
 				this.io.write(jarFile.getInputStream(entry), out);
-				if (io == null)
-					initState.progress((int) entry.getSize());
+				if (io == null) {
+					this.initState.progress((int) entry.getSize());
+				}
 			}
 			jarFile.close();
 
 			final byte[] buffer = new byte[4];
 			ByteBuffer.wrap(buffer).putInt(
-					master.getModule("BruTE").getVersion());
+					this.master.getModule("BruTE").getVersion());
 			outVersion.write(buffer);
-			io.close(outVersion);
+			this.io.close(outVersion);
 		}
 		return true;
 	}

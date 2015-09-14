@@ -6,9 +6,11 @@ import stone.util.Debug;
 import stone.util.Path;
 
 /**
- * A task to search recursively and compare file with found data by a {@link Deserializer}
+ * A task to search recursively and compare file with found data by a
+ * {@link Deserializer}
+ * 
  * @author Nelphindal
- *
+ * 
  */
 public class Crawler implements Runnable {
 
@@ -17,15 +19,17 @@ public class Crawler implements Runnable {
 
 	private final boolean terminated = false;
 	private final int offset;
-	
+
 	private final java.util.concurrent.atomic.AtomicInteger threads = new java.util.concurrent.atomic.AtomicInteger();
 
 	/**
 	 * Creates a new crealer
-	 * @param sdd instance of {@link Deserializer} to use 
+	 * 
+	 * @param sdd
+	 *            instance of {@link Deserializer} to use
 	 */
 	public Crawler(@SuppressWarnings("hiding") final Deserializer sdd) {
-		offset = sdd.getRoot().toString().length() + 1;
+		this.offset = sdd.getRoot().toString().length() + 1;
 		this.wl.add(sdd.getRoot());
 		this.sdd = sdd;
 	}
@@ -48,6 +52,7 @@ public class Crawler implements Runnable {
 
 	/**
 	 * Checks if all Crawlers terminated
+	 * 
 	 * @return <i>true</i> if crawling is done
 	 */
 	public final synchronized boolean terminated() {
@@ -92,7 +97,7 @@ public class Crawler implements Runnable {
 			}
 		} else if (path.toFile().isFile()
 				&& path.getFilename().endsWith(".abc")) {
-			Debug.print("found %s\n", path.toString().substring(offset));
+			Debug.print("found %s\n", path.toString().substring(this.offset));
 			synchronized (this.sdd) {
 				this.sdd.addToQueue(new ModEntry(path));
 				this.sdd.notifyAll();

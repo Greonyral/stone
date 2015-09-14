@@ -124,11 +124,12 @@ public class StagePlugin extends GUIPlugin {
 
 		public Integer length() {
 			int length = this.s.length() + 2;
-			if (encrypt)
+			if (this.encrypt) {
 				length += 2;
-			if (conflict > 0) {
+			}
+			if (this.conflict > 0) {
 				length += 2;
-				for (final String c : conflictFiles) {
+				for (final String c : this.conflictFiles) {
 					length += 6 + c.length();
 				}
 			}
@@ -149,7 +150,7 @@ public class StagePlugin extends GUIPlugin {
 				lines.append(" ");
 				lines.append(this.s);
 				lines.append("</font>");
-				for (final String c : conflictFiles) {
+				for (final String c : this.conflictFiles) {
 					lines.append("<br/><font color=white>XC </font>");
 					lines.append("<font bgcolor=orange>X");
 					lines.append(" ");
@@ -264,10 +265,297 @@ public class StagePlugin extends GUIPlugin {
 			if (s == null) {
 				return;
 			}
-			setEncrypt(s, encrypt);
+			setEncrypt(s, this.encrypt);
 			StagePlugin.this.left.setSelectionStart(0);
 			StagePlugin.this.left.setSelectionEnd(0);
 			updateLeftAndRight();
+		}
+	}
+
+	class StageActionRemoveListener implements MouseListener {
+
+		@Override
+		public void mouseClicked(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseEntered(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseExited(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mousePressed(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseReleased(final MouseEvent e) {
+			e.consume();
+			final String s = StagePlugin.this.right.getSelectedText();
+			if (s == null) {
+				return;
+			}
+			final String[] files = setEncrypt(s, false);
+			final Set<String> done = new HashSet<>();
+			for (int i = 1; i < files.length; i++) {
+				final String file = files[i];
+				if (done.add(file)) {
+					final ChangedFile f = StagePlugin.this.stagedFiles
+							.remove(file);
+					if (f == null) {
+						throw new NullPointerException();
+					}
+					StagePlugin.this.unstagedFiles.put(file, f);
+				}
+			}
+			StagePlugin.this.right.setSelectionStart(0);
+			StagePlugin.this.right.setSelectionEnd(0);
+			updateLeftAndRight();
+		}
+	}
+
+	class StageMouseListener implements MouseListener {
+
+		final int h;
+		final Map<Integer, Integer> offset;
+		final JEditorPane c;
+
+
+		@SuppressWarnings("hiding")
+		StageMouseListener(final JEditorPane c,
+				final Map<Integer, Integer> offset) {
+			this.h = c.getFontMetrics(c.getFont()).getHeight() + 2;
+			this.c = c;
+			this.offset = offset;
+		}
+
+		@Override
+		public void mouseClicked(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseEntered(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseExited(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mousePressed(final MouseEvent e) {
+			e.consume();
+		}
+
+		@Override
+		public void mouseReleased(final MouseEvent e) {
+			e.consume();
+			final int y = e.getPoint().y;
+			@SuppressWarnings("hiding")
+			final int offset = y / this.h;
+			int start = getStart(offset);
+			if (start < 0) {
+				this.c.setSelectionStart(y);
+				this.c.setSelectionEnd(y);
+				this.c.revalidate();
+				return;
+			}
+			int end;
+			for (int i = offset + 1; true; ++i) {
+				end = getStart(i);
+				if ((end != start) || (end < 0)) {
+					break;
+				}
+			}
+			if (end < 0) {
+				end = start - end;
+			}
+			if (this.c.getSelectionEnd() != this.c.getSelectionStart()) {
+				// normalize to start and end of line
+				start = Math.min(this.c.getSelectionStart(), start);
+				int startL = 0, i = 0;
+				while (true) {
+					final int s = getStart(i);
+					if (s > start) {
+						--i;
+						break;
+					}
+					startL = s;
+					++i;
+				}
+				start = startL;
+				int endL = this.c.getSelectionEnd();
+				if (endL > end) {
+					while (true) {
+						int s = getStart(i + 1);
+						if (s < 0) {
+							s = getStart(i - 1) - s;
+							break;
+						}
+						endL = s;
+						if (s > this.c.getSelectionEnd()) {
+							break;
+						}
+						++i;
+					}
+					end = endL;
+				}
+			}
+			this.c.setSelectionStart(start + 1);
+			this.c.setSelectionEnd(end + 1);
+			this.c.revalidate();
+		}
+
+		private int getStart(int line) {
+			@SuppressWarnings("hiding")
+			int offset = 0;
+			final Iterator<Map.Entry<Integer, Integer>> iter = this.offset
+					.entrySet().iterator();
+			while (--line >= 0) {
+				if (!iter.hasNext()) {
+					return -offset;
+				}
+				final Map.Entry<Integer, Integer> next = iter.next();
+				line -= next.getValue();
+				if (line < 0) {
+					break;
+				}
+				offset += next.getKey() + 1;
+			}
+			return offset;
+		}
+	}
+
+	private final Map<Integer, Integer> offsetLeft = new LinkedMap<>();
+
+	private final Map<Integer, Integer> offsetRight = new LinkedMap<>();
+
+	private final TreeMap<String, ChangedFile> unstagedFiles = new TreeMap<>();
+
+	private final TreeMap<String, ChangedFile> stagedFiles = new TreeMap<>();
+
+	private final JEditorPane left = new JEditorPane();
+
+	private final JEditorPane right = new JEditorPane();
+
+	private final MasterThread master;
+
+	private final Status status;
+	// unstaged files
+	private final Set<String> untracked = new HashSet<>();
+
+	private final Set<String> modified = new HashSet<>();
+	private final Set<String> missing = new HashSet<>();
+	// staged files
+	private final Set<String> added = new HashSet<>();
+	private final Set<String> changed = new HashSet<>();
+	private final Set<String> removed = new HashSet<>();
+	private boolean commit;
+
+	private final DirCache cache;
+
+	private final Map<String, String> checkedInFiles = new HashMap<>();
+
+	/**
+	 * Creates a new instance of {@link StagePlugin}.
+	 * 
+	 * @param status
+	 *            status of git repository
+	 * @param cache
+	 *            dir cache of git repository
+	 * @param commit
+	 *            <i>true</i> if commit shall be performed
+	 * @param master
+	 *            the master thread to check on interruption
+	 */
+	@SuppressWarnings("hiding")
+	public StagePlugin(final Status status, final DirCache cache,
+			boolean commit, final MasterThread master) {
+		super("");
+		this.commit = commit;
+		this.status = status;
+		this.master = master;
+		this.cache = cache;
+		this.left.setEditable(false);
+		this.right.setEditable(false);
+	}
+
+	/**
+	 * 
+	 * @param gitSession
+	 *            -
+	 * @param vc
+	 *            -
+	 * @return <i>true</i> if a commit shall be done
+	 */
+	public boolean doCommit(final Git gitSession, final VersionControl vc) {
+		try {
+			if (this.master.isInterrupted()) {
+				return false;
+			}
+			if (this.commit) {
+				for (final ChangedFile f : this.unstagedFiles.values()) {
+					if (!(this.untracked.remove(f.s)
+							|| this.missing.remove(f.s) || this.modified
+								.remove(f.s))) {
+						;
+						Debug.print("Rolling back %s\n", f.s);
+						gitSession.reset().setRef("HEAD").addPath(f.s).call();
+					}
+				}
+				for (final ChangedFile f : this.stagedFiles.values()) {
+					if (this.untracked.remove(f.s) || this.missing.remove(f.s)
+							|| this.modified.remove(f.s)) {
+						if (f.removed) {
+							if (f.changeTypeC == 'C') {
+								gitSession.rm().addFilepattern(f.s)
+										.setCached(true).call();
+							}
+							gitSession.rm().addFilepattern(f.s).call();
+						} else {
+							if (f.encrypt) {
+								final String encrypted = vc.encrypt(f.s, null,
+										true);
+								if (encrypted == null) {
+									return false;
+								}
+								gitSession.add().addFilepattern(encrypted)
+										.call();
+							} else {
+								gitSession.add().addFilepattern(f.s).call();
+							}
+						}
+					}
+				}
+			}
+			if (this.commit && this.stagedFiles.isEmpty()) {
+				Debug.print("\nStage clean.\nNo files to commit\n\n");
+			}
+			return this.commit && !this.stagedFiles.isEmpty();
+		} catch (final Exception e) {
+			return false;
+		}
+	}
+
+	private void readCache() {
+		final int nEntries = this.cache.getEntryCount();
+
+		for (int i = 0; i < nEntries; ++i) {
+			final String pathS = this.cache.getEntry(i).getPathString();
+			final int offset = pathS.lastIndexOf('/');
+			if (offset < 0) {
+				this.checkedInFiles.put(pathS, pathS);
+			} else {
+				this.checkedInFiles.put(pathS, pathS.substring(offset + 1));
+			}
 		}
 	}
 
@@ -371,269 +659,36 @@ public class StagePlugin extends GUIPlugin {
 		return files;
 	}
 
-	class StageActionRemoveListener implements MouseListener {
-
-		@Override
-		public void mouseClicked(final MouseEvent e) {
-			e.consume();
+	private void testConflict(final ChangedFile c) {
+		if (this.checkedInFiles.isEmpty()) {
+			readCache();
 		}
-
-		@Override
-		public void mouseEntered(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mouseExited(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mousePressed(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mouseReleased(final MouseEvent e) {
-			e.consume();
-			final String s = StagePlugin.this.right.getSelectedText();
-			if (s == null) {
-				return;
+		final String filename;
+		{
+			final int offset = c.s.lastIndexOf('/');
+			if (offset < 0) {
+				filename = c.s;
+			} else {
+				filename = c.s.substring(offset + 1);
 			}
-			final String[] files = setEncrypt(s, false);
-			final Set<String> done = new HashSet<>();
-			for (int i = 1; i < files.length; i++) {
-				final String file = files[i];
-				if (done.add(file)) {
-					final ChangedFile f = StagePlugin.this.stagedFiles
-							.remove(file);
-					if (f == null) {
-						throw new NullPointerException();
-					}
-					StagePlugin.this.unstagedFiles.put(file, f);
+		}
+		final String filenameRemove = this.checkedInFiles.remove(c.s);
+
+		final Collection<String> filenames = this.checkedInFiles.values();
+		if (filenames.contains(filename)) {
+			int files = 0;
+			for (final Map.Entry<String, String> e : this.checkedInFiles
+					.entrySet()) {
+				if (e.getValue().equals(filename)) {
+					c.conflictFiles.add(e.getKey());
+					++files;
 				}
+
 			}
-			StagePlugin.this.right.setSelectionStart(0);
-			StagePlugin.this.right.setSelectionEnd(0);
-			updateLeftAndRight();
+			c.conflict = files;
 		}
-	}
-
-	class StageMouseListener implements MouseListener {
-
-		final int h;
-		final Map<Integer, Integer> offset;
-		final JEditorPane c;
-
-
-		@SuppressWarnings("hiding")
-		StageMouseListener(final JEditorPane c,
-				final Map<Integer, Integer> offset) {
-			this.h = c.getFontMetrics(c.getFont()).getHeight() + 2;
-			this.c = c;
-			this.offset = offset;
-		}
-
-		@Override
-		public void mouseClicked(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mouseEntered(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mouseExited(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mousePressed(final MouseEvent e) {
-			e.consume();
-		}
-
-		@Override
-		public void mouseReleased(final MouseEvent e) {
-			e.consume();
-			final int y = e.getPoint().y;
-			@SuppressWarnings("hiding")
-			final int offset = y / this.h;
-			int start = getStart(offset);
-			if (start < 0) {
-				this.c.setSelectionStart(y);
-				this.c.setSelectionEnd(y);
-				this.c.revalidate();
-				return;
-			}
-			int end;
-			for (int i = offset + 1; true; ++i) {
-				end = getStart(i);
-				if (end != start || end < 0)
-					break;
-			}
-			if (end < 0)
-				end = start - end;
-			if (this.c.getSelectionEnd() != this.c.getSelectionStart()) {
-				// normalize to start and end of line
-				start = Math.min(this.c.getSelectionStart(), start);
-				int startL = 0, i = 0;
-				while (true) {
-					final int s = getStart(i);
-					if (s > start) {
-						--i;
-						break;
-					}
-					startL = s;
-					++i;
-				}
-				start = startL;
-				int endL = this.c.getSelectionEnd();
-				if (endL > end) {
-					while (true) {
-						int s = getStart(i + 1);
-						if (s < 0) {
-							s = getStart(i - 1) - s;
-							break;
-						}
-						endL = s;
-						if (s > this.c.getSelectionEnd()) {
-							break;
-						}
-						++i;
-					}
-					end = endL;
-				}
-			}
-			this.c.setSelectionStart(start + 1);
-			this.c.setSelectionEnd(end + 1);
-			this.c.revalidate();
-		}
-
-		private int getStart(int line) {
-			@SuppressWarnings("hiding")
-			int offset = 0;
-			final Iterator<Map.Entry<Integer, Integer>> iter = this.offset
-					.entrySet().iterator();
-			while (--line >= 0) {
-				if (!iter.hasNext())
-					return -offset;
-				final Map.Entry<Integer, Integer> next = iter.next();
-				line -= next.getValue();
-				if (line < 0)
-					break;
-				offset += next.getKey() + 1;
-			}
-			return offset;
-		}
-	}
-
-	private final Map<Integer, Integer> offsetLeft = new LinkedMap<>();
-
-	private final Map<Integer, Integer> offsetRight = new LinkedMap<>();
-
-	private final TreeMap<String, ChangedFile> unstagedFiles = new TreeMap<>();
-
-	private final TreeMap<String, ChangedFile> stagedFiles = new TreeMap<>();
-
-	private final JEditorPane left = new JEditorPane();
-
-	private final JEditorPane right = new JEditorPane();
-
-	private final MasterThread master;
-	private final Status status;
-
-	// unstaged files
-	private final Set<String> untracked = new HashSet<>();
-	private final Set<String> modified = new HashSet<>();
-	private final Set<String> missing = new HashSet<>();
-	// staged files
-	private final Set<String> added = new HashSet<>();
-	private final Set<String> changed = new HashSet<>();
-	private final Set<String> removed = new HashSet<>();
-
-	private boolean commit;
-
-	private final DirCache cache;
-	private final Map<String, String> checkedInFiles = new HashMap<>();
-
-	/**
-	 * Creates a new instance of {@link StagePlugin}.
-	 * 
-	 * @param status
-	 *            status of git repository
-	 * @param cache
-	 *            dir cache of git repository
-	 * @param commit
-	 *            <i>true</i> if commit shall be performed
-	 * @param master
-	 *            the master thread to check on interruption
-	 */
-	@SuppressWarnings("hiding")
-	public StagePlugin(final Status status, final DirCache cache,
-			boolean commit, final MasterThread master) {
-		super("");
-		this.commit = commit;
-		this.status = status;
-		this.master = master;
-		this.cache = cache;
-		this.left.setEditable(false);
-		this.right.setEditable(false);
-	}
-
-	/**
-	 * 
-	 * @param gitSession
-	 *            -
-	 * @param vc
-	 *            -
-	 * @return <i>true</i> if a commit shall be done
-	 */
-	public boolean doCommit(final Git gitSession, final VersionControl vc) {
-		try {
-			if (this.master.isInterrupted()) {
-				return false;
-			}
-			if (this.commit) {
-				for (final ChangedFile f : this.unstagedFiles.values()) {
-					if (!(this.untracked.remove(f.s)
-							|| this.missing.remove(f.s) || this.modified
-								.remove(f.s))) {;
-						Debug.print("Rolling back %s\n", f.s);
-						gitSession.reset().setRef("HEAD").addPath(f.s).call();
-					}
-				}
-				for (final ChangedFile f : this.stagedFiles.values()) {
-					if (this.untracked.remove(f.s) || this.missing.remove(f.s)
-							|| this.modified.remove(f.s)) {
-						if (f.removed) {
-							if (f.changeTypeC == 'C') {
-								gitSession.rm().addFilepattern(f.s)
-										.setCached(true).call();
-							}
-							gitSession.rm().addFilepattern(f.s).call();
-						} else {
-							if (f.encrypt) {
-								final String encrypted = vc.encrypt(f.s, null,
-										true);
-								if (encrypted == null) {
-									return false;
-								}
-								gitSession.add().addFilepattern(encrypted)
-										.call();
-							} else {
-								gitSession.add().addFilepattern(f.s).call();
-							}
-						}
-					}
-				}
-			}
-			if (this.commit && this.stagedFiles.isEmpty())
-				Debug.print("\nStage clean.\nNo files to commit\n\n");
-			return this.commit && !this.stagedFiles.isEmpty();
-		} catch (final Exception e) {
-			return false;
+		if (filenameRemove != null) {
+			this.checkedInFiles.put(c.s, filenameRemove);
 		}
 	}
 
@@ -925,48 +980,6 @@ public class StagePlugin extends GUIPlugin {
 		panel.add(new JLabel("Performing changes - please wait"));
 		repack(new Dimension(140, 20));
 		return true;
-	}
-
-	private void testConflict(final ChangedFile c) {
-		if (checkedInFiles.isEmpty())
-			readCache();
-		final String filename;
-		{
-			final int offset = c.s.lastIndexOf('/');
-			if (offset < 0)
-				filename = c.s;
-			else
-				filename = c.s.substring(offset + 1);
-		}
-		final String filenameRemove = checkedInFiles.remove(c.s);
-
-		final Collection<String> filenames = checkedInFiles.values();
-		if (filenames.contains(filename)) {
-			int files = 0;
-			for (final Map.Entry<String, String> e : checkedInFiles.entrySet()) {
-				if (e.getValue().equals(filename)) {
-					c.conflictFiles.add(e.getKey());
-					++files;
-				}
-
-			}
-			c.conflict = files;
-		}
-		if (filenameRemove != null)
-			checkedInFiles.put(c.s, filenameRemove);
-	}
-
-	private void readCache() {
-		final int nEntries = cache.getEntryCount();
-
-		for (int i = 0; i < nEntries; ++i) {
-			final String pathS = cache.getEntry(i).getPathString();
-			final int offset = pathS.lastIndexOf('/');
-			if (offset < 0)
-				checkedInFiles.put(pathS, pathS);
-			else
-				checkedInFiles.put(pathS, pathS.substring(offset + 1));
-		}
 	}
 
 	@Override

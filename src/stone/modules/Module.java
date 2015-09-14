@@ -16,6 +16,14 @@ import stone.util.Option;
 public interface Module {
 
 	/**
+	 * Adds modules on which this module depends to given set
+	 * 
+	 * @param set
+	 *            {@link Set} to add dependent modules to
+	 */
+	void dependingModules(Set<String> set);
+
+	/**
 	 * @return a list of options needed to set by the user
 	 */
 	List<Option> getOptions();
@@ -40,10 +48,4 @@ public interface Module {
 	 * Executes this module
 	 */
 	void run();
-	
-	/**
-	 * Adds modules on which this module depends to given set 
-	 * @param set {@link Set} to add dependent modules to
-	 */
-	void dependingModules(Set<String> set);
 }

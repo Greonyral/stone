@@ -61,8 +61,11 @@ public class Flag {
 	 * @return last argument of {@link #parse(String[])}
 	 */
 	public final String[] getArgs() {
-		if (args == null) {
-			return new String[] {"-\b", getValue(stone.Main.UPDATE_ID) };
+		if (this.args == null) {
+			final String args = getValue(stone.Main.UPDATE_ID);
+			if (args == null)
+				return new String[0];
+			return new String[] { "-\b", args };
 		}
 		@SuppressWarnings("hiding")
 		final String[] args = new String[this.args.length + 2];
@@ -267,6 +270,8 @@ public class Flag {
 		this.dirty = false;
 		for (int i = 0, ci = -1; i < this.args.length; i++) {
 			final String id;
+            if (args[i] == null)
+                continue;
 			if ((ci < 0) && this.args[i].startsWith("--")) {
 				id = this.longToId.get(this.args[i].substring(2));
 			} else if ((ci < 0) && this.args[i].startsWith("-")) {

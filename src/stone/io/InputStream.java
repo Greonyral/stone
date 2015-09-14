@@ -12,7 +12,7 @@ import java.util.Queue;
 
 /**
  * A class for a BufferedInputStream reading from a file
- *
+ * 
  * @author Nelphindal
  */
 public class InputStream extends AbstractInputStream {
@@ -49,7 +49,7 @@ public class InputStream extends AbstractInputStream {
 
 	/**
 	 * Generates a new InputStream reading from given file
-	 *
+	 * 
 	 * @param file
 	 *            file to read from
 	 * @param cs
@@ -178,9 +178,12 @@ public class InputStream extends AbstractInputStream {
 	 * Registers an IO-Handler for managing a {@link ProgressMonitor} for
 	 * {@link #read()}
 	 * 
-	 * @param io {@link IOHandler} providing a instance of {@link ProgressMonitor} 
+	 * @param io
+	 *            {@link IOHandler} providing a instance of
+	 *            {@link ProgressMonitor}
 	 */
-	public final void registerProgressMonitor(@SuppressWarnings("hiding") final IOHandler io) {
+	public final void registerProgressMonitor(
+			@SuppressWarnings("hiding") final IOHandler io) {
 		this.io = io;
 		io.startProgress("Reading file", (int) this.file.length());
 	}
@@ -197,9 +200,11 @@ public class InputStream extends AbstractInputStream {
 	/**
 	 * Not supported
 	 * 
-	 * @param n ignored
+	 * @param n
+	 *            ignored
 	 * @return nothing, throws UnsupportedOperationException
-	 * @throws UnsupportedOperationException whenever called
+	 * @throws UnsupportedOperationException
+	 *             whenever called
 	 */
 	@Override
 	public final long skip(long n) {
@@ -251,7 +256,8 @@ public class InputStream extends AbstractInputStream {
 				this._length = 0;
 				return;
 			}
-			this.stream = new BufferedInputStream(new FileInputStream(this.file));
+			this.stream = new BufferedInputStream(
+					new FileInputStream(this.file));
 			fillBuff();
 			// remove byte order mark
 			if (this.cs.toString().equals("UTF-16")) {

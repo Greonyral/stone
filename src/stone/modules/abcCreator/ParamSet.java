@@ -51,6 +51,11 @@ final class ParamSet {
 	}
 
 	@Override
+	public int hashCode() {
+		return super.hashCode();
+	}
+
+	@Override
 	public final String toString() {
 		return this.params.entrySet().toString();
 	}
@@ -64,10 +69,5 @@ final class ParamSet {
 
 	final void put(final BruteParams<?> param, final String string) {
 		this.params.put(param, string);
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode();
 	}
 }

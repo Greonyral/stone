@@ -9,12 +9,12 @@ import java.util.Set;
 import stone.util.LinkedMap;
 
 
-
 /**
  * A representation of non static details of the program. The details are packed
  * into the archive as config.txt and parsed on startup.
+ * 
  * @author Nelphindal
- *
+ * 
  */
 public final class Config {
 
@@ -72,29 +72,33 @@ public final class Config {
 	}
 
 	/**
-	 * @param section of config file to return
+	 * @param section
+	 *            of config file to return
 	 * @return section of config file
 	 */
 	public Set<String> getSection(final String section) {
 		final Map<String, String> map = this.mapSKV.get(section);
 		final Set<String> set;
-		if (map == null)
+		if (map == null) {
 			set = java.util.Collections.emptySet();
-		else
+		} else {
 			set = map.keySet();
+		}
 		assert set != null;
 		return set;
-		
+
 	}
 
 	/**
-	 * @param key identifying key of main section to return
+	 * @param key
+	 *            identifying key of main section to return
 	 * @return corresponding value of config value
 	 */
 	public final String getValue(final String key) {
 		final String value = this.mapKV.get(key);
-		if (value == null)
+		if (value == null) {
 			return "";
+		}
 		return value;
 	}
 

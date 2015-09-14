@@ -62,14 +62,17 @@ public interface GUIInterface {
 
 	/**
 	 * Ends current progress
-	 * @param text message to displayed on ending
+	 * 
+	 * @param text
+	 *            message to displayed on ending
 	 */
 	void endProgress(String text);
 
 	/**
 	 * Displays the given options and allows to modify them
 	 * 
-	 * @param options to be displayed options
+	 * @param options
+	 *            to be displayed options
 	 */
 	void getOptions(Collection<Option> options);
 
@@ -111,7 +114,8 @@ public interface GUIInterface {
 	 * Displays a no default GUI operation with given plugin.
 	 * 
 	 * @param plugin
-	 * @param text message to display 
+	 * @param text
+	 *            message to display
 	 */
 	void runPlugin(GUIPlugin plugin);
 

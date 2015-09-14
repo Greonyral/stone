@@ -11,9 +11,12 @@ import stone.util.Path;
  * Interface for use in drag-and-drop-plugins
  * 
  * @author Nelphindal
- * @param <C> -
- * @param <D> -
- * @param <T> -
+ * @param <C>
+ *            -
+ * @param <D>
+ *            -
+ * @param <T>
+ *            -
  */
 public interface DndPluginCaller<C extends Container, D extends Container, T extends Container> {
 
@@ -47,7 +50,8 @@ public interface DndPluginCaller<C extends Container, D extends Container, T ext
 
 	/**
 	 * 
-	 * @param task run <i>task</i>
+	 * @param task
+	 *            run <i>task</i>
 	 */
 	public void exec(final Runnable task);
 
@@ -59,8 +63,10 @@ public interface DndPluginCaller<C extends Container, D extends Container, T ext
 	/**
 	 * Puts all parsed data into given container
 	 * 
-	 * @param mapToLoad -
-	 * @param container -
+	 * @param mapToLoad
+	 *            -
+	 * @param container
+	 *            -
 	 */
 	public void loadMap(File mapToLoad, LoadedMapEntry container);
 

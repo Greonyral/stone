@@ -65,6 +65,17 @@ public abstract class AbstractInputStream extends InputStream {
 	}
 
 	/**
+	 * Unsupported operation.
+	 * 
+	 * @param readlimit
+	 *            ignored
+	 */
+	@Override
+	public final synchronized void mark(int readlimit) {
+		return;
+	}
+
+	/**
 	 * Returns next byte in <i>this</i> stream.
 	 * 
 	 * @return next byte in <i>this</i> stream or -1 if there is no more byte
@@ -151,28 +162,23 @@ public abstract class AbstractInputStream extends InputStream {
 	public synchronized void reset() {
 		this._length = -1;
 	}
-	
-	/**
-	 * Unsupported operation.
-	 * @param readlimit ignored
-	 */
-	@Override
-	public final synchronized void mark(int readlimit) {
-		return;
-	}
 
 	/**
 	 * Fills {@link #_buffer} and sets {@link #_length} and {@link #_offset}
 	 * accordingly.
 	 * 
-	 * @throws IOException if accessing the underlying stream fails
+	 * @throws IOException
+	 *             if accessing the underlying stream fails
 	 */
 	protected abstract void fillBuff() throws IOException;
 
 	/**
 	 * Like {@link #fillBuff()} but uses given stream to fill the buffer.
-	 * @param stream {@link java.io.InputStream} to read from
-	 * @throws IOException if accessing the given stream fails
+	 * 
+	 * @param stream
+	 *            {@link java.io.InputStream} to read from
+	 * @throws IOException
+	 *             if accessing the given stream fails
 	 */
 	protected final void fillBuffByStream(final java.io.InputStream stream)
 			throws IOException {
@@ -194,9 +200,12 @@ public abstract class AbstractInputStream extends InputStream {
 	/**
 	 * Tries to read as many bytes as needed to fill given buffer.
 	 * 
-	 * @param buffer buffer to fill
-	 * @param offset start index of <i>buffer</i> to fill
-	 * @param length maximum number of bytes to fill into <i>buffer</i>
+	 * @param buffer
+	 *            buffer to fill
+	 * @param offset
+	 *            start index of <i>buffer</i> to fill
+	 * @param length
+	 *            maximum number of bytes to fill into <i>buffer</i>
 	 * @return numbers of bytes copied to <i>buffer</i>
 	 */
 	protected final int fillExternalBuffer(final byte[] buffer, int offset,

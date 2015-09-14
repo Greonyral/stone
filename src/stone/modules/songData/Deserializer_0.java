@@ -8,9 +8,7 @@ import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -190,9 +188,11 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 			Deserializer_0.this.io.setProgressSize(this.serialSongs);
 			for (final Map.Entry<String, AbstractInputStream> stream : streams
 					.entrySet()) {
-				if (!stream.getKey().equals(pathIdMap.getFilename()))
+				if (!stream.getKey().equals(
+						Deserializer_0.this.pathIdMap.getFilename())) {
 					Deserializer_0.this.streams.add(new DeserialTask(stream,
 							this));
+				}
 			}
 			Deserializer_0.this.streams.add(this.end);
 		}
@@ -322,21 +322,21 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 					directory.writeExternals(this);
 					idDir = getId(directory);
 				}
-				int idSong = Deserializer_0.this.id.incrementAndGet();
-				final Path outFile = idx.getParent().resolve(
-						String.format(format, idSong));
-				out = io.openOut(outFile.toFile());
+				final int idSong = Deserializer_0.this.id.incrementAndGet();
+				final Path outFile = Deserializer_0.this.idx.getParent()
+						.resolve(String.format(format, idSong));
+				this.out = this.io.openOut(outFile.toFile());
 				write(writeIntRE(idDir));
 				write(name);
 				writeMod(mod);
 				SongData.writeExternal(voices, this);
-				out.flush();
-				synchronized (files) {
-					files.add(outFile.toFile());
+				this.out.flush();
+				synchronized (Deserializer_0.this.files) {
+					Deserializer_0.this.files.add(outFile.toFile());
 				}
-				io.close(out);
+				this.io.close(this.out);
 			} catch (final InterruptedException e) {
-				io.handleException(ExceptionHandle.SUPPRESS, e);
+				this.io.handleException(ExceptionHandle.SUPPRESS, e);
 			}
 
 			// Path outFile;
@@ -454,14 +454,15 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 			int bytesEncoded = 1;
 			int j = i >> 7;
 			while (j != 0) {
-				if (++bytesEncoded == 4)
+				if (++bytesEncoded == 4) {
 					break;
+				}
 				j >>= 7;
 			}
 			j = i;
 			final byte[] bytes = new byte[bytesEncoded];
 			while (--bytesEncoded >= 0) {
-				bytes[bytesEncoded] = (byte) (hByte | mask & j);
+				bytes[bytesEncoded] = (byte) (hByte | (mask & j));
 				j >>= 7;
 				hByte = 0x80;
 			}
@@ -517,7 +518,7 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 
 	private final void clear(File[] files) {
 		final Path idxDir = this.idx.getParent();
-		for (File file : files) {
+		for (final File file : files) {
 			file.delete();
 		}
 		this.pathIdMap.delete();
@@ -531,8 +532,8 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 		final OutputStream out = this.io.openOut(versionFile);
 		this.io.write(out, (byte) 0);
 		this.io.close(out);
-		files.add(versionFile);
-		files.add(idx.toFile());
+		this.files.add(versionFile);
+		this.files.add(this.idx.toFile());
 		final File[] files = this.files.toArray(new File[this.files.size()]);
 		clear(files);
 	}
@@ -555,8 +556,8 @@ class Deserializer_0 extends Deserializer implements MTDeserializer {
 		final OutputStream out = this.io.openOut(versionFile);
 		this.io.write(out, (byte) 0);
 		this.io.close(out);
-		files.add(versionFile);
-		files.add(pathIdMap.toFile());
+		this.files.add(versionFile);
+		this.files.add(this.pathIdMap.toFile());
 		final File[] files = this.files.toArray(new File[this.files.size()]);
 		this.io.compress(this.idx.toFile(), files);
 		clear(files);

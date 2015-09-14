@@ -10,7 +10,9 @@ public interface KeyEventHandler {
 
 	/**
 	 * Tries to handle <i>event</i>.
-	 * @param event incomming key
+	 * 
+	 * @param event
+	 *            incomming key
 	 */
 	void handleKeyEvent(int event);
 }

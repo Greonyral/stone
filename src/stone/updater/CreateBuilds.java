@@ -23,7 +23,8 @@ public class CreateBuilds {
 	 * 
 	 * @param args
 	 *            ignored
-	 * @throws IOException -
+	 * @throws IOException
+	 *             -
 	 */
 	public final static void main(final String[] args) throws IOException {
 		final URL url = CreateBuilds.class.getClassLoader().getResource(
@@ -87,12 +88,12 @@ public class CreateBuilds {
 		}
 		final InputStream in = new FileInputStream(info.resolve("Main")
 				.toFile());
-		final OutputStream out0 = new FileOutputStream(info.resolve("Main_band")
-				.toFile());
-		final OutputStream out1 = new FileOutputStream(info.resolve("Main_susa")
-				.toFile());
+		final OutputStream out0 = new FileOutputStream(info
+				.resolve("Main_band").toFile());
+		final OutputStream out1 = new FileOutputStream(info
+				.resolve("Main_susa").toFile());
 		for (int i = 0; i < 4; i++) {
-			int inByte = in.read();
+			final int inByte = in.read();
 			out0.write(inByte);
 			out1.write(inByte);
 		}

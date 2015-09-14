@@ -354,8 +354,9 @@ public final class Path implements Comparable<Path>, Externalizable {
 			}
 			value <<= 7;
 			value += 0x7f & byteRead;
-			if ((byteRead & 0x80) == 0)
+			if ((byteRead & 0x80) == 0) {
 				break;
+			}
 		}
 		return Integer.valueOf(value);
 	}
@@ -625,7 +626,8 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @return the number of components of <i>this</i> path
 	 */
 	public final int getNameCount() {
-		return this.filename == null ? 0 : this.dirs == null ? 1 : this.dirs.length + 1;
+		return this.filename == null ? 0 : this.dirs == null ? 1
+				: this.dirs.length + 1;
 	}
 
 	/**

@@ -103,11 +103,16 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 	protected final JPanel panelLeft = new JPanel();
 
 	/**
-	 * @param caller -
-	 * @param taskPool -
-	 * @param parser -
-	 * @param targets -
-	 * @param io -
+	 * @param caller
+	 *            -
+	 * @param taskPool
+	 *            -
+	 * @param parser
+	 *            -
+	 * @param targets
+	 *            -
+	 * @param io
+	 *            -
 	 */
 	@SuppressWarnings("hiding")
 	protected DragAndDropPlugin(final DndPluginCaller<C, D, T> caller,
@@ -129,7 +134,8 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 	/**
 	 * Adds given target to the component created by {@link #initCenter(Map)}
 	 * 
-	 * @param target -
+	 * @param target
+	 *            -
 	 */
 	protected abstract void addToCenter(final DropTarget<C, D, T> target);
 
@@ -257,7 +263,8 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 	}
 
 	/**
-	 * @param initListLeft -
+	 * @param initListLeft
+	 *            -
 	 * @return component to be shown in the center
 	 */
 	protected abstract Component initCenter(
@@ -270,7 +277,8 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 	protected abstract Map<Integer, DragObject<C, D, T>> initInitListLeft();
 
 	/**
-	 * @param initListLeft -
+	 * @param initListLeft
+	 *            -
 	 * @return component to be shown to the left
 	 */
 	protected abstract Component initLeft(
@@ -279,7 +287,8 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 	/**
 	 * Handles everything needed to show given object
 	 * 
-	 * @param object -
+	 * @param object
+	 *            -
 	 */
 	protected abstract void initObject(final DragObject<C, D, T> object);
 
@@ -291,7 +300,8 @@ public abstract class DragAndDropPlugin<C extends Container, D extends Container
 	/**
 	 * Handles everything needed to show given target
 	 * 
-	 * @param target -
+	 * @param target
+	 *            -
 	 */
 	protected abstract void initTarget(final DropTarget<C, D, T> target);
 

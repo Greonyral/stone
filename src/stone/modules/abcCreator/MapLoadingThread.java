@@ -20,7 +20,9 @@ final class MapLoadingThread implements Runnable {
 	private final AbcMapPlugin abcMapPlugin;
 	private final File mapToLoad;
 
-	MapLoadingThread(@SuppressWarnings("hiding") final AbcMapPlugin abcMapPlugin, @SuppressWarnings("hiding") final File mapToLoad) {
+	MapLoadingThread(
+			@SuppressWarnings("hiding") final AbcMapPlugin abcMapPlugin,
+			@SuppressWarnings("hiding") final File mapToLoad) {
 		this.abcMapPlugin = abcMapPlugin;
 		this.mapToLoad = mapToLoad;
 	}
@@ -49,9 +51,10 @@ final class MapLoadingThread implements Runnable {
 					this.error = true;
 					return;
 				}
-				if (t != null)
-				MapLoadingThread.this.abcMapPlugin.link(t,
-						this.activeInstrument);
+				if (t != null) {
+					MapLoadingThread.this.abcMapPlugin.link(t,
+							this.activeInstrument);
+				}
 			}
 
 			@Override

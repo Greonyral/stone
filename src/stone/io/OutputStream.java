@@ -56,28 +56,32 @@ public class OutputStream extends FileOutputStream {
 	}
 
 	/**
+	 * 
+	 * @param io
+	 *            {@link IOHandler} to use for displaying progress, each read
+	 *            byte will progress by one
+	 */
+	public void registerProgress(@SuppressWarnings("hiding") final IOHandler io) {
+		this.io = io;
+	}
+
+	@Override
+	public void write(final byte[] b, int off, int len) throws IOException {
+		super.write(b, off, len);
+		if (this.io != null) {
+			this.io.updateProgress(len);
+		}
+	}
+
+	/**
 	 * Writes the encoded string
 	 * 
-	 * @param string {@link String} to write
+	 * @param string
+	 *            {@link String} to write
 	 * @throws IOException
 	 *             if an error occurs
 	 */
 	public final void write(final String string) throws IOException {
 		write(string.getBytes(this.cs));
-	}
-	
-	@Override
-	public void write(final byte[] b, int off, int len) throws IOException {
-		 super.write(b, off, len);
-		if (io != null)
-			io.updateProgress(len);
-	}
-	
-	/**
-	 * 
-	 * @param io {@link IOHandler} to use for displaying progress, each read byte will progress by one
-	 */
-	public void registerProgress(@SuppressWarnings("hiding") final IOHandler io) {
-		this.io = io;
 	}
 }

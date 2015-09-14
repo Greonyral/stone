@@ -33,11 +33,16 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 	final Set<Path> selection;
 
 	/**
-	 * @param fileEditor -
-	 * @param root -
-	 * @param text displayed if {@link GUIPlugin#display(JPanel)} returns false
+	 * @param fileEditor
+	 *            -
+	 * @param root
+	 *            -
+	 * @param text
+	 *            displayed if {@link GUIPlugin#display(JPanel)} returns false
 	 */
-	protected FileEditorPlugin(@SuppressWarnings("hiding") final FileEditor fileEditor, final Path root, final String text) {
+	protected FileEditorPlugin(
+			@SuppressWarnings("hiding") final FileEditor fileEditor,
+			final Path root, final String text) {
 		super(text);
 		this.fileEditor = fileEditor;
 		this.currentDir = this.base = root;

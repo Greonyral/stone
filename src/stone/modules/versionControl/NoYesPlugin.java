@@ -26,11 +26,17 @@ public class NoYesPlugin extends GUIPlugin {
 	protected final boolean progress;
 
 	/**
-	 * @param title -
-	 * @param message -
-	 * @param guiInterface -
-	 * @param progress -
-	 * @param text displayed if {@link GUIPlugin#display(JPanel)} returns <i>false</i>
+	 * @param title
+	 *            -
+	 * @param message
+	 *            -
+	 * @param guiInterface
+	 *            -
+	 * @param progress
+	 *            -
+	 * @param text
+	 *            displayed if {@link GUIPlugin#display(JPanel)} returns
+	 *            <i>false</i>
 	 */
 	@SuppressWarnings("hiding")
 	public NoYesPlugin(final String title, final String message,

@@ -87,7 +87,8 @@ public class PathOption extends Option {
 
 	/** */
 	@Override
-	public final void display(final JPanel panel, @SuppressWarnings("hiding") final KeyEventHandler key) {
+	public final void display(final JPanel panel,
+			@SuppressWarnings("hiding") final KeyEventHandler key) {
 		final JPanel mainPanel = new JPanel();
 		final JTextField textField = new JTextField();
 		final JScrollPane scrollPane = new JScrollPane(textField);

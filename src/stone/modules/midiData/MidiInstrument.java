@@ -224,12 +224,12 @@ public class MidiInstrument implements
 	/** */
 	public static final MidiInstrument CLARINET = new MidiInstrument("clarinet");
 
-	/** 
+	/**
 	 * maps basic harp
 	 */
 	public static final MidiInstrument HARP = new MidiInstrument("harp");
-	
-	/** 
+
+	/**
 	 * maps misty mountains harp
 	 */
 	public static final MidiInstrument HMISTY = new MidiInstrument("misty");
@@ -241,8 +241,8 @@ public class MidiInstrument implements
 	 * maps lute of ages
 	 */
 	public static final MidiInstrument LUTE = new MidiInstrument("lute");
-	
-	/** 
+
+	/**
 	 * maps basic lute
 	 */
 	public static final MidiInstrument LBASIC = new MidiInstrument("basic");
@@ -266,12 +266,12 @@ public class MidiInstrument implements
 	/** */
 	public static final MidiInstrument MOOR_COWBELL = new MidiInstrument(
 			"moor-cowbell");
-	
+
 	/*
 	 * to make createTargets() to work: no field except instruments may be
 	 * public
 	 */
-	
+
 	final int id;
 	final Set<String> paramKeys = new HashSet<>();
 
@@ -312,7 +312,8 @@ public class MidiInstrument implements
 	 * Returns the instrument matching best to given encoding of midi
 	 * instrument. <i>null</i> may be returned, if no general matching is made.
 	 * 
-	 * @param instrument encoded instrument
+	 * @param instrument
+	 *            encoded instrument
 	 * @return the instrument encoded by instrument
 	 */
 	public final static MidiInstrument get(final Byte instrument) {
@@ -323,8 +324,10 @@ public class MidiInstrument implements
 	 * Reads given map and sets the midi to abc map for instruments according to
 	 * the map.
 	 * 
-	 * @param mapFile -
-	 * @param io -
+	 * @param mapFile
+	 *            -
+	 * @param io
+	 *            -
 	 */
 	public final static void readMap(final Path mapFile, final IOHandler io) {
 		if (!mapFile.exists()) {
@@ -427,7 +430,8 @@ public class MidiInstrument implements
 	/**
 	 * Creates a new instrument
 	 * 
-	 * @param name -
+	 * @param name
+	 *            -
 	 */
 	protected MidiInstrument(@SuppressWarnings("hiding") final String name) {
 		this(name, new String[0]);
@@ -436,8 +440,10 @@ public class MidiInstrument implements
 	/**
 	 * Creates a new instrument
 	 * 
-	 * @param name -
-	 * @param params -
+	 * @param name
+	 *            -
+	 * @param params
+	 *            -
 	 */
 	@SuppressWarnings("hiding")
 	protected MidiInstrument(final String name, final String... params) {

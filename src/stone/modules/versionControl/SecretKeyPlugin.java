@@ -16,16 +16,11 @@ import stone.io.GUIPlugin;
  */
 public class SecretKeyPlugin extends GUIPlugin {
 
-	/** */
-	public SecretKeyPlugin() {
-		super("");
-	}
-
-
 	/**
 	 * Decodes <i>text</i> a hexdump to the according byte array
 	 * 
-	 * @param text string containing the key
+	 * @param text
+	 *            string containing the key
 	 * @return decoded text for use as key
 	 */
 	public final static byte[] decode(final String text) {
@@ -55,7 +50,13 @@ public class SecretKeyPlugin extends GUIPlugin {
 		return key;
 	}
 
+
 	private final JTextField textField = new JTextField();
+
+	/** */
+	public SecretKeyPlugin() {
+		super("");
+	}
 
 	/**
 	 * @return the bytes for the selected key

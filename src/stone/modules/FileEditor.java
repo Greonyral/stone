@@ -158,19 +158,26 @@ public class FileEditor implements Module {
 		this.SONG_SCHEME = FileEditor.createSongSchemeOption(sc
 				.getOptionContainer());
 		this.main = sc.getMain();
-		songdata = master.getModule("SongData");
+		this.songdata = this.master.getModule("SongData");
+	}
+
+	@Override
+	public final void dependingModules(final Set<String> set) {
+		set.add("SongData");
 	}
 
 	/**
-	 * @param currentDir currently processed directory
+	 * @param currentDir
+	 *            currently processed directory
 	 * @return directories at given directory
 	 */
 	public final String[] getDirs(final Path currentDir) {
-		return ((stone.modules.SongData) songdata).getDirs(currentDir);
+		return ((stone.modules.SongData) this.songdata).getDirs(currentDir);
 	}
 
 	/**
-	 * @param currentDir currently processed directory
+	 * @param currentDir
+	 *            currently processed directory
 	 * @return files at given directory
 	 */
 	public final String[] getFiles(final Path currentDir) {
@@ -217,16 +224,16 @@ public class FileEditor implements Module {
 		}
 		try {
 			if (this.UNIFORM_SONGS.getValue()) {
-				((SongData) songdata).fill();
+				((SongData) this.songdata).fill();
 				final FileEditorPlugin plugin = new UniformSongsGUI(this,
-						((SongData) songdata).getRoot(), "Applying");
+						((SongData) this.songdata).getRoot(), "Applying");
 				this.io.handleGUIPlugin(plugin);
 				uniformSongs(plugin.getSelection());
 			}
 			if (this.CHANGE_TITLE.getValue()) {
-				((SongData) songdata).fill();
+				((SongData) this.songdata).fill();
 				final FileEditorPlugin plugin = new ChangeTitleGUI(this,
-						((SongData) songdata).getRoot(), "Changing title");
+						((SongData) this.songdata).getRoot(), "Changing title");
 				this.io.handleGUIPlugin(plugin);
 				changeTitle(plugin.getSelection());
 			}
@@ -234,9 +241,9 @@ public class FileEditor implements Module {
 				return;
 			}
 			if (this.CHANGE_NUMBERING.getValue()) {
-				((SongData) songdata).fill();
+				((SongData) this.songdata).fill();
 				final FileEditorPlugin plugin = new ChangeNumberingGUI(this,
-						((SongData) songdata).getRoot(), "Editing file");
+						((SongData) this.songdata).getRoot(), "Editing file");
 				this.io.handleGUIPlugin(plugin);
 				changeNumbering(plugin.getSelection());
 			}
@@ -259,7 +266,8 @@ public class FileEditor implements Module {
 		final TreeSet<Path> selectionFiles = selectFilesOnly(selection);
 		for (final Path song : selectionFiles) {
 			final SongChangeData data = get(song);
-			final NumberingGUI plugin = new NumberingGUI(data, this.io, "Renumbering");
+			final NumberingGUI plugin = new NumberingGUI(data, this.io,
+					"Renumbering");
 			if (this.master.isInterrupted()) {
 				return;
 			}
@@ -279,7 +287,8 @@ public class FileEditor implements Module {
 			final SongChangeData scd = get(file);
 			final EditorPlugin plugin = new EditorPlugin(scd.getTitle(),
 					"Chance title of "
-							+ file.relativize(((SongData) songdata).getRoot()), "Changing title");
+							+ file.relativize(((SongData) this.songdata)
+									.getRoot()), "Changing title");
 			this.io.handleGUIPlugin(plugin);
 			scd.setTitle(plugin.get());
 		}
@@ -340,17 +349,17 @@ public class FileEditor implements Module {
 
 	}
 
+
 	private final SongChangeData get(final Path file) {
 		final SongChangeData change = this.changes.get(file);
 		if (change != null) {
 			return change;
 		}
 		final SongChangeData data = new SongChangeData(
-				((SongData) songdata).getVoices(file), this.main);
+				((SongData) this.songdata).getVoices(file), this.main);
 		this.changes.put(file, data);
 		return data;
 	}
-
 
 	private final NameScheme getNameScheme() throws InvalidNameSchemeException {
 		if (this.scheme == null) {
@@ -360,7 +369,7 @@ public class FileEditor implements Module {
 	}
 
 	private final void resetModDate() {
-		final Path repo = ((SongData) songdata).getRoot()
+		final Path repo = ((SongData) this.songdata).getRoot()
 				.resolve(
 						this.main.getConfigValue(Main.VC_SECTION,
 								Main.REPO_KEY, "band"));
@@ -403,13 +412,13 @@ public class FileEditor implements Module {
 		while (!queue.isEmpty()) {
 			final Path p = queue.remove();
 			if (p.toFile().isDirectory()) {
-				for (final String dir : ((SongData) songdata).getDirs(p)) {
+				for (final String dir : ((SongData) this.songdata).getDirs(p)) {
 					if (dir.equals("..")) {
 						continue;
 					}
 					queue.add(p.resolve(dir));
 				}
-				for (final String song : ((SongData) songdata).getSongs(p)) {
+				for (final String song : ((SongData) this.songdata).getSongs(p)) {
 					selectionFiles.add(p.resolve(song));
 				}
 			} else {
@@ -433,10 +442,5 @@ public class FileEditor implements Module {
 			this.io.updateProgress();
 		}
 		this.io.endProgress("name scheme applied");
-	}
-
-	@Override
-	public final void dependingModules(final Set<String> set) {
-		set.add("SongData");
 	}
 }

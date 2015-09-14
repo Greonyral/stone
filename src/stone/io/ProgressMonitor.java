@@ -65,7 +65,9 @@ public class ProgressMonitor {
 
 	/**
 	 * Ends the task
-	 * @param text passed to {@link GUIInterface#endProgress(String)}
+	 * 
+	 * @param text
+	 *            passed to {@link GUIInterface#endProgress(String)}
 	 */
 	public final void endProgress(final String text) {
 		if (this.init) {

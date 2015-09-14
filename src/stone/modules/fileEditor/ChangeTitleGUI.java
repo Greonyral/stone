@@ -12,11 +12,16 @@ import stone.util.Path;
 public final class ChangeTitleGUI extends FileEditorPlugin {
 
 	/**
-	 * @param fileEditor -
-	 * @param root -
-	 * @param text message displayed at end of plugin
+	 * @param fileEditor
+	 *            -
+	 * @param root
+	 *            -
+	 * @param text
+	 *            message displayed at end of plugin
 	 */
-	public ChangeTitleGUI(@SuppressWarnings("hiding") final FileEditor fileEditor, final Path root, final String text) {
+	public ChangeTitleGUI(
+			@SuppressWarnings("hiding") final FileEditor fileEditor,
+			final Path root, final String text) {
 		super(fileEditor, root, text);
 	}
 

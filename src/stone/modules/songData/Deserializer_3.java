@@ -49,6 +49,14 @@ class Deserializer_3 extends Deserializer {
 		}
 	}
 
+	/**
+	 * Not supported
+	 */
+	@Override
+	public Runnable getDeserialTask() {
+		return null;
+	}
+
 	private final void put(final ByteBuffer bb) {
 		final byte[] bArray = new byte[bb.position()];
 		System.arraycopy(bb.array(), 0, bArray, 0, bArray.length);
@@ -264,13 +272,5 @@ class Deserializer_3 extends Deserializer {
 			bb.put(Deserializer_3.SEPERATOR_EXT_3);
 		}
 		put(bb);
-	}
-
-	/**
-	 * Not supported
-	 */
-	@Override
-	public Runnable getDeserialTask() {
-		return null;
 	}
 }

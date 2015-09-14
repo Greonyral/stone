@@ -277,7 +277,7 @@ public class GUI implements GUIInterface {
 		this.mainFrame.getContentPane().removeAll();
 		this.mainFrame.add(panel);
 
-		waitForButton(wait.getText());
+		waitForButton(this.wait.getText());
 
 		return this.pressed;
 	}
@@ -503,7 +503,7 @@ public class GUI implements GUIInterface {
 		final Color oldFG = this.text.getForeground();
 		this.text.setBackground(Color.DARK_GRAY);
 		this.text.setForeground(Color.WHITE);
-		printMessageFunc(null, errorMessage, wait.getText());
+		printMessageFunc(null, errorMessage, this.wait.getText());
 		this.text.setBackground(oldBG);
 		this.text.setForeground(oldFG);
 	}
@@ -512,7 +512,7 @@ public class GUI implements GUIInterface {
 	@Override
 	public final void printMessage(final String title, final String message,
 			boolean toFront) {
-		printMessageFunc(title, message, toFront ? wait.getText() : null);
+		printMessageFunc(title, message, toFront ? this.wait.getText() : null);
 	}
 
 	/** */
@@ -652,10 +652,11 @@ public class GUI implements GUIInterface {
 				Button.class.notifyAll();
 			}
 		}
-		if (title == null)
+		if (title == null) {
 			Debug.print("\n%s", message);
-		else
+		} else {
 			Debug.print("#%s#\n%s", title, message);
+		}
 		this.mainFrame.getContentPane().removeAll();
 		this.text.setEditable(false);
 		this.text.setText(message);
@@ -673,7 +674,7 @@ public class GUI implements GUIInterface {
 				this.wait.setText("");
 			}
 			panel.add(this.wait, BorderLayout.NORTH);
-			mainFrame.add(Button.OK.getButton(), BorderLayout.SOUTH);
+			this.mainFrame.add(Button.OK.getButton(), BorderLayout.SOUTH);
 			this.mainFrame.pack();
 			final int height = scrollPane.getHeight();
 			if (height > 800) {

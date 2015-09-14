@@ -195,8 +195,10 @@ public class NameScheme {
 	final Map<Integer, String> indices = new HashMap<>();
 
 	/**
-	 * @param string -
-	 * @throws InvalidNameSchemeException if parsing <i>string</i> raises an error
+	 * @param string
+	 *            -
+	 * @throws InvalidNameSchemeException
+	 *             if parsing <i>string</i> raises an error
 	 */
 	public NameScheme(final String string) throws InvalidNameSchemeException {
 		int pos = 0;
@@ -282,7 +284,9 @@ public class NameScheme {
 
 	/**
 	 * Sets titles for each track
-	 * @param titles -
+	 * 
+	 * @param titles
+	 *            -
 	 */
 	public void title(final Map<Integer, String> titles) {
 		this.TITLE.value(titles);
@@ -290,6 +294,7 @@ public class NameScheme {
 
 	/**
 	 * Checks if uniform title is set
+	 * 
 	 * @return <i>true</i> if uniform title is set
 	 */
 	public boolean titleIsEmpty() {

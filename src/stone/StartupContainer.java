@@ -23,9 +23,20 @@ public class StartupContainer {
 	 * Only one instance shall exist at one time.
 	 * 
 	 * @return the new created instance.
+	 * @deprecated
 	 */
+	@Deprecated
 	public final static StartupContainer createInstance() {
-		return new StartupContainer();
+		return createInstance(new String[0]);
+	}
+
+	/**
+	 * Only one instance shall exist at one time.
+	 * 
+	 * @return the new created instance.
+	 */
+	public final static StartupContainer createInstance(final String[] args) {
+		return new StartupContainer(args);
 	}
 
 	/**
@@ -40,7 +51,8 @@ public class StartupContainer {
 	/**
 	 * Asks the ModuleLoader to load given module
 	 * 
-	 * @param module {@link Module} to load
+	 * @param module
+	 *            {@link Module} to load
 	 * @return the Class of loaded Module or <i> null</i> if the module could
 	 *         not been found.
 	 */
@@ -76,7 +88,7 @@ public class StartupContainer {
 
 	private int wait = 2;
 
-	
+
 	private static final ClassLoader loader = StartupContainer.class
 			.getClassLoader();
 
@@ -85,8 +97,11 @@ public class StartupContainer {
 
 	/**
 	 * Informs the module manager about downloaded archive.
-	 * @param downloadedArchive {@link Path} of downloaded archive
-	 * @param moduleName Name of containing {@link Module}
+	 * 
+	 * @param downloadedArchive
+	 *            {@link Path} of downloaded archive
+	 * @param moduleName
+	 *            Name of containing {@link Module}
 	 */
 	public final static void registerDownloadedModule(
 			final Path downloadedArchive, final String moduleName) {
@@ -98,8 +113,14 @@ public class StartupContainer {
 		}
 	}
 
-	private StartupContainer() {
-		this.io = new IOHandler(Main.TOOLNAME);
+	private StartupContainer(final String[] args) {
+		boolean disableGUI = false;
+		for (final String param : args) {
+			if ((param != null) && param.equals(stone.Main.NO_GUI_ID)) {
+				disableGUI = true;
+			}
+		}
+		this.io = new IOHandler(disableGUI ? null : Main.TOOLNAME);
 		boolean jar_ = false;
 		Path workingDirectory_ = null;
 		try {
@@ -124,9 +145,11 @@ public class StartupContainer {
 	}
 
 	/**
-	 * @param io {@link IOHandler} to use
+	 * @param io
+	 *            {@link IOHandler} to use
 	 */
-	public final void createFinalIO(@SuppressWarnings("hiding") final IOHandler io) {
+	public final void createFinalIO(
+			@SuppressWarnings("hiding") final IOHandler io) {
 		this.io = io;
 	}
 
@@ -144,7 +167,8 @@ public class StartupContainer {
 	 * Calling this method will provide the parsed command line arguments to any
 	 * module.
 	 * 
-	 * @param flags {@link Flag} to use
+	 * @param flags
+	 *            {@link Flag} to use
 	 */
 	public final void finishInit(@SuppressWarnings("hiding") final Flag flags) {
 		this.flags = flags;
@@ -208,16 +232,19 @@ public class StartupContainer {
 	/**
 	 * Sets the instance of the main-module.
 	 * 
-	 * @param main {@link Main} to use
+	 * @param main
+	 *            {@link Main} to use
 	 */
 	public final void setMain(@SuppressWarnings("hiding") final Main main) {
 		this.main = main;
 	}
 
 	/**
-	 * @param master {@link MasterThread} to use
+	 * @param master
+	 *            {@link MasterThread} to use
 	 */
-	public final void setMaster(@SuppressWarnings("hiding") final MasterThread master) {
+	public final void setMaster(
+			@SuppressWarnings("hiding") final MasterThread master) {
 		this.master = master;
 	}
 
@@ -263,6 +290,4 @@ public class StartupContainer {
 		}
 		return params;
 	}
-
-	
 }

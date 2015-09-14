@@ -537,7 +537,8 @@ public abstract class MidiParser {
 	/**
 	 * Creates a new Parser using giving implementation.
 	 * 
-	 * @param sc -
+	 * @param sc
+	 *            -
 	 * @return the selected parser
 	 */
 	public final static MidiParser createInstance(final StartupContainer sc) {
@@ -663,8 +664,10 @@ public abstract class MidiParser {
 	int trackLen;
 
 	/**
-	 * @param io -
-	 * @param master -
+	 * @param io
+	 *            -
+	 * @param master
+	 *            -
 	 */
 	@SuppressWarnings("hiding")
 	protected MidiParser(final IOHandler io, final MasterThread master) {
@@ -826,7 +829,8 @@ public abstract class MidiParser {
 	/**
 	 * Sets given midi to be parsed
 	 * 
-	 * @param midi -
+	 * @param midi
+	 *            -
 	 * @return <i>true</i> on success, <i>false</i> otherwise
 	 */
 	public final boolean setMidi(@SuppressWarnings("hiding") final Path midi) {
@@ -974,7 +978,8 @@ public abstract class MidiParser {
 	 * @param delta
 	 *            a time offset to prior event in milliseconds
 	 * @return the parsed event
-	 * @throws ParsingException -
+	 * @throws ParsingException
+	 *             -
 	 */
 	protected final MidiEvent createEvent(byte[] message, int delta)
 			throws ParsingException {
@@ -1008,7 +1013,8 @@ public abstract class MidiParser {
 	/**
 	 * Decodes the previously read midi-map
 	 * 
-	 * @throws DecodingException -
+	 * @throws DecodingException
+	 *             -
 	 */
 	protected abstract void decodeMidiMap() throws DecodingException;
 
@@ -1044,8 +1050,10 @@ public abstract class MidiParser {
 	 * Requests to delete and clear all cached data to prepare next parsing
 	 * routine
 	 * 
-	 * @param newMidi -
-	 * @throws Exception -
+	 * @param newMidi
+	 *            -
+	 * @throws Exception
+	 *             -
 	 */
 	protected abstract void prepareMidi(final Path newMidi) throws Exception;
 }

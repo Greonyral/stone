@@ -46,9 +46,11 @@ public final class ZippedInputStream extends AbstractInputStream {
 	/**
 	 * Not supported
 	 * 
-	 * @param n ignored
+	 * @param n
+	 *            ignored
 	 * @return nothing, throws UnsupportedOperationException
-	 * @throws UnsupportedOperationException any time this method is called
+	 * @throws UnsupportedOperationException
+	 *             any time this method is called
 	 */
 	@Override
 	public final long skip(long n) {

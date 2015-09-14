@@ -134,12 +134,16 @@ public abstract class Option {
 	/**
 	 * Uses given panel to display this option.
 	 * 
-	 * @param rootPanel the panel for displaying
-	 * @param activeGui instance of @{link GUIInterface} displaying <i>rootPanel</i>
-	 * @param key {@link KeyEventHandler} to process key strokes
+	 * @param rootPanel
+	 *            the panel for displaying
+	 * @param activeGui
+	 *            instance of @{link GUIInterface} displaying <i>rootPanel</i>
+	 * @param key
+	 *            {@link KeyEventHandler} to process key strokes
 	 */
 	public final void displayWithGUI(final JPanel rootPanel,
-			final stone.io.GUIInterface activeGui, @SuppressWarnings("hiding") final KeyEventHandler key) {
+			final stone.io.GUIInterface activeGui,
+			@SuppressWarnings("hiding") final KeyEventHandler key) {
 		this.panel = rootPanel;
 		this.gui = activeGui;
 		display(rootPanel, key);
@@ -148,7 +152,8 @@ public abstract class Option {
 	/**
 	 * Enables or disables all components belonging to this option.
 	 * 
-	 * @param active sets <i>this</i> option active if <i>active</i> is <i>true</i>
+	 * @param active
+	 *            sets <i>this</i> option active if <i>active</i> is <i>true</i>
 	 */
 	public final void enableOnGUI(boolean active) {
 		GUI.setEnabled(this.panel, active);

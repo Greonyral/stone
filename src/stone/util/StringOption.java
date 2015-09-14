@@ -26,7 +26,8 @@ public final class StringOption extends Option {
 	/**
 	 * Creates a new StringOption and registers it at the OptionContainer
 	 * 
-	  * @param optionContainer instance of {@link OptionContainer} to use
+	 * @param optionContainer
+	 *            instance of {@link OptionContainer} to use
 	 * @param name
 	 *            a unique identifier for this option to register at
 	 *            OptionContainer
@@ -64,7 +65,8 @@ public final class StringOption extends Option {
 	/**
 	 * Creates a new StringOption and registers it at the OptionContainer
 	 * 
-	 * @param optionContainer instance of {@link OptionContainer} to use
+	 * @param optionContainer
+	 *            instance of {@link OptionContainer} to use
 	 * @param name
 	 *            a unique identifier for this option to register at
 	 *            OptionContainer
@@ -103,7 +105,8 @@ public final class StringOption extends Option {
 
 	/** */
 	@Override
-	public final void display(final JPanel panel, @SuppressWarnings("hiding") final KeyEventHandler key) {
+	public final void display(final JPanel panel,
+			@SuppressWarnings("hiding") final KeyEventHandler key) {
 		this.textField = new JTextField();
 		final JScrollPane scrollPane = new JScrollPane(this.textField);
 		final JPanel mainPanel = new JPanel();

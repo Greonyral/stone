@@ -39,10 +39,10 @@ public abstract class Debug {
 
 		@Override
 		protected final void printImpl(final String string, final Object[] args) {
-			if (first) {
-				first = false;
-				if (log.exists()) {
-					final String s0 = log.toString();
+			if (this.first) {
+				this.first = false;
+				if (this.log.exists()) {
+					final String s0 = this.log.toString();
 					final String s1 = s0.replace("log", "log.0");
 					final String s2 = s0.replace("log", "log.1");
 					final String s3 = s0.replace("log", "log.2");
@@ -50,14 +50,18 @@ public abstract class Debug {
 					final File f1 = new File(s1);
 					final File f2 = new File(s2);
 					final File f3 = new File(s3);
-					if (f2.exists())
-						if (f3.exists())
+					if (f2.exists()) {
+						if (f3.exists()) {
 							f3.delete();
+						}
+					}
 					f2.renameTo(f3);
-					if (f1.exists())
+					if (f1.exists()) {
 						f1.renameTo(f2);
-					if (f0.exists())
+					}
+					if (f0.exists()) {
 						f0.renameTo(f1);
+					}
 				}
 				printImpl("Started %s\n",
 						new Object[] { stone.util.Time.date(System
@@ -71,12 +75,12 @@ public abstract class Debug {
 					FileSystem.getLineSeparator());
 			try {
 				final java.io.OutputStream out = new java.io.FileOutputStream(
-						log, true);
+						this.log, true);
 
 				out.write(String.format(format, args).getBytes());
 				out.flush();
 				out.close();
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				return;
 			}
 		}

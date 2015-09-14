@@ -13,7 +13,6 @@ import stone.MasterThread;
 import stone.StartupContainer;
 import stone.io.IOHandler;
 import stone.io.OutputStream;
-import stone.modules.Main;
 import stone.modules.songData.AbtractEoWInAbc;
 import stone.modules.songData.Crawler;
 import stone.modules.songData.DeserializeContainer;
@@ -36,16 +35,6 @@ import stone.util.TaskPool;
 public class SongData implements Module {
 
 	private static final int VERSION = 2;
-
-	/**
-	 * @param sc
-	 *            -
-	 * @return the created new instance
-	 */
-	@Override
-	public final Module init(final StartupContainer sc) {
-		return new SongData(sc);
-	}
 
 	/**
 	 * Decodes serialized data of a single entry
@@ -110,10 +99,10 @@ public class SongData implements Module {
 	 * Constructor for building versionInfo
 	 */
 	public SongData() {
-		tree = null;
-		taskPool = null;
-		master = null;
-		io = null;
+		this.tree = null;
+		this.taskPool = null;
+		this.master = null;
+		this.io = null;
 	}
 
 	/**
@@ -143,6 +132,11 @@ public class SongData implements Module {
 			}
 		}
 		this.tree = new DirTree(basePath);
+	}
+
+	@Override
+	public void dependingModules(final Set<String> set) {
+		return;
 	}
 
 	/**
@@ -182,9 +176,9 @@ public class SongData implements Module {
 			sdd.abort();
 			return;
 		}
-		io.startProgress("Creating store for next run", -1);
+		this.io.startProgress("Creating store for next run", -1);
 		sdd.finish();
-		io.endProgress(sdd.songsFound() + " songs found");
+		this.io.endProgress(sdd.songsFound() + " songs found");
 		for (final AbtractEoWInAbc e : AbtractEoWInAbc.getMessages()) {
 			this.io.printError(e.printMessage(), true);
 		}
@@ -211,12 +205,24 @@ public class SongData implements Module {
 	}
 
 	/**
+	 * @return {@link DirTree} managing the entries
+	 */
+	public final DirTree getDirTree() {
+		return this.tree;
+	}
+
+	/**
 	 * Returns the used IO-Handler
 	 * 
 	 * @return the used IO-Handler
 	 */
 	public final IOHandler getIOHandler() {
 		return this.io;
+	}
+
+	@Override
+	public List<Option> getOptions() {
+		return java.util.Collections.emptyList();
 	}
 
 	/**
@@ -238,6 +244,11 @@ public class SongData implements Module {
 		return files.toArray(new String[files.size()]);
 	}
 
+	@Override
+	public final int getVersion() {
+		return VERSION;
+	}
+
 	/**
 	 * @param song
 	 *            -
@@ -245,6 +256,32 @@ public class SongData implements Module {
 	 */
 	public final SongDataEntry getVoices(final Path song) {
 		return this.tree.get(song);
+	}
+
+	/**
+	 * @param sc
+	 *            -
+	 * @return the created new instance
+	 */
+	@Override
+	public final Module init(final StartupContainer sc) {
+		return new SongData(sc);
+	}
+
+	@Override
+	public void repair() {
+		return;
+	}
+
+	/**
+	 * 
+	 */
+	@Override
+	public void run() {
+		Debug.print("\n");
+		this.io.startProgress("Searching for songs", -1);
+		fill();
+		this.io.endProgress(this.tree.getFilesCount() + " songs found");
 	}
 
 	/**
@@ -329,43 +366,5 @@ public class SongData implements Module {
 		} finally {
 			this.io.close(outMaster);
 		}
-	}
-
-	/**
-	 * @return {@link DirTree} managing the entries
-	 */
-	public final DirTree getDirTree() {
-		return this.tree;
-	}
-
-	@Override
-	public List<Option> getOptions() {
-		return java.util.Collections.emptyList();
-	}
-
-	@Override
-	public final int getVersion() {
-		return VERSION;
-	}
-
-	@Override
-	public void repair() {
-		return;
-	}
-
-	/**
-	 * 
-	 */
-	@Override
-	public void run() {
-		Debug.print("\n");
-		io.startProgress("Searching for songs", -1);
-		fill();
-		io.endProgress(tree.getFilesCount() + " songs found");
-	}
-
-	@Override
-	public void dependingModules(final Set<String> set) {
-		return;
 	}
 }
