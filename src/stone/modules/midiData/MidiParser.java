@@ -199,6 +199,8 @@ public abstract class MidiParser {
 		@Override
 		final ParseState getNext(byte read) {
 			switch (read) {
+			// case 0x01:
+			// return TEXT;
 			// case 0x02:
 			// return COPYRIGHT;
 			case 0x03:
@@ -329,7 +331,7 @@ public abstract class MidiParser {
 
 	private abstract class ParseState_ReadN extends ParseState {
 		int len;
-		private boolean check;
+		private boolean check, byteToFollow;
 		private final boolean firstByteIsLen;
 
 		ParseState_ReadN() {
@@ -349,12 +351,21 @@ public abstract class MidiParser {
 			if (this.check) {
 				this.check = false;
 				if (this.len < 0) {
-					this.len = 0xff & read;
+					this.len = 0x7f & read;
+					byteToFollow = (0x80 & read) != 0;
 					--MidiParser.this.trackLen;
 				} else {
 					MidiParser.this.bytes.add(read);
 				}
-				if ((MidiParser.this.trackLen -= this.len) < 0) {
+				if (!byteToFollow && (MidiParser.this.trackLen -= this.len) < 0) {
+					throw new NoEOT();
+				}
+			} else if (byteToFollow) {
+				this.len <<= 7;
+				this.len += 0x7f & read;
+				byteToFollow = (0x80 & read) != 0;
+				--MidiParser.this.trackLen;
+				if (!byteToFollow && (MidiParser.this.trackLen -= this.len) < 0) {
 					throw new NoEOT();
 				}
 			} else {
@@ -425,6 +436,7 @@ public abstract class MidiParser {
 		final ParseState getNext(byte read) throws ParsingException {
 			final byte status, data;
 			final boolean runningStatus;
+
 			if ((read & 0xf0) < 0x80) {
 				status = (byte) ((0xf0 & this.lastStatus) >> 4);
 				data = (byte) (0x0f & this.lastStatus);

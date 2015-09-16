@@ -3,6 +3,8 @@ package stone.io;
 import java.io.IOException;
 import java.io.InputStream;
 
+import stone.util.Debug;
+
 /**
  * A buffered {@link InputStream}.
  * 
