@@ -62,6 +62,7 @@ public class Flag {
 	 */
 	public final String[] getArgs() {
 		if (this.args == null) {
+			@SuppressWarnings("hiding")
 			final String args = getValue(stone.Main.UPDATE_ID);
 			if (args == null)
 				return new String[0];

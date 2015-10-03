@@ -1,6 +1,7 @@
 package stone.io;
 
 import java.awt.Dimension;
+import java.io.IOException;
 
 import javax.swing.JPanel;
 
@@ -87,5 +88,11 @@ public abstract class GUIPlugin {
 		this.gui.setResizable(true);
 		this.gui = null;
 	}
+
+	/**
+	 * Requests equivalent functionality if a GUI is disalbed
+	 * @throws IOException 
+	 */
+	protected abstract void textmode() throws IOException;
 
 }

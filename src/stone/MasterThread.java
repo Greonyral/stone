@@ -181,11 +181,15 @@ public class MasterThread extends Thread {
 	 */
 	public Module getModule(final String m) {
 		final ModuleInfo mi0 = this.modulesLocal.get(m);
-		if (mi0 == null) {
+		if (mi0 == null || mi0.instance == null) {
 			final Class<Module> clazz = StartupContainer.loadModule(m);
-			if (clazz == null) {
+			if (clazz == null || mi0 != null && mi0.instance == null) {
+				if (m.equals(Main.REPAIR))
+					return null;
 				downloadModule(m);
+				io.startProgress("Init downloaded module", -1);
 				final Class<Module> clazz0 = StartupContainer.loadModule(m);
+				io.endProgress("Loading selected modules");
 				this.modulesLocal.put(m, new ModuleInfo(clazz0, m));
 			} else {
 				this.modulesLocal.put(m, new ModuleInfo(clazz, m));
@@ -214,14 +218,15 @@ public class MasterThread extends Thread {
 	/**
 	 * Interrupts <i>this</i> thread and blocks to wait for all tasks in the
 	 * TaskPool to finish.
+	 * @return true if every thread exited and the Taskpool is closed 
 	 * 
 	 */
-	public void interruptAndWait() {
+	public boolean interruptAndWait() {
 		synchronized (this) {
 			this.state.handleEvent(Event.INT);
 			notifyAll();
 		}
-		this.taskPool.close();
+		return this.taskPool.close();
 	}
 
 	/** */
@@ -406,8 +411,6 @@ public class MasterThread extends Thread {
 				return false;
 			}
 			final int versionNew = ByteBuffer.wrap(bytes).getInt();
-			System.out.printf("%s %2d %2d\n", info.name, info.getVersion(),
-					versionNew);
 			Debug.print("%s %2d %2d\n", info.name, info.getVersion(),
 					versionNew);
 			return versionNew > info.getVersion();
@@ -612,6 +615,8 @@ public class MasterThread extends Thread {
 			final Module module;
 			final Module modul0 = getModule(m);
 			if (modul0 == null) {
+				if (m.equals(Main.REPAIR))
+					return modules;
 				downloadModule(m);
 				final Class<Module> clazz = StartupContainer.loadModule(m);
 				if (clazz == null) {
@@ -705,10 +710,13 @@ public class MasterThread extends Thread {
 
 				@Override
 				public final void run() {
+					if (m.instance == null)
+						return;
 					m.instance.repair();
 				}
 			});
 		}
+		io.startProgress("Performing repairs", -1);
 		this.taskPool.waitForTasks();
 	}
 

@@ -1,6 +1,9 @@
 package stone.io;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -77,4 +80,72 @@ public class FileSelectionGUIPlugin extends GUIPlugin {
 		return this.title;
 	}
 
+
+	@Override
+	public void textmode() throws IOException {
+		Path currentDir = Path.getPath(startDir.toString().split(
+				"\\" + FileSystem.getFileSeparator()));
+		final BufferedReader r = new BufferedReader(new InputStreamReader(
+				System.in));
+		final int COLS = 3;
+		while (true) {
+			System.out.print(IOHandler.printGreen("%s\n", currentDir));
+			final File[] entries = currentDir.toFile().listFiles();
+			int index = -1;
+			for (; index != entries.length;) {
+				String line = "";
+				for (int col = 0; col < COLS;) {
+					if (index == entries.length)
+						break;
+					final String s;
+					if (index <= -1) {
+						if (currentDir.getNameCount() == 0) {
+							final String[] bases = FileSystem.getBases();
+							int i = -(index--) - 1;
+							if (i == bases.length) {
+								s = null;
+								index = 0;
+							} else {
+								final String base = bases[i];
+								if (Path.getPath(base).exists())
+									s = IOHandler.printBlue("%-30.30s",
+											base.toString());
+								else
+									s = null;
+							}
+						} else {
+							s = IOHandler.printBlue("%-30.30s", "..");
+							index = 0;
+						}
+					} else
+						s = IOHandler.print(entries[index++], filter);
+					if (s != null) {
+						line += s;
+						++col;
+					}
+				}
+				System.out.println(line);
+			}
+			System.out.print("Please enter your selection: ");
+			final String[] input = r.readLine().split(
+					"[, \\" + FileSystem.getFileSeparator() + "]");
+			Path newDir;
+			if (input.length == 0)
+				newDir = currentDir.resolve("/");
+			else
+				newDir = currentDir.resolve(input);
+			while (!newDir.exists()) {
+				if (newDir.getParent() == newDir)
+					newDir = currentDir;
+				else
+					newDir = newDir.getParent();
+			}
+			currentDir = newDir;
+			if (currentDir.toFile().isFile()) {
+				selected = currentDir.toFile();
+				return;
+			}
+
+		}
+	}
 }

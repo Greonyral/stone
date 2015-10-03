@@ -119,6 +119,7 @@ public abstract class FileSystem {
 		return FileSystem.type.getLineSeparator();
 	}
 
+
 	private final static FileSystem createInstance() {
 		switch (FileSystem.type) {
 		case UNIX:
@@ -176,6 +177,7 @@ public abstract class FileSystem {
 }
 
 final class UnixFileSystem extends FileSystem {
+
 
 	UnixFileSystem() {
 	}

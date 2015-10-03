@@ -64,7 +64,7 @@ VC_SRC= \
 VC_CLASSES=$(patsubst src/%, $(BIN_DIR)/%, $(patsubst %.java,%.class,$(VC_SRC)))
 VC_CLASSES_BASE=$(patsubst $(BIN_DIR)/%.class,%,$(VC_CLASSES))
 
-all: classes wipeJars hiddenVC normal songbook_standalone moduleInfo sign_jars
+all: classes wipeJars hiddenVC normal songbook_standalone test moduleInfo sign_jars
 
 clean:
 	rm -rf $(BIN_DIR)
@@ -135,6 +135,21 @@ modules/Main_band.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
 	@./build_jar cfe $@ "stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class)\
         -C $(BIN_DIR) stone/io/Icon.png config.txt"
 
+modules/Main_band_test.jar: modules $(MAIN_CLASSES) $(BIN_DIR)/stone/io/Icon.png
+	$(JAVAC) src/stone/MasterThread.java
+	@echo "url https://github.com/Greonyral/stone/raw/experimental/" > config.txt
+	@echo "url_https https://github.com/Greonyral/lotro-songs.git" >> config.txt
+
+	@echo "url_ssh git@github.com:Greonyral/lotro-songs.git" >> config.txt
+	@echo "mainClass Main_band" >> config.txt
+	@echo "modules" >> config.txt
+	@echo "AbcCreator Simple GUI of BruTE" >> config.txt
+	@echo "FileEditor Tools to edit abc-files" >> config.txt
+	@echo "VersionControl Simple git-GUI to synchronize songs" >> config.txt
+	@echo "SongbookUpdater Generates the files needed for Songbook Plugin" >> config.txt
+	@./build_jar cfe $@ "stone.Main $(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(MAIN_CLASSES_BASE)))) $(BIN_DIR)/stone/util/UnrecognizedOSException.class $(BIN_DIR)/stone/util/UnixFileSystem.class $(BIN_DIR)/stone/util/WindowsFileSystem.class)\
+        -C $(BIN_DIR) stone/io/Icon.png config.txt"
+
 #dummy modules
 modules/SongData.jar: modules $(SD_CLASSES)
 	@./build_jar cfM $@ "$(patsubst $(BIN_DIR)/%,-C $(BIN_DIR) %,$(subst $$,\$$,$(shell find $(patsubst %,$(BIN_DIR)/%*.class,$(SD_CLASSES_BASE)))))"
@@ -147,6 +162,9 @@ modules/BruTE.jar: modules $(BR_CLASSES) brute/$(BRUTE_VERSION)
 #targets
 hiddenVC: modules/Main.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/FileEditor.jar modules/BruTE.jar modules/SongData.jar
 	cp $< SToNe_hiddenVC.jar
+
+test: modules/Main_band_test.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/VersionControl.jar modules/FileEditor.jar modules/SongData.jar modules/BruTE.jar
+	cp $< SToNe_test.jar
 
 normal: modules/Main_band.jar modules/AbcCreator.jar modules/SongbookUpdater.jar modules/VersionControl.jar modules/FileEditor.jar modules/SongData.jar modules/BruTE.jar
 	cp $< SToNe.jar

@@ -86,10 +86,10 @@ public class TaskPool {
 	/**
 	 * Closes this pool. All waiting tasks will be woken up.
 	 */
-	public final void close() {
+	public final boolean close() {
 		synchronized (this.taskPool) {
 			if (this.closed) {
-				return;
+				return true;
 			}
 			this.closed = true;
 			this.taskPool.notifyAll();
@@ -98,6 +98,8 @@ public class TaskPool {
 					t.interrupt();
 				}
 			}
+			if (runningTaskList.contains(Thread.currentThread()))
+				return false;
 			while (this.runningTasks > 0) {
 				try {
 					this.taskPool.wait();
@@ -106,6 +108,7 @@ public class TaskPool {
 				}
 			}
 		}
+		return true;
 	}
 
 	/**

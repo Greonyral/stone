@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -18,9 +17,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
@@ -211,7 +207,7 @@ public class AbcCreator implements Module,
 
 	private static final PathOptionFileFilter INSTR_MAP_FILTER = new InstrumentMapFileFilter();
 
-	private final static int VERSION = 16;
+	private final static int VERSION = 17;
 
 	private static final FileFilter midiFilter = new MidiFileFilter();
 
@@ -702,6 +698,7 @@ public class AbcCreator implements Module,
 			for (int i = 0; i < AbcCreator.DRUM_MAPS_COUNT; i++) {
 				this.maps.add(i);
 			}
+			System.out.println("Running loop");
 			this.io.endProgress("Running loop");
 			runLoop();
 		} finally {
@@ -892,53 +889,6 @@ public class AbcCreator implements Module,
 		}
 
 		return call(exe, CallType.EXE_WAIT, bruteDirectory);
-	}
-
-	private final void extract(final JarFile jarFile, final String string)
-			throws IOException {
-		this.initState.startPhase(InitState.READ_JAR);
-		final ZipEntry jarEntry = jarFile.getEntry(string);
-		this.initState.startPhase(InitState.UNPACK_JAR);
-		unpack(jarFile, jarEntry);
-		final Path jar = this.bruteDir.resolve(string);
-		extract(jar);
-	}
-
-	private final void extract(final Path zip) throws IOException {
-		final Set<ZipEntry> entries = new HashSet<>();
-		final ZipFile zipFile = new ZipFile(zip.toFile());
-		final Enumeration<? extends ZipEntry> ee = zipFile.entries();
-		while (ee.hasMoreElements()) {
-			final ZipEntry je = ee.nextElement();
-			if (!je.isDirectory()) {
-				entries.add(je);
-			}
-		}
-		this.initState.setSize(InitState.UNPACK_JAR, (int) zip.toFile()
-				.length());
-		unpack(zipFile, entries.toArray(new JarEntry[entries.size()]));
-		try {
-			zipFile.close();
-		} catch (final IOException e) {
-			e.printStackTrace();
-			this.initState.setFailed();
-		}
-	}
-
-	private final void extract(final URL url) {
-		final String s = url.toString();
-		if (!s.startsWith("jar:")) {
-			this.initState.setFailed();
-			return;
-		}
-		try {
-			final JarFile jarFile = new JarFile(Path.getPath(url).toFile());
-			extract(jarFile, s.substring(s.indexOf("!") + 2));
-		} catch (final IOException e) {
-			e.printStackTrace();
-			this.initState.setFailed();
-		}
-
 	}
 
 	private final Path generateMap(final Object name, final Object title) {
@@ -1153,49 +1103,6 @@ public class AbcCreator implements Module,
 						true);
 			}
 			this.dragAndDropPlugin.reset();
-		}
-	}
-
-	private final void unpack(final ZipFile zipFile,
-			final ZipEntry... jarEntries) {
-		for (final ZipEntry jarEntry : jarEntries) {
-			if (this.master.isInterrupted()) {
-				return;
-			}
-
-			final OutputStream out;
-			final java.io.File file;
-
-			file = this.bruteDir.resolve(jarEntry.getName()).toFile();
-
-			if (!file.getParentFile().exists()) {
-				if (!file.getParentFile().mkdirs()) {
-					this.initState.setFailed();
-					this.bruteDir.delete();
-					return;
-				}
-			}
-			try {
-				out = this.io.openOut(file);
-				boolean hiddenProgress = false;
-				if (this.initState.io == null) {
-					hiddenProgress = true;
-				} else {
-					out.registerProgress(this.initState.io);
-				}
-				try {
-					this.io.write(zipFile.getInputStream(jarEntry), out);
-				} finally {
-					this.io.close(out);
-				}
-				if (hiddenProgress) {
-					this.initState.progress((int) file.length());
-				}
-			} catch (final IOException e) {
-				this.initState.setFailed();
-				this.bruteDir.delete();
-				return;
-			}
 		}
 	}
 

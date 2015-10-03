@@ -68,4 +68,11 @@ public final class EditorPlugin extends GUIPlugin {
 		return this.title;
 	}
 
+
+	@Override
+	protected void textmode() {
+		// TODO
+		System.err.println("Text mode not supported - yet");
+	}
+
 }

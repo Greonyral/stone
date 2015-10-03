@@ -166,4 +166,10 @@ public class NumberingGUI extends GUIPlugin {
 		return "Change Numbering - " + this.scd.file().getFilename();
 	}
 
+
+	@Override
+	protected void textmode() {
+		// TODO
+		System.err.println("Text mode not supported - yet");
+	}
 }

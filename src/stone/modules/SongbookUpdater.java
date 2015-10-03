@@ -25,7 +25,7 @@ import stone.util.Path;
  */
 public final class SongbookUpdater implements Module {
 
-	private final static int VERSION = 9;
+	private final static int VERSION = 10;
 
 	private final IOHandler io;
 
@@ -105,6 +105,8 @@ public final class SongbookUpdater implements Module {
 				"SongbookUpdateData");
 		final Path updateDataPathZip = basePath.resolve("PluginData").resolve(
 				"SongbookUpdateData.zip");
+		final Path updateDataPathIdx = basePath.resolve("PluginData").resolve(
+				"SongbookUpdateData.idx");
 		if (updateDataPath.exists()) {
 			final boolean success = updateDataPath.delete();
 			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
@@ -114,6 +116,11 @@ public final class SongbookUpdater implements Module {
 			final boolean success = updateDataPathZip.delete();
 			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
 					updateDataPathZip.toString(), success ? "" : " failed");
+		}
+		if (updateDataPathIdx.exists()) {
+			final boolean success = updateDataPathIdx.delete();
+			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
+					updateDataPathIdx.toString(), success ? "" : " failed");
 		}
 	}
 

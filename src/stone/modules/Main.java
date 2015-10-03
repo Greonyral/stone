@@ -30,7 +30,7 @@ public class Main implements Module {
 	private static final int MAX_LENGTH_INFO = 80;
 
 
-	private static final int VERSION = 27;
+	private static final int VERSION = 28;
 
 	/**
 	 * The name to be used for naming the config-file and the title.
@@ -302,6 +302,10 @@ public class Main implements Module {
 			System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
 					Main.homeSetting.toString(), success ? "" : " failed");
 		}
+		final boolean success = Main.homeSetting.getParent().delete();
+		System.out.printf("Delet%s %s%s\n", success ? "ed" : "ing",
+				Main.homeSetting.getParent().toString(), success ? ""
+						: " failed");
 	}
 
 	/**
@@ -338,11 +342,13 @@ public class Main implements Module {
 			@Override
 			public void run() {
 				if (!Main.homeSetting.exists()) {
-					try {
-						Main.homeSetting.toFile().createNewFile();
-					} catch (final IOException e) {
-						Debug.print("%s\n", e.getMessage());
-					}
+					if (Main.homeSetting.getParent().exists())
+						try {
+							Main.homeSetting.toFile().createNewFile();
+						} catch (final IOException e) {
+							Debug.print("%s: %s\n", Main.homeSetting,
+									e.getMessage());
+						}
 					try {
 						sc.finishInit(flags); // sync barrier 1
 						sc.parseDone(); // sync barrier 2

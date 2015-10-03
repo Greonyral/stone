@@ -75,7 +75,7 @@ import stone.util.StringOption;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 16;
+	private final static int VERSION = 17;
 
 	private final static String SECTION = Main.VC_SECTION;
 
@@ -1269,7 +1269,7 @@ public final class VersionControl implements Module {
 		try {
 			remoteHead = getRemoteHead(gitSession);
 			if (remoteHead == null) {
-				this.io.printError("The remote branch does not exist", false);
+				this.io.printError("The remote branch does not exist.\nPossible Reason: Missing internet connection or wrong URL. ", false);
 				return false;
 			}
 			Debug.print("Remote head: %s\n", remoteHead.getName());

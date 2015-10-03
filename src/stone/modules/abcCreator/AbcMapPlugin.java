@@ -477,4 +477,11 @@ public final class AbcMapPlugin extends
 				new DT_Listener<>(target, this.state));
 	}
 
+	@Override
+	protected
+	 void textmode() {
+		// TODO
+		System.err.println("Text mode not supported - yet");
+	}
+
 }

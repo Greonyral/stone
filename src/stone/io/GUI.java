@@ -291,9 +291,10 @@ public class GUI implements GUIInterface {
 			}
 			this.destroyed = true;
 		}
-		this.master.interruptAndWait();
-		this.mainFrame.setVisible(false);
-		this.mainFrame.dispose();
+		if (this.master.interruptAndWait()) {
+			this.mainFrame.setVisible(false);
+			this.mainFrame.dispose();
+		}
 	}
 
 	/** */

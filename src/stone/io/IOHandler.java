@@ -99,6 +99,7 @@ public class IOHandler {
 			}
 
 		}
+		@SuppressWarnings("hiding")
 		final GUI gui = (GUI) sc.getIO().gui;
 		this.guiReal = gui == null ? null : new GUI(gui, this.master);
 		class GUIInvocationHandler implements InvocationHandler {
@@ -428,8 +429,14 @@ public class IOHandler {
 	 *            plugin to perform on the GUI
 	 */
 	public final void handleGUIPlugin(final GUIPlugin plugin) {
-		// TODO support non gui mode
-		this.gui.runPlugin(plugin);
+		if (guiReal == null)
+			try {
+				plugin.textmode();
+			} catch (final IOException e) {
+				handleException(ExceptionHandle.TERMINATE, e);
+			}
+		else
+			this.gui.runPlugin(plugin);
 	}
 
 	/**
@@ -655,6 +662,31 @@ public class IOHandler {
 				title, startDir, filter, text);
 		handleGUIPlugin(selector);
 		return selector.getSelection();
+	}
+
+	static String print(final File file, final FileFilter filter) {
+		if (filter.accept(file)) {
+			if (file.isDirectory()) {
+				return printBlue("%-30.30s", file.getName());
+			}
+			return printRed("%-30.30s", file.getName());
+		}
+		return null;
+	}
+
+	final static String printBlue(final String format, final Object... args) {
+		return stone.util.Color.print(stone.util.Color.ColorType.BLUE,
+				stone.util.Color.ColorType.BLACK, format, args);
+	}
+
+	final static String printRed(final String format, final Object... args) {
+		return stone.util.Color.print(stone.util.Color.ColorType.RED,
+				stone.util.Color.ColorType.BLACK, format, args);
+	}
+
+	final static String printGreen(final String format, final Object... args) {
+		return stone.util.Color.print(stone.util.Color.ColorType.GREEN,
+				stone.util.Color.ColorType.BLACK, format, args);
 	}
 
 	/**

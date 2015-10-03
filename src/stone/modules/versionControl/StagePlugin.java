@@ -7,7 +7,6 @@ import java.awt.event.MouseListener;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -29,7 +28,7 @@ import stone.io.GUI;
 import stone.io.GUIPlugin;
 import stone.modules.VersionControl;
 import stone.util.Debug;
-import stone.util.LinkedMap;
+
 
 /**
  * 
@@ -39,6 +38,16 @@ import stone.util.LinkedMap;
  * 
  */
 public class StagePlugin extends GUIPlugin {
+
+	static final String normalize(final String s) {
+		final String a = s.replaceAll("<[^>]*>", "\n");
+		final String b1 = a.replaceAll(" *\n +", "");
+		final String b2 = b1.replaceAll("[-+M]\n","  ");
+		final String c = b2.replaceAll("\n\n*", "\n");
+		if (c.startsWith("\n"))
+			return c.substring(1);
+		return c;
+	}
 
 	class ButtonMouseListener implements MouseListener {
 
@@ -166,6 +175,7 @@ public class StagePlugin extends GUIPlugin {
 			return this.changeType + " " + this.s;
 		}
 	}
+
 
 	class StageActionAddListener implements MouseListener {
 
@@ -322,17 +332,31 @@ public class StagePlugin extends GUIPlugin {
 
 	class StageMouseListener implements MouseListener {
 
+		class Selection {
+
+			private String s;
+
+			public void set(@SuppressWarnings("hiding") final String s,
+					int start, int end) {
+				this.s = normalize(s.substring(start, end));
+			}
+
+			@Override
+			public final String toString() {
+				return s;
+			}
+
+		}
+
 		final int h;
-		final Map<Integer, Integer> offset;
 		final JEditorPane c;
+		private final Selection selection = new Selection();
 
 
 		@SuppressWarnings("hiding")
-		StageMouseListener(final JEditorPane c,
-				final Map<Integer, Integer> offset) {
+		StageMouseListener(final JEditorPane c) {
 			this.h = c.getFontMetrics(c.getFont()).getHeight() + 2;
 			this.c = c;
-			this.offset = offset;
 		}
 
 		@Override
@@ -358,85 +382,63 @@ public class StagePlugin extends GUIPlugin {
 		@Override
 		public void mouseReleased(final MouseEvent e) {
 			e.consume();
-			final int y = e.getPoint().y;
-			@SuppressWarnings("hiding")
-			final int offset = y / this.h;
-			int start = getStart(offset);
-			if (start < 0) {
-				this.c.setSelectionStart(y);
-				this.c.setSelectionEnd(y);
-				this.c.revalidate();
-				return;
-			}
+			int line = e.getY() / h;
+			// normalize to start and end of line
+			int start;
 			int end;
-			for (int i = offset + 1; true; ++i) {
-				end = getStart(i);
-				if ((end != start) || (end < 0)) {
-					break;
-				}
-			}
-			if (end < 0) {
-				end = start - end;
-			}
-			if (this.c.getSelectionEnd() != this.c.getSelectionStart()) {
-				// normalize to start and end of line
-				start = Math.min(this.c.getSelectionStart(), start);
-				int startL = 0, i = 0;
-				while (true) {
-					final int s = getStart(i);
-					if (s > start) {
-						--i;
-						break;
-					}
-					startL = s;
-					++i;
-				}
-				start = startL;
-				int endL = this.c.getSelectionEnd();
-				if (endL > end) {
-					while (true) {
-						int s = getStart(i + 1);
-						if (s < 0) {
-							s = getStart(i - 1) - s;
-							break;
-						}
-						endL = s;
-						if (s > this.c.getSelectionEnd()) {
-							break;
-						}
-						++i;
-					}
-					end = endL;
-				}
-			}
-			this.c.setSelectionStart(start + 1);
-			this.c.setSelectionEnd(end + 1);
-			this.c.revalidate();
-		}
 
-		private int getStart(int line) {
-			@SuppressWarnings("hiding")
-			int offset = 0;
-			final Iterator<Map.Entry<Integer, Integer>> iter = this.offset
-					.entrySet().iterator();
-			while (--line >= 0) {
-				if (!iter.hasNext()) {
-					return -offset;
-				}
-				final Map.Entry<Integer, Integer> next = iter.next();
-				line -= next.getValue();
-				if (line < 0) {
+			if (this.c.getSelectionStart() != this.c.getSelectionEnd()) {
+				start = this.c.getSelectionStart();
+				while (true) {
+					final String s = this.c.getSelectedText().replaceAll(
+							"[-+M] ", "\n");
+					char startC = s.charAt(0);
+					switch (startC) {
+					case '\n':
+						break;
+					default:
+						this.c.setSelectionStart(--start);
+						continue;
+					}
+					this.c.setSelectionStart(start);
 					break;
 				}
-				offset += next.getKey() + 1;
+
+				end = this.c.getSelectionEnd();
+				while (this.c.getSelectedText().length() == end - start) {
+					final String s = this.c.getSelectedText().replaceAll(
+							" [-+M]", "\n");
+					char endC = s.charAt(s.length() - 1);
+					switch (endC) {
+					case '\n':
+						break;
+					default:
+						this.c.setSelectionEnd(++end);
+						continue;
+					}
+					this.c.setSelectionEnd(--end);
+					break;
+				}
+			} else {
+				final String s = this.c.getText();
+				start = s.indexOf("<font");
+				while (line-- > 0) {
+					start = s.indexOf("<br>", start) + 4;
+				}
+				end = s.indexOf("<br>", start);
+				if (end < 0)
+					end = s.length();
+				final String d = normalize(s);
+				selection.set(s, start, end);
+				start = d.indexOf(selection.s) + 1;
+				end = start + selection.s.length();
+				this.c.setSelectionStart(start);
+				this.c.setSelectionEnd(end);
 			}
-			return offset;
+			this.c.revalidate();
 		}
 	}
 
-	private final Map<Integer, Integer> offsetLeft = new LinkedMap<>();
-
-	private final Map<Integer, Integer> offsetRight = new LinkedMap<>();
 
 	private final TreeMap<String, ChangedFile> unstagedFiles = new TreeMap<>();
 
@@ -451,13 +453,14 @@ public class StagePlugin extends GUIPlugin {
 	private final Status status;
 	// unstaged files
 	private final Set<String> untracked = new HashSet<>();
-
 	private final Set<String> modified = new HashSet<>();
 	private final Set<String> missing = new HashSet<>();
+
 	// staged files
 	private final Set<String> added = new HashSet<>();
 	private final Set<String> changed = new HashSet<>();
 	private final Set<String> removed = new HashSet<>();
+
 	private boolean commit;
 
 	private final DirCache cache;
@@ -694,8 +697,6 @@ public class StagePlugin extends GUIPlugin {
 
 	private void updateLeftAndRight() {
 		final StringBuilder sb = new StringBuilder();
-		this.offsetLeft.clear();
-		this.offsetRight.clear();
 
 		for (final ChangedFile f : this.unstagedFiles.values()) {
 			if (sb.length() == 0) {
@@ -703,7 +704,6 @@ public class StagePlugin extends GUIPlugin {
 			} else {
 				sb.append("<br/>");
 			}
-			this.offsetLeft.put(f.length(), f.conflict);
 			sb.append(f.toString());
 		}
 		sb.append("</font></html>");
@@ -717,7 +717,6 @@ public class StagePlugin extends GUIPlugin {
 			} else {
 				sb.append("<br/>");
 			}
-			this.offsetRight.put(f.length(), f.conflict);
 			sb.append(f.toString());
 		}
 		sb.append("</font></html>");
@@ -743,7 +742,7 @@ public class StagePlugin extends GUIPlugin {
 		final JScrollPane rightScroll = new JScrollPane(this.right);
 
 		final int height = 600;
-		final int width = 800;
+		final int width = 1200;
 
 		// create Layout
 		panel.setLayout(layout);
@@ -947,10 +946,8 @@ public class StagePlugin extends GUIPlugin {
 		updateLeftAndRight();
 
 		if (this.commit) {
-			this.left.addMouseListener(new StageMouseListener(this.left,
-					this.offsetLeft));
-			this.right.addMouseListener(new StageMouseListener(this.right,
-					this.offsetRight));
+			this.left.addMouseListener(new StageMouseListener(this.left));
+			this.right.addMouseListener(new StageMouseListener(this.right));
 		}
 
 		okButton.addMouseListener(new ButtonMouseListener(true));
@@ -962,7 +959,10 @@ public class StagePlugin extends GUIPlugin {
 		buttonPlain.addMouseListener(new StageActionEncryptListener(false));
 
 		lockResize();
-		repack(panel.getSize());
+		panel.setMinimumSize(new Dimension(width, height));
+		panel.setPreferredSize(panel.getMinimumSize());
+
+		repack(panel.getMinimumSize());
 
 		synchronized (GUI.Button.class) {
 			if (this.master.isInterrupted()) {
@@ -996,4 +996,10 @@ public class StagePlugin extends GUIPlugin {
 		}
 	}
 
+
+	@Override
+	protected void textmode() {
+		// TODO
+		System.err.println("Text mode not supported - yet");
+	}
 }

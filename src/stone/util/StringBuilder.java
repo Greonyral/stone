@@ -199,7 +199,7 @@ public class StringBuilder {
 		if (this.tail == this.head) {
 			return -1;
 		}
-		final char c = this.content[this.cIdx][this.tail];
+		final char c = this.content[this.cIdx][this.tail - 1];
 		if (--this.tail == 0) {
 			copy();
 		}
@@ -536,7 +536,7 @@ public class StringBuilder {
 		if (this.tail == this.head) {
 			return -1;
 		}
-		final char c = this.content[this.cIdx][this.tail];
+		final char c = this.content[this.cIdx][this.tail - 1];
 		return c;
 	}
 

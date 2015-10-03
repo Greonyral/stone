@@ -626,8 +626,8 @@ public final class Path implements Comparable<Path>, Externalizable {
 	 * @return the number of components of <i>this</i> path
 	 */
 	public final int getNameCount() {
-		return this.filename == null ? 0 : this.dirs == null ? 1
-				: this.dirs.length + 1;
+		return this.filename == null ? 0 : this.dirs == null ? this.filename
+				.equals("/") ? 0 : 1 : this.dirs.length + 1;
 	}
 
 	/**
@@ -787,6 +787,12 @@ public final class Path implements Comparable<Path>, Externalizable {
 		}
 		if (Path.rootMap.containsKey(name[0]) || name[0].isEmpty()) {
 			return Path.getPath(name);
+		} else if (name[0].length() == 1 && name[0].equals("/")) {
+			Path p = this;
+			while (p.getNameCount() > 0) {
+				p = p.getParent();
+			}
+			return p.getPathFunc(name, 1);
 		}
 		return getPathFunc(name, 0);
 	}

@@ -23,7 +23,7 @@ public class StartupContainer {
 	 * Only one instance shall exist at one time.
 	 * 
 	 * @return the new created instance.
-	 * @deprecated
+	 * @deprecated use {@link #createInstance(String[])} instead
 	 */
 	@Deprecated
 	public final static StartupContainer createInstance() {
@@ -32,6 +32,11 @@ public class StartupContainer {
 
 	/**
 	 * Only one instance shall exist at one time.
+	 * 
+	 * @param args
+	 *            <i>args</i> of called {@link stone.Main#main(String[])} to be
+	 *            passed to subsequent calls if original instance has to be
+	 *            recreated
 	 * 
 	 * @return the new created instance.
 	 */

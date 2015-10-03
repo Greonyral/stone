@@ -90,4 +90,11 @@ public class SecretKeyPlugin extends GUIPlugin {
 		return "Enter the key for song encryption";
 	}
 
+
+	@Override
+	protected
+	void textmode() {
+		// TODO
+		System.err.println("Text mode not supported - yet");
+	}
 }

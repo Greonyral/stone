@@ -161,4 +161,11 @@ public abstract class FileEditorPlugin extends GUIPlugin {
 			panel.add(contentPanel);
 		}
 	}
+
+
+	@Override
+	protected void textmode() {
+		// TODO
+		System.err.println("Text mode not supported - yet");
+	}
 }

@@ -1,5 +1,6 @@
 package stone;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import stone.modules.Module;
@@ -45,7 +46,15 @@ public final class ModuleInfo {
 		Module instance = null;
 		if (clazz != null) {
 			try {
-				instance = clazz.getConstructor(sc.getClass()).newInstance(sc);
+				Constructor<Module> constructor;
+				try {
+					constructor = clazz.getConstructor(sc.getClass());
+				} catch (final java.lang.NoClassDefFoundError ncdfe) {
+					// module class exists but not its dependencies
+					constructor = null;
+				}
+				if (constructor != null)
+					instance = constructor.newInstance(sc);
 			} catch (final InstantiationException | IllegalAccessException
 					| IllegalArgumentException | InvocationTargetException
 					| NoSuchMethodException | SecurityException e) {
