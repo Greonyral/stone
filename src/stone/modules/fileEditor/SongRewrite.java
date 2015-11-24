@@ -1,6 +1,8 @@
 package stone.modules.fileEditor;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JPanel;
 import stone.MasterThread;
@@ -47,7 +49,6 @@ public class SongRewrite {
 			final Console c = Console.createConsoleGUI(panel);
 			repack();
 			lockResize();
-
 			return false;
 		}
 
@@ -66,6 +67,10 @@ public class SongRewrite {
 	}
 	
 	private void run(final Console c) {
-		c.run(root);
+		final Set<Command> commands = new HashSet<>();
+		
+		// TODO genereate commands
+		
+		c.run(root, commands);
 	}
 }
