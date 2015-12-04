@@ -5,13 +5,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class CommandInterpreter {
+class CommandInterpreter {
+
+	static final String[] NO_ARGS = new String[0];
 
 	private final Map<String, Command> commandMap = new HashMap<>();
-	private final Map<String, Command> helpCommands = new HashMap<>();
+	private final Map<String, HelpCommand> helpCommands = new HashMap<>();
 
-	public CommandInterpreter(final Object endSignal) {
-		// TODO Auto-generated constructor stub
+	private final Object endSignal;
+
+	public CommandInterpreter(@SuppressWarnings("hiding") final Object endSignal) {
+		this.endSignal = endSignal;
 	}
 
 	public Set<Command> handleTab(final String line, boolean doubleTab) {
@@ -19,9 +23,29 @@ public class CommandInterpreter {
 		return null;
 	}
 
-	public void handleEnter(final String line) {
-		// TODO Auto-generated method stub
-
+	public boolean handleEnter(String line) {
+		line = line.trim();
+		int delim = line.indexOf(' ');
+		final String baseCommand;
+		final String[] args;
+		if (delim < 0) {
+			baseCommand = line;
+			args = NO_ARGS;
+		} else {
+			baseCommand = line.substring(0, delim);
+			args = line.substring(delim + 1, line.length() - delim - 1).split(
+					" ");
+		}
+		if (baseCommand.equals("help")) {
+			helpCommands.get(null).call(args);
+			return true;
+		}
+		final Command c = commandMap.get(baseCommand);
+		if (c == null) {
+			return false;
+		}
+		c.call(args);
+		return true;
 	}
 
 	/**
@@ -33,40 +57,28 @@ public class CommandInterpreter {
 	public void registerCommands(final Set<Command> commands) {
 		for (final Command c : commands) {
 			if (c.getCommandText().equals("help")) {
-				helpCommands.put(null, c);
+				helpCommands.put(null, (HelpCommand) c);
 				if (c.getCommandText().startsWith("help "))
 					helpCommands.put(
-							c.getCommandText().replaceFirst("help ", ""), c);
+							c.getCommandText().replaceFirst("help ", ""),
+							(HelpCommand) c);
+			} else {
+				commandMap.put(c.getCommandText(), c);
 			}
 		}
 		if (helpCommands.get(null) == null) {
-			helpCommands.put(null, new Command() {
-
-				@Override
-				public String getCommandText() {
-					return "help";
-				}
-
-				@Override
-				public String getHelpText() {
-					return "print this message\nhelp [command] prints details on given command";
-				}
-			});
-			for (final Command c : commands) {
-				helpCommands.put(c.getCommandText(), new Command() {
-
-					@Override
-					public String getCommandText() {
-						return "help " + c.getCommandText();
-					}
-
-					@Override
-					public String getHelpText() {
-						return "no help text supplied";
-					}
-				});
-			}
+			throw new RuntimeException("Missing help command");
 		}
 
+	}
+
+	Map<String, Command> getCommandMap() {
+		return commandMap;
+	}
+
+	void exit() {
+		synchronized(endSignal) {
+			endSignal.notifyAll();
+		}
 	}
 }

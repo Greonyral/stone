@@ -3,7 +3,6 @@ package stone.modules.fileEditor;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.KeyboardFocusManager;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
@@ -15,39 +14,41 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.text.Caret;
-
 import stone.io.GUIInterface;
 import stone.util.Path;
 
+/**
+ * Abstraction for basic I/O for supporting commands on GUI or console.
+ * @author Nelphindal
+ *
+ */
 public class Console {
 
 	private final OutputStream out;
 	private final CommandInterpreter ci;
+	private boolean firstOut;
 
-	private Console(final CommandInterpreter ci, final OutputStream outStream) {
+	private Console(@SuppressWarnings("hiding") final CommandInterpreter ci, final OutputStream outStream) {
 		out = outStream;
+		out("type \"help\" to get a list of available commands\n");
+		firstOut = true;
 		this.ci = ci;
 	}
 
 	private class InputKeyListener implements KeyListener {
 
-		private final CommandInterpreter ci;
 		private final char[] c1a = new char[1];
 		private final JTextField textField;
 
-		InputKeyListener(final JTextField in,
-				@SuppressWarnings("hiding") final CommandInterpreter ci) {
+		InputKeyListener(final JTextField in) {
 			this.textField = in;
-			this.ci = ci;
 		}
 
 
@@ -87,7 +88,9 @@ public class Console {
 			final int keycode = e.getKeyCode();
 			switch (keycode) {
 			case KeyEvent.VK_ENTER:
-				ci.handleEnter(textField.getText());
+				if (!ci.handleEnter(textField.getText()))
+					out("No such command\n");
+				textField.setText("");
 				break;
 			case KeyEvent.VK_BACK_SPACE:
 				keyTyped(e);
@@ -167,13 +170,38 @@ public class Console {
 		}
 	}
 
-	private void out(String string) {
-		// TODO Auto-generated method stub
-
+	void out(final String string) {
+		try {
+			if (firstOut) {
+				firstOut = false;
+				out.write('\r');
+				out.write('\r');
+			}
+			out.write(string.getBytes());
+		} catch (final IOException e) {
+			exit();
+		}
 	}
 
-	static void parseStream(final InputStream in, final CommandInterpreter ci) {
-		new Thread() {
+	static void parseStream(final InputStream in, final CommandInterpreter ci,
+			final Object endSignal) {
+		class ListenerThread extends Thread {
+
+
+			public ListenerThread() {
+				new Thread() {
+					@Override
+					public void run() {
+						synchronized (endSignal) {
+							try {
+								endSignal.wait();
+							} catch (final InterruptedException e) {
+								ListenerThread.this.interrupt();
+							}
+						}
+					}
+				}.start();
+			}
 
 			@Override
 			public void run() {
@@ -183,7 +211,6 @@ public class Console {
 					try {
 						line = r.readLine();
 					} catch (final IOException e) {
-						e.printStackTrace();
 						return;
 					}
 					if (line == null)
@@ -191,7 +218,9 @@ public class Console {
 					ci.handleEnter(line);
 				}
 			}
-		}.start();
+		}
+
+		new ListenerThread().start();
 	}
 
 	static Console createConsoleGUI(final JPanel panel) {
@@ -201,9 +230,30 @@ public class Console {
 		final CommandInterpreter ci = new CommandInterpreter(endSignal);
 		final OutputStream outStream = new OutputStream() {
 
+			private final StringBuilder sb = new StringBuilder();
+
 			@Override
 			public void write(int b) throws IOException {
-				out.setText(out.getText() + (char) b);
+				boolean flush = false;
+				switch (b) {
+				case '\n':
+					flush = true;
+					break;
+				case '\r':
+					int index = sb.lastIndexOf("\n");
+					if (index < 0) {
+						sb.setLength(0);
+					} else {
+						sb.setLength(index);
+					}
+					return;
+				default:
+				}
+				sb.append((char) b);
+				if (flush) {
+					out.setText(sb.toString());
+				}
+
 			}
 		};
 		final Console c = new Console(ci, outStream);
@@ -228,12 +278,12 @@ public class Console {
 
 		panel.addFocusListener(fl);
 		out.addFocusListener(fl);
-		
+
 		// remove all MouseListeners to identify pressed TAB
 		for (final MouseListener ml : out.getMouseListeners()) {
 			out.removeMouseListener(ml);
 		}
-		
+
 		in.addFocusListener(new FocusListener() {
 
 			@Override
@@ -251,17 +301,19 @@ public class Console {
 					l.c1a[0] = '\t';
 				}
 				return;
-				
-			}});
-		
-		
+
+			}
+		});
+
+
 		in.setBackground(Color.BLACK);
 		in.setForeground(Color.LIGHT_GRAY);
 		in.setSelectionColor(Color.YELLOW);
 		in.setCaretColor(Color.RED);
 		in.getCaret().setVisible(true);
 
-		panel.add(new JScrollPane(out));
+		new JScrollPane(out);
+		panel.add(out);
 		panel.add(in, BorderLayout.SOUTH);
 
 		in.addKeyListener(l);
@@ -276,18 +328,39 @@ public class Console {
 		return c;
 	}
 
-
 	private InputKeyListener generateKeyListener(final JTextField textField) {
-		return new InputKeyListener(textField, ci);
+		return new InputKeyListener(textField);
 	}
 
-	public static Console createConsole(final Object endSignal) {
+	/**
+	 * Creates a new Console object for I/O-controlling.
+	 * 
+	 * @return created Console
+	 */
+	public static Console createConsole() {
+		final Object endSignal = new Object();
 		final CommandInterpreter ci = new CommandInterpreter(endSignal);
-		parseStream(System.in, ci);
+		parseStream(System.in, ci, endSignal);
 		return new Console(ci, System.out);
 	}
 
+	/**
+	 * Registers commands to this Console
+	 * 
+	 * @param root
+	 *            base directory for relative paths
+	 * @param commands
+	 *            supported Commands
+	 */
 	public void run(final Path root, final Set<Command> commands) {
 		ci.registerCommands(commands);
+	}
+
+	Map<String, Command> getCommandMap() {
+		return ci.getCommandMap();
+	}
+
+	void exit() {
+		ci.exit();
 	}
 }
