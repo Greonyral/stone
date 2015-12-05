@@ -1,5 +1,7 @@
 package stone.modules.fileEditor;
 
+import java.util.Set;
+
 /**
  * @author Nelphindal
  *
@@ -25,10 +27,16 @@ public interface Command {
 	void call(String[] params);
 
 	/**
-	 * Print more details for a command. Params up to paramOffset are parsed already
-	 * @param paramsOffset
+	 * Print more details for a command.
 	 * @param params
 	 */
-	void displayHelp(int paramsOffset, String[] params);
+	void displayHelp(String params);
+
+	/**
+	 * Handles TAB-completion
+	 * @param line complete input line
+	 * @return possible completions
+	 */
+	Set<Command> complete(final String line);
 
 }

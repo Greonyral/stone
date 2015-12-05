@@ -1,6 +1,7 @@
 package stone.modules.fileEditor;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Base class of help commands allowing to display details on each command.
@@ -28,22 +29,28 @@ public abstract class HelpCommand implements Command {
 	public final String getCommandText() {
 		return "help";
 	}
+	
+	@Override
+	public Set<Command> complete(final String line) {
+		throw new UnsupportedOperationException();
+	}
 
 	@Override
 	public String getHelpText() {
 		if (help == null) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append("Available commands:");
-			sb.append(String.format("\n%s\n\t%s\n", "help",
-					"prints this message"));
-			sb.append(String.format("\n%s\n\t%s\n", "help <command>",
-					"display details for command"));
+			sb.append(String.format("\n%s\n    %s\n", "help",
+					"Prints this message"));
+			sb.append(String.format("\n%s\n    %s\n", "help <command>",
+					"Displays details for command"));
 			for (final Map.Entry<String, Command> entry : c.getCommandMap()
 					.entrySet()) {
 				final String command = entry.getKey();
 				final String helpText = entry.getValue().getHelpText();
-				sb.append(String.format("\n%s\n\t%s\n", command, helpText));
+				sb.append(String.format("\n%s\n    %s\n", command, helpText));
 			}
+			sb.append("\n");
 			help = sb.toString();
 		}
 		return help;
@@ -57,15 +64,15 @@ public abstract class HelpCommand implements Command {
 			@SuppressWarnings("hiding")
 			final Command c = this.c.getCommandMap().get(params[0]);
 			if (c == null) {
-				this.c.out("No such command: " + params[0]);
+				this.c.err("No such command: " + params[0]);
 			} else {
-				c.displayHelp(1, params);
+				c.displayHelp(params[1]);
 			}
 		}
 	}
 
 	@Override
-	public final void displayHelp(int paramsOffset, String[] params) {
+	public final void displayHelp(final String params) {
 		call(CommandInterpreter.NO_ARGS);
 	}
 }

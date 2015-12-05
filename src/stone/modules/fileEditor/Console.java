@@ -3,6 +3,7 @@ package stone.modules.fileEditor;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
@@ -17,29 +18,40 @@ import java.io.OutputStream;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
 import stone.io.GUIInterface;
 import stone.util.Path;
 
 /**
  * Abstraction for basic I/O for supporting commands on GUI or console.
+ * 
  * @author Nelphindal
- *
+ * 
  */
 public class Console {
+
+
+	private static final String BR = "<br/>";
+	private static final byte[] SP = "&nbsp;".getBytes();
 
 	private final OutputStream out;
 	private final CommandInterpreter ci;
 	private boolean firstOut;
+	final State state;
 
-	private Console(@SuppressWarnings("hiding") final CommandInterpreter ci, final OutputStream outStream) {
+	private Console(@SuppressWarnings("hiding") final CommandInterpreter ci,
+			final OutputStream outStream,
+			@SuppressWarnings("hiding") final State state) {
 		out = outStream;
 		out("type \"help\" to get a list of available commands\n");
 		firstOut = true;
 		this.ci = ci;
+		this.state = state;
 	}
 
 	private class InputKeyListener implements KeyListener {
@@ -183,8 +195,8 @@ public class Console {
 		}
 	}
 
-	static void parseStream(final InputStream in, final CommandInterpreter ci,
-			final Object endSignal) {
+	private static void parseStream(final InputStream in,
+			final CommandInterpreter ci, final Object endSignal) {
 		class ListenerThread extends Thread {
 
 
@@ -223,8 +235,9 @@ public class Console {
 		new ListenerThread().start();
 	}
 
-	static Console createConsoleGUI(final JPanel panel) {
-		final JTextArea out = new JTextArea();
+	static Console createConsoleGUI(final JPanel panel, final State state) {
+		final JEditorPane out = new JEditorPane();
+		final JScrollPane jscroll = new JScrollPane(out);
 		final JTextField in = new JTextField();
 		final Object endSignal = GUIInterface.Button.class;
 		final CommandInterpreter ci = new CommandInterpreter(endSignal);
@@ -232,15 +245,36 @@ public class Console {
 
 			private final StringBuilder sb = new StringBuilder();
 
+
 			@Override
 			public void write(int b) throws IOException {
-				boolean flush = false;
 				switch (b) {
+				case ' ':
+					write(SP);
+					return;
+				case '\t':
+					int startOfLastLine = sb.lastIndexOf(BR);
+					int tabWidth = 4;
+					final String line;
+					if (startOfLastLine < 0) {
+						line = sb.toString().replaceAll("<.*>", "");
+					} else {
+						line = sb.substring(startOfLastLine + 5).replaceAll(
+								"<.*>", "");
+					}
+
+					int mod = line.length() % tabWidth;
+					while (mod-- > 0) {
+						write(' ');
+					}
+					return;
 				case '\n':
-					flush = true;
-					break;
+					sb.append(BR);
+					out.setText("<font face=\"Courier New\">" + sb.toString()
+							+ "</font>");
+					return;
 				case '\r':
-					int index = sb.lastIndexOf("\n");
+					int index = sb.lastIndexOf(BR);
 					if (index < 0) {
 						sb.setLength(0);
 					} else {
@@ -248,15 +282,14 @@ public class Console {
 					}
 					return;
 				default:
+					sb.append((char) b);
 				}
-				sb.append((char) b);
-				if (flush) {
-					out.setText(sb.toString());
-				}
-
 			}
 		};
-		final Console c = new Console(ci, outStream);
+
+		out.setContentType("text/html");
+
+		final Console c = new Console(ci, outStream, state);
 		final InputKeyListener l = c.generateKeyListener(in);
 
 		final FocusListener fl = new FocusListener() {
@@ -274,7 +307,6 @@ public class Console {
 
 		out.setEditable(false);
 		in.setEditable(false);
-
 
 		panel.addFocusListener(fl);
 		out.addFocusListener(fl);
@@ -297,8 +329,21 @@ public class Console {
 				final Object target = e.getOppositeComponent();
 				final Object origin = e.getComponent();
 				if (origin == source && source == in && target == out) {
-					c.ci.handleTab(in.getSelectedText(), l.c1a[0] == '\t');
+					final Set<Command> completions = c.ci.handleTab(
+							in.getText(), l.c1a[0] == '\t');
 					l.c1a[0] = '\t';
+					if (completions != null)
+						if (completions.size() == 1) {
+							final Command c = completions.iterator().next();
+							in.setText(c.getCommandText());
+						} else {
+							c.out("Possible completions:\n");
+							for (final Command cmd : completions) {
+								c.out(cmd.getCommandText());
+								c.out("\n");
+							}
+							c.out("\n");
+						}
 				}
 				return;
 
@@ -312,18 +357,16 @@ public class Console {
 		in.setCaretColor(Color.RED);
 		in.getCaret().setVisible(true);
 
-		new JScrollPane(out);
-		panel.add(out);
+		panel.add(jscroll);
 		panel.add(in, BorderLayout.SOUTH);
 
 		in.addKeyListener(l);
 
-		out.setPreferredSize(new Dimension(600, 400));
 		in.setPreferredSize(new Dimension(600, 40));
-		in.setSize(600, 40);
+		in.setSize(600, 15);
+		jscroll.setPreferredSize(new Dimension(600, 400));
 
-
-		panel.setPreferredSize(new Dimension(600, 450));
+		panel.setPreferredSize(new Dimension(620, 450));
 
 		return c;
 	}
@@ -337,11 +380,11 @@ public class Console {
 	 * 
 	 * @return created Console
 	 */
-	public static Console createConsole() {
+	static Console createConsole(final State state) {
 		final Object endSignal = new Object();
 		final CommandInterpreter ci = new CommandInterpreter(endSignal);
 		parseStream(System.in, ci, endSignal);
-		return new Console(ci, System.out);
+		return new Console(ci, System.out, state);
 	}
 
 	/**
@@ -362,5 +405,19 @@ public class Console {
 
 	void exit() {
 		ci.exit();
+	}
+
+	void err(final String string) {
+		if (out == System.out) {
+			try {
+				System.err.write(string.getBytes());
+			} catch (final IOException e) {
+				exit();
+			}
+		} else {
+			out("<font color=red>");
+			out(string);
+			out("</font>");
+		}
 	}
 }

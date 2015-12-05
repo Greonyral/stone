@@ -9,7 +9,7 @@ package stone.modules.fileEditor;
  */
 public abstract class ExitCommand implements Command {
 
-	private final Console c;
+	protected final Console c;
 
 	/**
 	 * Creates a new ExitCommand for given Console

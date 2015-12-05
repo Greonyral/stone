@@ -158,7 +158,7 @@ public class FileEditor implements Module {
 	 * @param sc
 	 *            container providing runtime dependent information
 	 */
-	public FileEditor(final StartupContainer sc) {
+	public FileEditor(@SuppressWarnings("hiding") final StartupContainer sc) {
 		this.io = sc.getIO();
 		this.master = sc.getMaster();
 		this.MOD_DATE = FileEditor.createModDateOption(sc.getOptionContainer());

@@ -19,8 +19,41 @@ class CommandInterpreter {
 	}
 
 	public Set<Command> handleTab(final String line, boolean doubleTab) {
-		// TODO Auto-generated method stub
-		return null;
+		final String baseCmd = line.split(" ", 2)[0];
+		final Command c = commandMap.get(baseCmd);
+		final Set<Command> set;
+		if (c != null) {
+			set = c.complete(line.substring(baseCmd.length()));
+		} else if (baseCmd.length() != line.length()) {
+			if (line.startsWith("help "))
+				set = complete(line);
+			else
+				// no match
+				return null;
+		} else
+			set = complete(baseCmd);
+		if (!doubleTab && set != null && set.size() != 1)
+			return null;
+		return set;
+	}
+
+	private Set<Command> complete(final String cmd) {
+		final Set<Command> set = new HashSet<>();
+		for (final String s : commandMap.keySet()) {
+			if (s.startsWith(cmd)) {
+				set.add(commandMap.get(s));
+			}
+		}
+		for (final String s : helpCommands.keySet()) {
+			if (s == null) {
+				if ("help".startsWith(cmd)) {
+					set.add(helpCommands.get(null));
+				}
+			} else if (s.startsWith(cmd)) {
+				set.add(commandMap.get(s));
+			}
+		}
+		return set;
 	}
 
 	public boolean handleEnter(String line) {
@@ -33,8 +66,7 @@ class CommandInterpreter {
 			args = NO_ARGS;
 		} else {
 			baseCommand = line.substring(0, delim);
-			args = line.substring(delim + 1, line.length() - delim - 1).split(
-					" ");
+			args = line.substring(delim + 1).split(" ", 2);
 		}
 		if (baseCommand.equals("help")) {
 			helpCommands.get(null).call(args);
@@ -77,7 +109,7 @@ class CommandInterpreter {
 	}
 
 	void exit() {
-		synchronized(endSignal) {
+		synchronized (endSignal) {
 			endSignal.notifyAll();
 		}
 	}
