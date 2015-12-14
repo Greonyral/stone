@@ -75,7 +75,7 @@ import stone.util.StringOption;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 17;
+	private final static int VERSION = 18;
 
 	private final static String SECTION = Main.VC_SECTION;
 
@@ -1076,7 +1076,7 @@ public final class VersionControl implements Module {
 							if (merged.add(old)) {
 								this.repoRoot.resolve(old).delete();
 							}
-							gitSession.add().addFilepattern(old).call();
+							gitSession.rm().addFilepattern(old).call();
 							break;
 						case ADD:
 						case COPY:

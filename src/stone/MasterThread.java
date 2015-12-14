@@ -208,6 +208,16 @@ public class MasterThread extends Thread {
 		return this.modulesLocal.get(m);
 	}
 
+	/**
+	 * Adds a task to the TaskPool to be executed.
+	 * 
+	 * @param task
+	 *            -
+	 */
+	public void addTask(final Runnable task) {
+		taskPool.addTask(task);
+	}
+
 	/** */
 	@Override
 	public synchronized void interrupt() {
@@ -218,7 +228,8 @@ public class MasterThread extends Thread {
 	/**
 	 * Interrupts <i>this</i> thread and blocks to wait for all tasks in the
 	 * TaskPool to finish.
-	 * @return true if every thread exited and the Taskpool is closed 
+	 * 
+	 * @return true if every thread exited and the Taskpool is closed
 	 * 
 	 */
 	public boolean interruptAndWait() {
@@ -504,7 +515,7 @@ public class MasterThread extends Thread {
 	}
 
 	private final void downloadModule(final String module) {
-		this.io.startProgress("Donwloading module " + module, -1);
+		this.io.startProgress("Downloading module " + module, -1);
 		try {
 			final URL url = new URL(downloadPage + "modules/" + module + ".jar");
 			final URLConnection connection = url.openConnection();

@@ -39,6 +39,7 @@ import stone.modules.fileEditor.InvalidNameSchemeException;
 import stone.modules.fileEditor.NameScheme;
 import stone.modules.fileEditor.NumberingGUI;
 import stone.modules.fileEditor.SongChangeData;
+import stone.modules.fileEditor.SongRewrite;
 import stone.modules.fileEditor.UniformSongsGUI;
 import stone.util.BooleanOption;
 import stone.util.Flag;
@@ -58,7 +59,7 @@ public class FileEditor implements Module {
 
 	private final static String SECTION = "[fileEditor]";
 
-	private final static int VERSION = 5;
+	private final static int VERSION = 6;
 
 	private static final String DEFAULT_SCHEME = "%title %index/%total [%instrument]$1{ (%duration)}$2{ %b %d}";
 
@@ -97,12 +98,20 @@ public class FileEditor implements Module {
 				"Uniform song titles", Flag.NoShortFlag, "uniform-songs",
 				FileEditor.SECTION, null, false);
 	}
+	
+	final static BooleanOption createSongRewriteOption(final OptionContainer oc) {
+		return new BooleanOption(oc, "srwrite",
+				"Changes the structure of one or more songs.",
+				"Rewrite Songs", Flag.NoShortFlag, "rewrite-songs",
+				FileEditor.SECTION, null, false);
+	}
 
 	final StringOption SONG_SCHEME;
 	final BooleanOption MOD_DATE;
 	final BooleanOption CHANGE_TITLE;
 	final BooleanOption CHANGE_NUMBERING;
 	final BooleanOption UNIFORM_SONGS;
+	final BooleanOption SONG_REWRITE;
 
 	private final IOHandler io;
 	private final CanonicalTreeParser treeParserNew = new CanonicalTreeParser();
@@ -123,6 +132,8 @@ public class FileEditor implements Module {
 
 	private final Module songdata;
 
+	private final StartupContainer sc;
+
 	/**
 	 * Constructor for building versionInfo
 	 */
@@ -134,8 +145,10 @@ public class FileEditor implements Module {
 		this.CHANGE_NUMBERING = null;
 		this.UNIFORM_SONGS = null;
 		this.SONG_SCHEME = null;
+		this.SONG_REWRITE = null;
 		this.main = null;
 		this.songdata = null;
+		this.sc = null;
 	}
 
 	/**
@@ -145,7 +158,7 @@ public class FileEditor implements Module {
 	 * @param sc
 	 *            container providing runtime dependent information
 	 */
-	public FileEditor(final StartupContainer sc) {
+	public FileEditor(@SuppressWarnings("hiding") final StartupContainer sc) {
 		this.io = sc.getIO();
 		this.master = sc.getMaster();
 		this.MOD_DATE = FileEditor.createModDateOption(sc.getOptionContainer());
@@ -157,8 +170,10 @@ public class FileEditor implements Module {
 				.getOptionContainer());
 		this.SONG_SCHEME = FileEditor.createSongSchemeOption(sc
 				.getOptionContainer());
+		this.SONG_REWRITE = FileEditor.createSongRewriteOption(sc.getOptionContainer());
 		this.main = sc.getMain();
 		this.songdata = this.master.getModule("SongData");
+		this.sc = sc;
 	}
 
 	@Override
@@ -187,10 +202,12 @@ public class FileEditor implements Module {
 	@Override
 	public final List<Option> getOptions() {
 		final List<Option> list = new ArrayList<>(4);
+		
 		list.add(this.UNIFORM_SONGS);
 		list.add(this.SONG_SCHEME);
 		list.add(this.CHANGE_TITLE);
 		list.add(this.CHANGE_NUMBERING);
+		list.add(this.SONG_REWRITE);
 		list.add(this.MOD_DATE);
 		return list;
 	}
@@ -201,7 +218,7 @@ public class FileEditor implements Module {
 	}
 
 	@Override
-	public final Module init(final StartupContainer sc) {
+	public final Module init(@SuppressWarnings("hiding") final StartupContainer sc) {
 		return this;
 	}
 
@@ -253,7 +270,9 @@ public class FileEditor implements Module {
 			for (final SongChangeData scd : this.changes.values()) {
 				scd.revalidate(this.io, getNameScheme());
 			}
-
+			if (this.SONG_REWRITE.getValue()) {
+				new SongRewrite(sc).run();
+			}
 			if (this.MOD_DATE.getValue()) {
 				resetModDate();
 			}

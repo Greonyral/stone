@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import stone.MasterThread;
+import stone.modules.fileEditor.AbcConstants;
 import stone.io.ExceptionHandle;
 import stone.io.IOHandler;
 import stone.io.InputStream;
@@ -31,13 +32,13 @@ public class SongChangeData {
 
 	class AbcTempoParams {
 
-		int tempo = SongChangeData.DEFAULT_TEMPO;
+		int tempo = AbcConstants.DEFAULT_TEMPO;
 		double beats = 0;
 		double base = 0;
 
 		final void reset() {
-			this.tempo = SongChangeData.DEFAULT_TEMPO;
-			this.base = SongChangeData.DEFAULT_BASE;
+			this.tempo = AbcConstants.DEFAULT_TEMPO;
+			this.base = AbcConstants.DEFAULT_BASE;
 			this.beats = 0;
 		}
 
@@ -45,19 +46,15 @@ public class SongChangeData {
 			if (this.beats == 0) {
 				return 0.0;
 			}
-			if (this.base == SongChangeData.TIME_BASE) {
+			if (this.base == AbcConstants.TIME_BASE) {
 				return this.beats / this.tempo;
 			}
 			return (this.beats / this.tempo)
-					* (this.base / SongChangeData.TIME_BASE);
+					* (this.base / AbcConstants.TIME_BASE);
 		}
 	}
 
-	private static final int DEFAULT_TEMPO = 120;
-	private static final double DEFAULT_BASE = 0.125;
-
-	private static final double TIME_BASE = 0.25;
-
+	
 	private static Path basePath;
 
 	private static final String testDuration(final String durationS) {

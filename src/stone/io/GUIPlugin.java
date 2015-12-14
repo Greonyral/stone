@@ -91,7 +91,7 @@ public abstract class GUIPlugin {
 
 	/**
 	 * Requests equivalent functionality if a GUI is disalbed
-	 * @throws IOException 
+	 * @throws IOException if an I/O-error occurs
 	 */
 	protected abstract void textmode() throws IOException;
 
