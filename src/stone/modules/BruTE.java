@@ -14,7 +14,7 @@ import stone.util.Option;
  */
 public final class BruTE implements Module {
 
-	private static final int VERSION = 1;
+	private static final int VERSION = 2;
 
 	/**
 	 * Constructor for building versionInfo

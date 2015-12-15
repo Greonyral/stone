@@ -34,7 +34,7 @@ import stone.util.TaskPool;
  */
 public class SongData implements Module {
 
-	private static final int VERSION = 2;
+	private static final int VERSION = 3;
 
 	/**
 	 * Decodes serialized data of a single entry

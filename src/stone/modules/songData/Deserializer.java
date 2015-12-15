@@ -32,12 +32,15 @@ abstract public class Deserializer {
 	 *            -
 	 * @return created instance
 	 */
-	public final static Deserializer init(final SongData sdc,
-			final MasterThread master) {
+	public final static Deserializer init(final SongData sdc, final MasterThread master) {
 		final Path idx = getIdx(sdc.getRoot());
 		final IOHandler io = sdc.getIOHandler();
-		final Map<String, AbstractInputStream> zipEntriesMap = io
-				.openInZip(idx);
+		final Map<String, AbstractInputStream> zipEntriesMap;
+
+		if (!idx.exists())
+			zipEntriesMap = null;
+		else
+			zipEntriesMap = io.openInZip(idx);
 		final AbstractInputStream in;
 		final Deserializer instance;
 		if (zipEntriesMap == null) {
@@ -65,8 +68,7 @@ abstract public class Deserializer {
 					protected final void deserialize_() throws IOException {
 						final int id = this.id.incrementAndGet();
 						if (id == 0) {
-							final Deserializer sdd = new Deserializer_3(
-									this.sdc);
+							final Deserializer sdd = new Deserializer_3(this.sdc);
 							sdd.deserialize();
 							sdd.abort_();
 						}
@@ -87,11 +89,9 @@ abstract public class Deserializer {
 	}
 
 	private static final Path getIdx(final Path root) {
-		final Path idx = root.resolve("..", "PluginData",
-				"SongbookUpdateData.idx");
+		final Path idx = root.resolve("..", "PluginData", "SongbookUpdateData.idx");
 
-		final Path idxOld = root.resolve("..", "PluginData",
-				"SongbookUpdateData.zip");
+		final Path idxOld = root.resolve("..", "PluginData", "SongbookUpdateData.zip");
 
 		if (idxOld.exists()) {
 			idxOld.renameTo(idx);
@@ -179,9 +179,7 @@ abstract public class Deserializer {
 			this.deserialDone = true;
 			notifyAll();
 		}
-		Debug.print(
-				"==========\nDeserial completed %d parsed\n\n==========\n\n",
-				this.songsParsed.get());
+		Debug.print("==========\nDeserial completed %d parsed\n\n==========\n\n", this.songsParsed.get());
 		if (this.crawlDone) {
 			this.io.startProgress("Parsing songs", this.songsFound.get());
 			this.io.updateProgress(this.songsParsed.get());
@@ -325,7 +323,6 @@ abstract public class Deserializer {
 	 * @throws IOException
 	 *             if an I/O-Error occurs
 	 */
-	protected abstract void generateStream(final SongDataEntry data)
-			throws IOException;
+	protected abstract void generateStream(final SongDataEntry data) throws IOException;
 
 }

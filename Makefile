@@ -3,7 +3,7 @@
 JAVAC=@javac -g -cp $(BIN_DIR):lib -sourcepath src -d $(BIN_DIR)
 BIN_DIR=classes
 
-BRUTE_VERSION=21b
+BRUTE_VERSION=21c
 BRUTE_FILES=drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe
 
 MAIN_SRC_FILES=Event Main MasterThread ModuleLoader \
