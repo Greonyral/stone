@@ -2,7 +2,6 @@ package stone.modules.fileEditor;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -23,6 +22,8 @@ import stone.util.Path;
  * 
  */
 public class SongRewrite {
+
+	static final String DIR_SUFFIX_REVERT = "_reversed";
 
 	private final class ReverseSongOrderCommandImpl implements Command {
 		private final Console c;
@@ -74,7 +75,7 @@ public class SongRewrite {
 			c.out("\n");
 			if (params.isEmpty()) {
 				c.out("Reverses currently selected song and writes result maintaining the hierachy to " + root
-						+ "_rewritten\n");
+						+ DIR_SUFFIX_REVERT +"\n");
 			} else {
 				c.err("No additional arguments supported\n");
 			}

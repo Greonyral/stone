@@ -150,7 +150,7 @@ class AbcFile {
 		}
 		
 		final String relative = selected.relativize(root);
-		final Path rootReversed = root.getParent().resolve(root.getFilename() + "_reversed");
+		final Path rootReversed = root.getParent().resolve(root.getFilename() + SongRewrite.DIR_SUFFIX_REVERT);
 		final Path target = rootReversed.resolve(relative.split("/"));
 		
 		target.getParent().toFile().mkdirs();
