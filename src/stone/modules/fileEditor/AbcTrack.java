@@ -391,8 +391,7 @@ class AbcTrack {
 				switch (c) {
 				case '+':
 					int delim = line.indexOf('+', index);
-					final String volume = line.substring(index, delim - index
-							+ 1);
+					final String volume = line.substring(index, delim);
 					state.readVol(volume);
 					index = delim + 1;
 					assert index > 0;
@@ -547,6 +546,10 @@ class AbcTrack {
 				headReversed.addLast(line);
 			}
 		}
+		final String title = this.title.toString();
+		this.title.setLength(0);
+		this.title.append(title);
+		
 		lines.clear();
 		if (notes.isEmpty())
 			parse();

@@ -19,6 +19,7 @@ import java.util.Set;
 
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
@@ -34,14 +35,14 @@ import stone.util.Path;
  */
 public class Console {
 
-
+	private static final int MAX_OUTLINES_BUFFERED = 400;
 	private static final String BR = "<br/>";
 	private static final byte[] SP = "&nbsp;".getBytes();
 
 	private final OutputStream out;
 	private final CommandInterpreter ci;
 	private boolean firstOut;
-	
+
 	final State state = new State();
 
 	private Console(@SuppressWarnings("hiding") final CommandInterpreter ci,
@@ -128,8 +129,7 @@ public class Console {
 				if (commands == null)
 					break;
 				if (c1a[0] != KeyEvent.VK_TAB && commands.size() == 1) {
-					textField.setText(commands.iterator().next()
-							);
+					textField.setText(commands.iterator().next());
 				} else {
 					out(in + "[TAB]");
 					for (final String s : commands) {
@@ -181,14 +181,17 @@ public class Console {
 	}
 
 	void out(final String string) {
+
 		try {
-			if (firstOut) {
-				firstOut = false;
-				out.write('\r');
-				out.write('\r');
+			synchronized (out) {
+				if (firstOut) {
+					firstOut = false;
+					out.write('\r');
+					out.write('\r');
+				}
+				Debug.print("%s", string);
+				out.write(string.getBytes());
 			}
-			Debug.print("%s", string);
-			out.write(string.getBytes());
 		} catch (final IOException e) {
 			exit();
 		}
@@ -240,10 +243,13 @@ public class Console {
 		final JTextField in = new JTextField();
 		final Object endSignal = GUIInterface.Button.class;
 		final CommandInterpreter ci = new CommandInterpreter(endSignal);
+
+
 		final OutputStream outStream = new OutputStream() {
 
+			private int lines = 0;
 			private final StringBuilder sb = new StringBuilder();
-
+			private final JScrollBar vscroll = jscroll.getVerticalScrollBar();
 
 			@Override
 			public void write(int b) throws IOException {
@@ -269,8 +275,38 @@ public class Console {
 					return;
 				case '\n':
 					sb.append(BR);
-					out.setText("<font face=\"Courier New\">" + sb.toString()
-							+ "</font>");
+					if (++lines >= MAX_OUTLINES_BUFFERED) {
+						--lines;
+						String truncated = sb.substring(sb.indexOf(BR)
+								+ BR.length());
+						if (truncated.startsWith("</")) {
+							truncated = truncated.substring(truncated
+									.indexOf(BR) + BR.length());
+							--lines;
+						}
+						sb.setLength(0);
+						sb.append(truncated);
+					}
+
+					while (true)
+						try {
+							out.setText("<font face=\"Courier New\">"
+									+ sb.toString() + "</font>");
+							out.invalidate();
+							vscroll.invalidate();
+							out.validate();
+							vscroll.validate();
+							vscroll.setValue(vscroll.getMaximum());
+							break;
+						} catch (final Exception e) {
+							try {
+								Thread.sleep(5);
+							} catch (final Exception ie) {
+								Thread.currentThread().interrupt();
+								return;
+							}
+							continue;
+						}
 					return;
 				case '\r':
 					int index = sb.lastIndexOf(BR);
@@ -337,7 +373,7 @@ public class Console {
 							in.setText(s);
 						} else {
 							c.out("Possible completions:\n");
-							for (final String s: completions) {
+							for (final String s : completions) {
 								c.out(s);
 								c.out("\n");
 							}
@@ -354,7 +390,7 @@ public class Console {
 		in.setSelectionColor(Color.YELLOW);
 		in.setCaretColor(Color.RED);
 		in.getCaret().setVisible(true);
-		
+
 		panel.add(jscroll);
 		panel.add(in, BorderLayout.SOUTH);
 
@@ -414,9 +450,11 @@ public class Console {
 				exit();
 			}
 		} else {
-			out("<font color=red>");
-			out(string);
-			out("</font>");
+			synchronized (out) {
+				out("<font color=red>");
+				out(string);
+				out("</font>");
+			}
 		}
 	}
 }

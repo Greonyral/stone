@@ -9,8 +9,10 @@ import java.util.TreeSet;
 import javax.swing.JPanel;
 import stone.MasterThread;
 import stone.StartupContainer;
+import stone.io.ExceptionHandle;
 import stone.io.IOHandler;
 import stone.modules.SongData;
+import stone.util.Debug;
 import stone.util.Path;
 
 /**
@@ -28,7 +30,8 @@ public class SongRewrite {
 	private final class ReverseSongOrderCommandImpl implements Command {
 		private final Console c;
 
-		private ReverseSongOrderCommandImpl(@SuppressWarnings("hiding") final Console c) {
+		private ReverseSongOrderCommandImpl(
+				@SuppressWarnings("hiding") final Console c) {
 			this.c = c;
 		}
 
@@ -45,27 +48,86 @@ public class SongRewrite {
 		@Override
 		public final void call(final String[] params) {
 			c.out(getCommandText() + "\n");
-			final Path selected = c.state.selected;
-			if (selected == null) {
-				c.err("No file selected\n");
-				return;
-			}
-			final InputStream stream = io.openIn(selected.toFile());
+			master.addTask(new Runnable() {
+				@Override
+				public void run() {
+					synchronized (c.state.selected) {
+						for (final Path selected : c.state.selected) {
+							if (master.isInterrupted())
+								return;
+							Debug.print("Processing %s in background\n",
+									selected.relativize(root));
+							final InputStream stream = io.openIn(selected
+									.toFile());
+							master.addTask(new Runnable() {
+
+								@Override
+								public void run() {
+									try {
+										AbcFile abcFile;
+										try {
+											abcFile = AbcFile.readFile(stream,
+													c);
+										} catch (final Exception e) {
+											abcFile = null;
+										} finally {
+											io.close(stream);
+										}
+										if (abcFile == null) {
+											c.err("Reading "
+													+ selected.relativize(root)
+													+ " finished with errors\n");
+											return;
+										}
+										try {
+											abcFile.reverse(root, selected, io);
+											Debug.print(
+													"Reveresing %s finished\n",
+													selected.relativize(root));
+
+										} catch (final Exception e) {
+											io.handleException(
+													ExceptionHandle.CONTINUE, e);
+											c.err("Reversing "
+													+ selected.relativize(root)
+													+ " finished with errors\n");
+										}
+									} finally {
+										synchronized (c.state.selected) {
+											c.state.selected.remove(selected);
+											c.state.selected.notifyAll();
+										}
+									}
+								}
+							});
+						}
+					}
+				}
+			});
 			master.addTask(new Runnable() {
 
 				@Override
 				public void run() {
-					final AbcFile abcFile = AbcFile.readFile(stream, c);
-					io.close(stream);
-					if (abcFile == null) {
-						c.err("Reversing " + selected + " finished with errors\n");
-						return;
+					while (true) {
+						synchronized (c.state.selected) {
+							if (c.state.selected.isEmpty())
+								break;
+							try {
+								c.state.selected.wait();
+							} catch (final Exception e) {
+								io.handleException(ExceptionHandle.CONTINUE, e);
+								return;
+							}
+						}
 					}
-					abcFile.reverse(root, selected, io);
-					c.out("Reversing  " + selected.relativize(root) + " finished\n");
+					String param = "";
+					for (final String s : params) {
+						param += " ";
+						param += s;
+					}
+					c.out("Reversing" + param + " completed\n");
 				}
 			});
-			c.out("Processing " + selected.relativize(root) + " in background\n");
 		}
 
 		@Override
@@ -74,8 +136,8 @@ public class SongRewrite {
 			c.out(params);
 			c.out("\n");
 			if (params.isEmpty()) {
-				c.out("Reverses currently selected song and writes result maintaining the hierachy to " + root
-						+ DIR_SUFFIX_REVERT +"\n");
+				c.out("Reverses currently selected song and writes result maintaining the hierachy to "
+						+ root + DIR_SUFFIX_REVERT + "\n");
 			} else {
 				c.err("No additional arguments supported\n");
 			}
@@ -121,14 +183,22 @@ public class SongRewrite {
 				c.out("\r ");
 				c.out(sb.toString());
 				c.out("\n");
-				final Path selected = root.resolve(sb.toString().split("[\\\\/]"));
-				if (selected.exists()) {
-					if (selected.toFile().isFile())
-						c.state.selected = selected;
-					else
-						c.err(selected.toString() + " is no file\n");
-				} else {
-					c.err(selected.toString() + " does not exist\n");
+				c.state.selected.clear();
+				final Path[] selected = root.resolveWC(sb.toString().split(
+						"[\\\\/]"));
+				for (final Path p : selected) {
+					final String name = p.relativize(root);
+					if (p.exists()) {
+						if (p.toFile().isFile())
+							if (p.getFilename().endsWith(".abc"))
+								c.state.selected.add(p);
+							else
+								c.err(name + " is no ABC-file\n");
+						else
+							c.err(name + " is no file\n");
+					} else {
+						c.err(name + " does not exist\n");
+					}
 				}
 			}
 			c.out("\n");
@@ -162,7 +232,9 @@ public class SongRewrite {
 			}
 			if (!p.exists())
 				return null;
-			if (!line.isEmpty() && (toComplete.isEmpty() ? p.exists() : p.resolve(toComplete).exists())) {
+			if (!line.isEmpty()
+					&& (toComplete.isEmpty() ? p.exists() : p.resolve(
+							toComplete).exists())) {
 				if (root.resolve(line).toFile().isDirectory()) {
 					if (!line.endsWith("/"))
 						completions.add(getCommandText() + " " + line + "/");
@@ -178,7 +250,8 @@ public class SongRewrite {
 				if (s.startsWith(toComplete)) {
 					if (!s.equals(toComplete)) {
 						final Path target = p.resolve(s);
-						completions.add(getCommandText() + " " + target.relativize(root));
+						completions.add(getCommandText() + " "
+								+ target.relativize(root));
 					}
 				}
 			}

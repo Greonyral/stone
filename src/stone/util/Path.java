@@ -936,4 +936,90 @@ public final class Path implements Comparable<Path>, Externalizable {
 			}
 		}
 	}
+
+	/**
+	 * Resolves like {@link #resolve(String...)} given path components.
+	 * Additionally to simple {@link #resolve(String...)} Wild-cards will be
+	 * recognized
+	 * 
+	 * @param pathComponent
+	 *            -
+	 * @return array of resolved Path
+	 */
+	public Path[] resolveWC(final String[] pathComponent) {
+		final Set<Path> workList = new HashSet<>();
+		final Set<Path> resultList = new HashSet<>();
+		resultList.add(this);
+		boolean lastWasWC = false;
+		for (String string : pathComponent) {
+
+			// adjusting wildcards to Java regex expressions
+			if (string.contains("*")) {
+				int index = string.indexOf('*');
+				while (index >= 0) {
+					if (index == 0) {
+						string = "." + string;
+					} else if (string.charAt(index - 1) != '.'
+							&& string.charAt(index - 1) != ']'
+							&& string.charAt(index - 1) != ')') {
+						string = string.substring(0, index - 1) + "."
+								+ string.substring(index);
+					}
+
+					index = string.indexOf('*', index + 1);
+				}
+			}
+
+			if (string.equals("..")) {
+				workList.clear();
+				workList.addAll(resultList);
+				resultList.clear();
+				for (final Path p : workList) {
+					resultList.add(p.getParent());
+				}
+			} else if (string.equals(".")) {
+				continue;
+			} else {
+				workList.clear();
+				workList.addAll(resultList);
+				resultList.clear();
+				lastWasWC = string.endsWith("*");
+
+				for (final Path p : workList) {
+					if (p.exists() && p.toFile().isDirectory()) {
+						for (final String f : p.toFile().list()) {
+							if (f.matches(string))
+								resultList.add(p.resolve(f));
+						}
+					}
+				}
+			}
+		}
+
+		if (lastWasWC) {
+			final HashSet<Path> workListNew = new HashSet<>();
+			workListNew.addAll(resultList);
+			while (!workListNew.isEmpty()) {
+				workList.clear();
+				workList.addAll(workListNew);
+				workListNew.clear();
+				for (final Path p : workList) {
+					if (p.exists()) {
+						if (p.toFile().isDirectory()) {
+							resultList.remove(p);
+							for (@SuppressWarnings("hiding")
+							final String file : p.toFile().list()) {
+								if (file.startsWith("."))
+									continue;
+								workListNew.add(p.resolve(file));
+							}
+						} else {
+							resultList.add(p);
+						}
+					}
+				}
+			}
+		}
+		return resultList.toArray(new Path[resultList.size()]);
+	}
 }
