@@ -1,0 +1,16 @@
+JAVAC="javac -g -cp $BIN_DIR:lib -sourcepath src -d $BIN_DIR"
+
+targetClass=`basename $1`
+echo -ne "JAVAC $targetClass \033[33mbusy\033[0m"
+
+`${JAVAC} $@`
+
+returnValue=$?
+if [ $returnValue -ne 0 ] ; then
+    printf "\r                                           \r"
+    echo -e "JAVAC $targetClass \033[31mfailed\033[0m"
+else
+    printf "\r                                           \r"
+    echo -e "JAVAC $targetClass \033[32mdone\033[0m"
+fi
+exit $returnValue

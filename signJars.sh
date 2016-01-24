@@ -1,21 +1,32 @@
 #! /bin/bash
 
 sign() {
+local password=`secret-tool "lookup" "app" "jarsigner"`
 for jar in ${jars[@]} ; do
 	echo -n "signing $jar " | sed "s/\\.\\/.*\\///g" \
 		| sed "s/\\.\\///g"
-	echo -e -n "\033[33mbusy\033[0m"
-	password=`secret-tool "lookup" "app" "jarsigner"`
+    jar_unsigned=`sed "s/\\.jar/\\.unsigned.jar/g" <<<$jar`
+    cp $jar $jar_unsigned
+    echo -ne "\033[33mbusy\033[0m"
 	echo $password | jarsigner $jar "stone" "-tsa" "http://timestamp.comodoca.com/rfc3161" >>$LOG 2>/dev/null
 	success=$?
 	printf "\b\b\b\b"
 	if (( $success != 0 )) ; then
 		echo -e "\033[31mfailed"
 		echo -e "\033[0m$success"
+        mv $jar_unsigned $jar
+        echo "\trolled back changes"
 		exit $success
 	fi
+    echo -ne "\033[34mverifying"
+    rm $jar_unsigned
+    jarsigner -verify $jar -verbose >>$LOG
+	printf "\b\b\b\b\b\b\b\b\b"
+	printf "         "
+	printf "\b\b\b\b\b\b\b\b\b"
 	echo -e "\033[32mdone\033[0m"
 done
+unset password
 }
 
 jars=(`find . -name \*.jar`)

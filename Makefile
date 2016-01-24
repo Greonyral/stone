@@ -1,8 +1,8 @@
 .PHONY: all moduleInfo sign_jars
 
-JAVAC=@javac -g -cp $(BIN_DIR):lib -sourcepath src -d $(BIN_DIR)
+JAVAC=@./compile
 BIN_DIR=classes
-
+export BIN_DIR
 BRUTE_VERSION=21c
 BRUTE_FILES=drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe
 
@@ -82,6 +82,8 @@ classes:
 	mkdir -p classes
 
 sign_jars:
+	@echo ""
+	@echo "Signing jars"
 	@./signJars.sh
 
 brute/$(BRUTE_VERSION): brute/$(BRUTE_VERSION).zip
@@ -174,6 +176,8 @@ songbook_standalone: modules/Main_susa.jar modules/SongbookUpdater.jar
 
 moduleInfo: $(BIN_DIR)/stone/updater/CreateBuilds.class
 	mkdir -p moduleInfo
+	@echo ""
+	@echo "Creating moduleInfo"
 	java -cp $(BIN_DIR):lib stone.updater.CreateBuilds
 
 $(BIN_DIR)/stone/io/Icon.png: Icon.png
@@ -183,15 +187,15 @@ $(BIN_DIR)/stone/io/Icon.png: Icon.png
 #	classes		#
 #########################
 $(BIN_DIR)/stone/%.class: src/stone/%.java
-	$(JAVAC) $<
+	$(JAVAC) $^
+
 
 $(BIN_DIR)/stone/updater/CreateBuilds.class: src/stone/updater/CreateBuilds.java $(MAIN_CLASSES_0) $(MODULE_CLASSES)
-	$(JAVAC) $<
+	$(JAVAC) $^
 
 
 #Module classes
 $(BIN_DIR)/stone/modules/Module.class: src/stone/modules/Module.java src/stone/MasterThread.java
-	$(JAVAC) $^ 
 
 $(BIN_DIR)/stone/modules/SongbookUpdater.class: src/stone/modules/SongbookUpdater.java src/stone/modules/songData/*.java $(BIN_DIR)/stone/modules/Module.class
 	$(JAVAC) $< src/stone/modules/songData/*.java

@@ -7,6 +7,10 @@ files_a=($3)
 
 to_delete=()
 shift 3
+
+printf "\r"
+echo -en "$target \033[34mpreparing\033[0m"
+
 while [ $# -gt 0 ] ; do
   targetD="$1"
   sourceD="$2"
@@ -28,8 +32,9 @@ done
 
 trap "rm -f $target; exit 127" SIGINT
 
+printf "\r                                     \r"
 echo -en "$target \033[33mbusy\033[0m"
-printf "\r"
+
 jar $jarFlags $target ${files[@]} $ds 2>/dev/null
 success=$?
 
@@ -40,10 +45,13 @@ for f in "$to_delete" ; do
 done
 
 if (( $success != 0 )) ; then
+    printf "\r"
 	echo -e "$target \033[31mfailed\033[0m"
 	echo "jar $jarFlags $target ${files[@]}"
 	rm -f $target
 	exit $success
 fi
+
+printf "\r"
 echo -e "$target \033[32mdone\033[0m"
 exit $success
