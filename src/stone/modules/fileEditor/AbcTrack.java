@@ -75,9 +75,11 @@ class AbcTrack {
 				return;
 			if (n < 0) {
 				n = -n;
-			}
-			if (d < 0) {
+				d = 1;
+			} else if (d < 0) {
 				d = -d;
+			} else if (d == 0) {
+				d = 1;
 			}
 
 			final AbcNote note = new AbcNote(value, n, d, modifiers);
@@ -196,13 +198,13 @@ class AbcTrack {
 		@Override
 		String abcLine() {
 			String s = toString();
-			if (n != 1 && d != 1) {
+			if (n != 1) {
 				s += n;
-				if (d != 1) {
-					s += "/";
-					if (d != 2)
-						s += d;
-				}
+			}
+			if (d != 1) {
+				s += "/";
+				if (d != 2)
+					s += d;
 			}
 			if (modifier.isBeamed)
 				s += "-";
@@ -234,7 +236,7 @@ class AbcTrack {
 			final List<AbcNote> list = getList(false, continuations);
 			if (list == null)
 				return;
-		
+
 			this.modifier.isBeamed = true;
 			list.get(0).modifier.isBeamed = false;
 		}
@@ -499,17 +501,29 @@ class AbcTrack {
 			appendPause(8.0);
 			duration -= 8.0;
 		}
+		if (duration < 1e-5) {
+			// numeric 0
+			// will result into */0 => omit
+			return;
+		}
 		int n, d;
-		final String[] frac = toDecFrac(duration).split("/");
-		if (frac[0].isEmpty()) {
+		final String frac = toDecFrac(duration);
+		final String[] frac_a = frac.split("/");
+		if (frac.isEmpty()) {
 			n = 1;
 			d = 1;
-		} else if (frac.length == 1) {
-			n = Integer.parseInt(frac[0]);
-			d = 1;
+		} else if (frac_a.length == 0) {
+			n = 1;
+			d = 2;
+		} else if (frac_a.length == 1) {
+			n = Integer.parseInt(frac_a[0]);
+			if (frac.endsWith("/"))
+				d = 2;
+			else
+				d = 1;
 		} else {
-			n = Integer.parseInt(frac[0]);
-			d = Integer.parseInt(frac[1]);
+			n = Integer.parseInt(frac_a[0]);
+			d = Integer.parseInt(frac_a[1]);
 		}
 		final AbcNote pause = new AbcNote('z', n, d);
 		lines.add(pause.abcLine());
@@ -549,7 +563,7 @@ class AbcTrack {
 		final String title = this.title.toString();
 		this.title.setLength(0);
 		this.title.append(title);
-		
+
 		lines.clear();
 		if (notes.isEmpty())
 			parse();
@@ -592,12 +606,15 @@ class AbcTrack {
 		ggT = ggT(d, n);
 		d /= ggT;
 		n /= ggT;
-		if (d == 1) {
-			if (n == 1)
+		if (n == 1) {
+			if (d == 1) {
 				return "";
-			return Integer.toString((int) n);
+			} else if (d == 2)
+				return "/";
 		}
-		if (d == 2)
+		if (d == 1)
+			return Integer.toString((int) n);
+		else if (d == 2)
 			return Integer.toString((int) n) + "/";
 		return Integer.toString((int) n) + "/" + Integer.toString((int) d);
 	}

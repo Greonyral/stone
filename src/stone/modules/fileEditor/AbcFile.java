@@ -144,7 +144,7 @@ class AbcFile {
 	 * @param io 
 	 */
 	public void reverse(final Path root, final Path selected, final IOHandler io) {
-//		pausePad();
+		pausePad();
 		for (final AbcTrack track : tracks.values()) {
 			track.reverseNotes();
 		}
@@ -169,7 +169,6 @@ class AbcFile {
 	 * Adds pauses to ensure all tracks end at exactly same time
 	 */
 	private void pausePad() {
-		// TODO still buggy
 		final Map<Integer, Double> noteDuration = new HashMap<>();
 		double max = 0;
 		for (final Entry<Integer, AbcTrack> trackEntry : tracks.entrySet()) {
