@@ -45,7 +45,7 @@ import stone.util.Path;
  */
 public class IOHandler {
 
-	private static final String oracleJavaDownloadURL = "http://www.java.com/en/download/manual.jsp";
+	private static final String oracleJavaDownloadURL = "https://www.java.com/en/download/manual.jsp";
 	private static final String oracleJRE = "Java(TM) SE Runtime Environment";
 	private static final String openJDK = "OpenJDK Runtime Environment";
 	private static final String oracleKey = "Recommended Version";

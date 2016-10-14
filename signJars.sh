@@ -1,6 +1,7 @@
 #! /bin/bash
 
 sign() {
+local passwordKeyStore=`secret-tool "lookup" "app" "java-keystore"`
 local password=`secret-tool "lookup" "app" "jarsigner"`
 for jar in ${jars[@]} ; do
 	echo -n "signing $jar " | sed "s/\\.\\/.*\\///g" \
@@ -8,7 +9,8 @@ for jar in ${jars[@]} ; do
     jar_unsigned=`sed "s/\\.jar/\\.unsigned.jar/g" <<<$jar`
     cp $jar $jar_unsigned
     echo -ne "\033[33mbusy\033[0m"
-	echo $password | jarsigner $jar "stone" "-tsa" "http://timestamp.comodoca.com/rfc3161" >>$LOG 2>/dev/null
+	jarsigner $jar "stone" "-tsa" "http://timestamp.comodoca.com/rfc3161" \
+    "-storepass" $passwordKeyStore "-keypass" $password >>$LOG 
 	success=$?
 	printf "\b\b\b\b"
 	if (( $success != 0 )) ; then
