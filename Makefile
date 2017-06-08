@@ -6,7 +6,7 @@ export BIN_DIR
 BRUTE_VERSION=21c
 BRUTE_FILES=drum1.drummap.txt drum2.drummap.txt drum3.drummap.txt drum4.drummap.txt drum5.drummap.txt library.zip midi2abc.exe midival.exe remap.exe
 
-MAIN_SRC_FILES=Event Main MasterThread ModuleLoader \
+MAIN_SRC_FILES=Event Main MasterThread ModuleLoader ParseError \
  Config OptionSetup StartupContainer Task ThreadState ModuleInfo \
  modules/Main modules/MainConfigWriter modules/Module
 MAIN_SRC_DIR=util io
