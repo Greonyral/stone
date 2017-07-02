@@ -194,6 +194,10 @@ public final class Scanner implements Runnable {
 			return false;
 		}
 		final SongDataEntry voices = getVoices(song);
+		if (voices == null) {
+			Debug.print("\n" + song.getKey() + " is not strict abc\n");
+			return true;
+		}
 		try {
 			this.sdd.serialize(voices);
 		} catch (final IOException e) {
