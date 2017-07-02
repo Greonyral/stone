@@ -438,7 +438,7 @@ public abstract class MidiParser {
 			final boolean runningStatus;
 
 			if ((read & 0xf0) < 0x80) {
-				status = (byte) ((0xf0 & this.lastStatus) >> 4);
+				status = (byte) ((this.lastStatus & 0xf0) >> 4);
 				data = (byte) (0x0f & this.lastStatus);
 				runningStatus = true;
 			} else {
@@ -487,7 +487,9 @@ public abstract class MidiParser {
 			case 0xc:
 				// program change
 				if (runningStatus) {
-					throw new IllegalStateException("Running state 0xc.");
+					MidiParser.this.DISCARD_N.len = 1;
+					return MidiParser.this.DISCARD_N;
+//					throw new IllegalStateException("Running state 0xc.");
 				}
 				MidiParser.this.PROGRAM_CHANGE.channel = data;
 				return MidiParser.this.PROGRAM_CHANGE;
