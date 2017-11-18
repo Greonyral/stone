@@ -464,6 +464,7 @@ public class SongChangeData {
 							}
 						}
 						tempo.base = (double) n / d;
+						break;
 					default:
 						break;
 					}

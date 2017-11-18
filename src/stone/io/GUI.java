@@ -335,6 +335,7 @@ public class GUI implements GUIInterface {
 						GUI.this.pressed = Button.OK;
 						Button.class.notifyAll();
 					}
+					//$FALL-THROUGH$
 				default:
 					break;
 				}

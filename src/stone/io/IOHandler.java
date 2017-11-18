@@ -951,21 +951,22 @@ public class IOHandler {
 		for (final String s : versionStringInstalled.split("[\\._]")) {
 			versionInstalled[versionInstalledIdx++] = Integer.parseInt(s);
 		}
-		if (versionIdx == 2) {
-			version[2] = version[1];
-			version[1] = version[0];
-			version[0] = 1;
-		}
-		if (versionInstalledIdx == 4) {
-			versionInstalled[2] = versionInstalled[3];
-		}
-		for (int i = 0; i < 3; i++) {
+		if (versionInstalled[0] == 1) {
+			// JDK 8 or earlier
+			versionInstalled[0] = versionInstalled[1];
+			versionInstalled[1] = versionInstalled[3];
+			versionInstalledIdx = 2;
+		} else if (versionInstalled[0] == 9) {
+      versionInstalled[1] = versionInstalled[2];
+			versionInstalledIdx = 2;
+    }
+		for (int i = 0; i < 2; i++) {
 			if (version[i] < versionInstalled[i]) {
 				System.err.printf("Check version of used Java\n"
 						+ "Installed   : %2d Update %2d\n"
 						+ "Recommended : %2d Update %2d\n",
-						versionInstalled[1], versionInstalled[2], version[1],
-						version[2]);
+						versionInstalled[0], versionInstalled[1], version[0],
+						version[1]);
 				return;
 			}
 			if (version[i] > versionInstalled[i]) {
