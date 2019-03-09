@@ -410,6 +410,7 @@ public class IOHandler {
 	public final void handleException(final ExceptionHandle handle,
 			final Exception exception) {
 		if (!handle.suppress()) {
+			Debug.print(exception);
 			if (!this.closed) {
 				exception.printStackTrace();
 				this.gui.printErrorMessage(exception.toString().replaceAll(
