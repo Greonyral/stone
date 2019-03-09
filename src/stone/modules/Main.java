@@ -30,7 +30,7 @@ public class Main implements Module {
 	private static final int MAX_LENGTH_INFO = 80;
 
 
-	private static final int VERSION = 32;
+	private static final int VERSION = 33;
 
 	/**
 	 * The name to be used for naming the config-file and the title.
