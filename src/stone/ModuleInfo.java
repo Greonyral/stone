@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import stone.modules.Module;
+import stone.util.Debug;
 
 /**
  * Container for {@link Module} holding version, tool tip and name.
@@ -51,6 +52,7 @@ public final class ModuleInfo {
 					constructor = clazz.getConstructor(sc.getClass());
 				} catch (final java.lang.NoClassDefFoundError ncdfe) {
 					// module class exists but not its dependencies
+					Debug.print(ncdfe);
 					constructor = null;
 				}
 				if (constructor != null)
@@ -58,6 +60,7 @@ public final class ModuleInfo {
 			} catch (final InstantiationException | IllegalAccessException
 					| IllegalArgumentException | InvocationTargetException
 					| NoSuchMethodException | SecurityException e) {
+				Debug.print(e);
 				e.printStackTrace();
 				instance = null;
 			}

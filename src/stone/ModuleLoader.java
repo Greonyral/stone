@@ -85,9 +85,8 @@ public class ModuleLoader extends ClassLoader {
 		final URL url = Main.class.getClassLoader().getResource(className);
 
 		if (url.getProtocol().equals("file")) {
-			final Path classPath = Path.getPath(url);
 			this.jar = false;
-			this.workingDirectory = classPath.getParent().getParent();
+			this.workingDirectory = Path.getPath(System.getProperty("user.dir").split("\\" + FileSystem.getFileSeparator()));
 		} else if (url.getProtocol().equals("jar")) {
 			this.jar = true;
 			this.workingDirectory = Path.getPath(url);

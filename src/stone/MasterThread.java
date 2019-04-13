@@ -628,6 +628,7 @@ public class MasterThread extends Thread {
 			if (modul0 == null) {
 				if (m.equals(Main.REPAIR))
 					return modules;
+				Debug.print("Module %s not found => Downloading\n", m);
 				downloadModule(m);
 				final Class<Module> clazz = StartupContainer.loadModule(m);
 				if (clazz == null) {

@@ -34,7 +34,7 @@ import stone.util.TaskPool;
  */
 public class SongData implements Module {
 
-	private static final int VERSION = 3;
+	private static final int VERSION = 4;
 
 	/**
 	 * Decodes serialized data of a single entry
@@ -119,7 +119,7 @@ public class SongData implements Module {
 		final String home = sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
 				Main.PATH_KEY, null);
 		assert home != null;
-		final Path basePath = Path.getPath(home.split("/")).resolve("Music");
+		final Path basePath = Path.getPath(home.split(home.contains("\\") ? "\\\\" : "/")).resolve("Music");
 		if (!basePath.exists()) {
 			if (!basePath.getParent().exists() || !basePath.toFile().mkdir()) {
 				this.io.printError(

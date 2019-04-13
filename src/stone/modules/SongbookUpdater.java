@@ -25,7 +25,7 @@ import stone.util.Path;
  */
 public final class SongbookUpdater implements Module {
 
-	private final static int VERSION = 11;
+	private final static int VERSION = 12;
 
 	private final IOHandler io;
 
@@ -61,7 +61,7 @@ public final class SongbookUpdater implements Module {
 		this.main = sc.getMain();
 		final String home = sc.getMain().getConfigValue(Main.GLOBAL_SECTION,
 				Main.PATH_KEY, null);
-		final Path basePath = Path.getPath(home.split("/"));
+		final Path basePath = Path.getPath(home.split(home.contains("\\") ? "\\\\" : "/"));
 		this.pluginDataPath = basePath.resolve("PluginData");
 		this.songbookPlugindataPath = this.pluginDataPath
 				.resolve("SongbookUpdateData");
