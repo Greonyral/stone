@@ -207,7 +207,7 @@ public class AbcCreator implements Module,
 
 	private static final PathOptionFileFilter INSTR_MAP_FILTER = new InstrumentMapFileFilter();
 
-	private final static int VERSION = 17;
+	private final static int VERSION = 18;
 
 	private static final FileFilter midiFilter = new MidiFileFilter();
 
@@ -1018,17 +1018,19 @@ public class AbcCreator implements Module,
 		if (this.bruteDir == null) {
 			return;
 		}
+		final String pathValue = this.main.getConfigValue(Main.GLOBAL_SECTION,
+				Main.PATH_KEY, null);
+		final File baseFile = Path.getPath(pathValue.split(pathValue.contains("\\") ? "\\\\" : "/")).toFile();
 		while (true) {
 			if (this.master.isInterrupted()) {
 				return;
 			}
 			this.midi = this.io.selectFile(
 					"Which midi do you want to transcribe to abc?",
-					this.midi == null ? Path.getPath(
-							this.main.getConfigValue(Main.GLOBAL_SECTION,
-									Main.PATH_KEY, null).split("/")).toFile()
-							: this.midi.getParent().toFile(),
-					AbcCreator.midiFilter, "Parsing midi");
+					this.midi == null ? baseFile : this.midi.getParent().toFile(),
+					AbcCreator.midiFilter,
+					"Parsing midi"
+			);
 			if (this.midi == null) {
 				break;
 			}
