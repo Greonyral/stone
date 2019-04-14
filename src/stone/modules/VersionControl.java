@@ -75,7 +75,7 @@ import stone.util.StringOption;
  */
 public final class VersionControl implements Module {
 
-	private final static int VERSION = 18;
+	private final static int VERSION = 19;
 
 	private final static String SECTION = Main.VC_SECTION;
 
@@ -256,6 +256,8 @@ public final class VersionControl implements Module {
 		this.main = vc.main;
 		final String baseValue = this.main.getConfigValue(Main.GLOBAL_SECTION,
 				Main.PATH_KEY, null);
+		final String bandValue = this.main.getConfigValue(
+				Main.VC_SECTION, Main.REPO_KEY, "band");
 		this.io = vc.io;
 		this.GIT_URL_SSH = vc.GIT_URL_SSH;
 		this.GIT_URL_HTTPS = vc.GIT_URL_HTTPS;
@@ -269,9 +271,8 @@ public final class VersionControl implements Module {
 		this.USE_SSH = vc.USE_SSH;
 		this.VC_DIR = vc.VC_DIR;
 		this.master = vc.master;
-		this.base = Path.getPath(baseValue.split("/")).resolve("Music");
-		this.repoRoot = this.base.resolve(this.main.getConfigValue(
-				Main.VC_SECTION, Main.REPO_KEY, "band").split("/"));
+		this.base = Path.getPath(baseValue.split(baseValue.contains("\\") ? "\\\\" : "/")).resolve("Music");
+		this.repoRoot = this.base.resolve(bandValue.split(bandValue.contains("\\")  ? "\\\\" : "/"));
 	}
 
 	@Override

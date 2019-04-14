@@ -111,6 +111,10 @@ public final class Path implements Comparable<Path>, Externalizable {
 			p = Path.rootMap.get(base);
 		}
 		if (p == null) {
+			if (null != FileSystem.getBase() && !rootMap.containsKey("~")) {
+				rootMap.put("~", FileSystem.getBase());
+				return getPath(name);
+			}
 			throw new RuntimeException("Invalid path: invalid root: " + base);
 		}
 		if (name[idx].length() <= p.str.length()) {
